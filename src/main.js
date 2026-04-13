@@ -3,10 +3,15 @@ import { Engine } from './core/Engine.js';
 import { initEnvironment } from './core/Environment.js';
 import { CIRCUIT_CONFIGS, createCircuit } from './core/Circuit.js';
 import { CircuitDesigner } from './core/CircuitDesigner.js';
+import { Vehicle } from './core/Vehicle.js';
 import './style.css';
 
 const engine = new Engine();
 initEnvironment(engine.scene);
+
+// Create the Car
+const car = new Vehicle();
+engine.scene.add(car.group);
 
 // Create a persistent group for the circuit
 const circuitGroup = new THREE.Group();
@@ -23,13 +28,20 @@ function loadCircuit(id) {
     // 2. Rebuild Circuit
     const { circuitCurve } = createCircuit(circuitGroup, config);
 
-    // 3. Reset Camera to Start
+    // 3. Reset Car Position
     const startPos = circuitCurve.getPointAt(0);
-    const startTangent = circuitCurve.getTangentAt(0);
+    const startTangent = circuitCurve.getTangentAt(0).normalize();
+    
+    car.group.position.copy(startPos);
+    car.group.position.y = 0.5;
+    const lookAtPos = new THREE.Vector3().copy(startPos).add(startTangent);
+    car.group.lookAt(lookAtPos.x, 0.5, lookAtPos.z);
+
+    // 4. Reset Camera to Start
     const up = new THREE.Vector3(0, 1, 0);
     const sideVec = new THREE.Vector3().crossVectors(startTangent, up).normalize();
 
-    // Position camera behind and above the start line
+    // Position camera behind and above the car
     engine.camera.position.copy(startPos)
         .addScaledVector(startTangent, -50)
         .addScaledVector(up, 20)
