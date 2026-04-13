@@ -19,6 +19,8 @@ engine.scene.add(circuitGroup);
 
 // --- Camera State ---
 let camMode = 0; // 0 = chase, 1 = onboard, 2 = t-cam, 3 = birds-eye (legacy modes)
+let simulationRunning = false; // Placeholder state for simulation control
+
 const chaseOffset = new THREE.Vector3(0, 12, -22); // Relative offset for chase cam
 const targetLookAtOffset = new THREE.Vector3(0, 0.5, 2); // Offset for look-at point relative to car
 
@@ -137,22 +139,30 @@ if (circuitSelect) {
 engine.start(() => {
     // Animation loop for camera and simulation updates
     
-    // Update camera based on car's position and rotation (Chase Cam)
-    if (car && car.group && camMode === 0) { // Check if car exists and camera mode is chase
+    // Update camera based on mode and simulation state
+    if (car && car.group) {
         const carPosition = car.group.position;
         const carQuaternion = car.group.quaternion;
 
-        // Calculate ideal camera position based on car's position and rotation
-        const idealPos = new THREE.Vector3().copy(chaseOffset).applyQuaternion(carQuaternion).add(carPosition);
+        // Determine if OrbitControls should be enabled
+        // Controls are enabled only for free-look (Bird's Eye) when simulation is NOT running.
+        engine.controls.enabled = !simulationRunning && camMode === 3;
         
-        // Smoothly move camera towards ideal position
-        const lerpFactor = 0.05; // Adjust for desired smoothness
-        engine.camera.position.lerp(idealPos, lerpFactor);
+        // Camera update logic based on camMode
+        if (camMode === 0) { // Chase camera
+            const idealPos = new THREE.Vector3().copy(chaseOffset).applyQuaternion(carQuaternion).add(carPosition);
+            const lerpFactor = 0.05; 
+            engine.camera.position.lerp(idealPos, lerpFactor);
 
-        // Calculate look-at target
-        const lookTarget = new THREE.Vector3().copy(targetLookAtOffset).applyQuaternion(carQuaternion).add(carPosition);
-        engine.camera.lookAt(lookTarget);
+            const lookTarget = new THREE.Vector3().copy(targetLookAtOffset).applyQuaternion(carQuaternion).add(carPosition);
+            engine.camera.lookAt(lookTarget);
+        } 
+        // else if (camMode === 1) { ... onboard ... }
+        // else if (camMode === 2) { ... t-cam ... }
+        // else if (camMode === 3) { ... birdseye ... }
+
+        engine.controls.update(); // Update controls if enabled/disabled state changed
     }
 
-    // Add future simulation update logic here
+    // Add future simulation update logic here (e.g., car physics, race state)
 });
