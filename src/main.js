@@ -17,6 +17,11 @@ engine.scene.add(car.group);
 const circuitGroup = new THREE.Group();
 engine.scene.add(circuitGroup);
 
+// --- Camera State ---
+let camMode = 0; // 0 = chase, 1 = onboard, 2 = t-cam, 3 = birds-eye (legacy modes)
+const chaseOffset = new THREE.Vector3(0, 12, -22); // Relative offset for chase cam
+const targetLookAtOffset = new THREE.Vector3(0, 0.5, 2); // Offset for look-at point relative to car
+
 function loadCircuit(id) {
     const config = CIRCUIT_CONFIGS[id];
     if (!config || (id === 'custom' && config.points.length === 0)) return;
@@ -109,7 +114,6 @@ if (circuitInput) {
                 designer.addCustomOption();
                 loadCircuit('custom');
                 
-                // Reset input so the same file can be imported again if needed
                 circuitInput.value = '';
             } catch (err) {
                 alert('Error importing circuit: ' + err.message);
@@ -131,5 +135,24 @@ if (circuitSelect) {
 }
 
 engine.start(() => {
-    // Future update logic will go here
+    // Animation loop for camera and simulation updates
+    
+    // Update camera based on car's position and rotation (Chase Cam)
+    if (car && car.group && camMode === 0) { // Check if car exists and camera mode is chase
+        const carPosition = car.group.position;
+        const carQuaternion = car.group.quaternion;
+
+        // Calculate ideal camera position based on car's position and rotation
+        const idealPos = new THREE.Vector3().copy(chaseOffset).applyQuaternion(carQuaternion).add(carPosition);
+        
+        // Smoothly move camera towards ideal position
+        const lerpFactor = 0.05; // Adjust for desired smoothness
+        engine.camera.position.lerp(idealPos, lerpFactor);
+
+        // Calculate look-at target
+        const lookTarget = new THREE.Vector3().copy(targetLookAtOffset).applyQuaternion(carQuaternion).add(carPosition);
+        engine.camera.lookAt(lookTarget);
+    }
+
+    // Add future simulation update logic here
 });
