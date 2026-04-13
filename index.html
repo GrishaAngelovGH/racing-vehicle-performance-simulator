@@ -17,9 +17,31 @@
                     <option value="forest">Forest Sprint</option>
                     <option value="city">City Street</option>
                 </select>
+                <button id="openDrawBtn">DRAW NEW CIRCUIT</button>
             </div>
         </div>
     </div>
+
+    <!-- Drawing Mode Modal -->
+    <div id="draw-modal">
+        <div class="panel modal-content">
+            <div class="modal-header">
+                <h2>Circuit Designer</h2>
+                <button id="closeDrawBtn">&times;</button>
+            </div>
+            <p class="modal-desc">
+                Click and drag on the canvas to draw your track path. The simulation will automatically smooth the curve and connect the ends.
+            </p>
+            <div id="canvas-container">
+                <canvas id="draw-canvas"></canvas>
+            </div>
+            <div class="modal-actions">
+                <button id="clearDrawBtn">CLEAR CANVAS</button>
+                <button id="generateTrackBtn">GENERATE CIRCUIT</button>
+            </div>
+        </div>
+    </div>
+
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
 </body>

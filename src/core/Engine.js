@@ -6,6 +6,7 @@ export class Engine {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.renderer.domElement.id = 'simulation-canvas';
         
         this.init();
     }

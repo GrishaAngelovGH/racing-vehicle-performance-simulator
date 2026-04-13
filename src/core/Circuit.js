@@ -80,6 +80,15 @@ export const CIRCUIT_CONFIGS = {
         groundColor: 0x222222,
         curbColor: 0xf9d62e,
         description: 'A technical harbor-style street circuit with sharp 90-degree turns and narrow urban canyons between skyscrapers.'
+    },
+    custom: {
+        name: 'Custom User Circuit',
+        points: [],
+        treeProb: 0.5,
+        buildingProb: 0.5,
+        groundColor: 0x222222,
+        curbColor: 0xffffff,
+        description: 'A circuit designed by you! Featuring your unique layout and balance of scenery.'
     }
 };
 
@@ -153,9 +162,10 @@ function makeGantrySignTexture(circuitName) {
 }
 
 function createStartFinish(circuitGroup, circuitCurve, config, circuitWidth) {
-    const startPos = circuitCurve.getPoint(0);
-    const startTangent = circuitCurve.getTangent(0);
+    const startPos = circuitCurve.getPointAt(0);
+    const startTangent = circuitCurve.getTangentAt(0).normalize();
     const up = new THREE.Vector3(0, 1, 0);
+    const sideVec = new THREE.Vector3().crossVectors(startTangent, up).normalize();
 
     // 1. Chequered Line
     const chequeredTex = makeChequeredTexture(12, 2, 32);
@@ -167,16 +177,20 @@ function createStartFinish(circuitGroup, circuitCurve, config, circuitWidth) {
     });
     const startLine = new THREE.Mesh(startLineGeo, startLineMat);
     startLine.position.copy(startPos);
-    startLine.position.y = 0.21;
-    startLine.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), startTangent);
-    startLine.rotation.x = -Math.PI / 2;
+    startLine.position.y = 0.22;
+    
+    // Create orientation matrix: 
+    // Local X = Side, Local Y = Tangent, Local Z = Normal (Up)
+    const basis = new THREE.Matrix4();
+    basis.makeBasis(sideVec, startTangent, up);
+    startLine.quaternion.setFromRotationMatrix(basis);
+    
     circuitGroup.add(startLine);
 
     // 2. Gantry Structure
     const gantryGroup = new THREE.Group();
     const gantryHeight = 12;
     const gantryWidth = circuitWidth + 6;
-    const sideVec = new THREE.Vector3().crossVectors(startTangent, up).normalize();
 
     const pillarGeo = new THREE.CylinderGeometry(0.4, 0.4, gantryHeight, 12);
     const pillarMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
@@ -198,8 +212,11 @@ function createStartFinish(circuitGroup, circuitCurve, config, circuitWidth) {
     const crossbar = new THREE.Mesh(crossbarGeo, crossbarMat);
     crossbar.position.copy(startPos);
     crossbar.position.y = gantryHeight;
-    const crossbarQuat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1, 0, 0), sideVec);
-    crossbar.quaternion.copy(crossbarQuat);
+    
+    // Crossbar orientation: Local X points along sideVec
+    const crossbarBasis = new THREE.Matrix4();
+    crossbarBasis.makeBasis(sideVec, up, startTangent.clone().negate());
+    crossbar.quaternion.setFromRotationMatrix(crossbarBasis);
     crossbar.castShadow = true;
     gantryGroup.add(crossbar);
 
@@ -248,8 +265,8 @@ export function createCircuit(circuitGroup, config) {
 
     for (let i = 0; i <= segments; i++) {
         const t = i / segments;
-        const pos = circuitCurve.getPoint(t % 1);
-        const tangent = circuitCurve.getTangent(t % 1).normalize();
+        const pos = circuitCurve.getPointAt(t);
+        const tangent = circuitCurve.getTangentAt(t).normalize();
         const side = new THREE.Vector3().crossVectors(tangent, up).normalize();
 
         const pLeft = new THREE.Vector3().copy(pos).addScaledVector(side, circuitWidth / 2);
@@ -292,8 +309,8 @@ export function createCircuit(circuitGroup, config) {
 
     for (let i = 0; i <= segments; i++) {
         const t = i / segments;
-        const pos = circuitCurve.getPoint(t % 1);
-        const tangent = circuitCurve.getTangent(t % 1).normalize();
+        const pos = circuitCurve.getPointAt(t);
+        const tangent = circuitCurve.getTangentAt(t).normalize();
         const side = new THREE.Vector3().crossVectors(tangent, up).normalize();
 
         const l1 = new THREE.Vector3().copy(pos).addScaledVector(side, circuitWidth / 2);
