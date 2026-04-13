@@ -40,6 +40,152 @@ export const CIRCUIT_CONFIGS = {
     }
 };
 
+function makeChequeredTexture(cols, rows, tileSize = 32) {
+    const canvas = document.createElement('canvas');
+    canvas.width = cols * tileSize;
+    canvas.height = rows * tileSize;
+    const ctx = canvas.getContext('2d');
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            ctx.fillStyle = (r + c) % 2 === 0 ? '#ffffff' : '#000000';
+            ctx.fillRect(c * tileSize, r * tileSize, tileSize, tileSize);
+        }
+    }
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    return tex;
+}
+
+function makeGantrySignTexture(circuitName) {
+    const cw = 1024, ch = 192;
+    const canvas = document.createElement('canvas');
+    canvas.width = cw;
+    canvas.height = ch;
+    const ctx = canvas.getContext('2d');
+
+    const grad = ctx.createLinearGradient(0, 0, 0, ch);
+    grad.addColorStop(0, '#1a0000');
+    grad.addColorStop(1, '#3d0000');
+    ctx.fillStyle = grad;
+    if (ctx.roundRect) {
+        ctx.roundRect(0, 0, cw, ch, 16);
+        ctx.fill();
+    } else {
+        ctx.fillRect(0, 0, cw, ch);
+    }
+
+    ctx.fillStyle = '#e10600';
+    ctx.fillRect(0, 0, cw, 8);
+    ctx.fillRect(0, ch - 8, cw, 8);
+
+    const tileSize = 14;
+    const cornerCols = 6, cornerRows = 3;
+    for (let side = 0; side < 2; side++) {
+        const startX = side === 0 ? 0 : cw - cornerCols * tileSize;
+        for (let r = 0; r < cornerRows; r++) {
+            for (let c = 0; c < cornerCols; c++) {
+                ctx.fillStyle = (r + c) % 2 === 0 ? '#ffffff' : '#111111';
+                ctx.fillRect(startX + c * tileSize, 8 + r * tileSize, tileSize, tileSize);
+            }
+        }
+    }
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = '#ff4422';
+    ctx.shadowBlur = 24;
+    ctx.font = 'bold 80px "Arial Black", Impact, sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('START / FINISH', cw / 2, ch * 0.44);
+
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = '#e10600';
+    ctx.font = 'bold 28px Arial, sans-serif';
+    ctx.fillStyle = '#ffcccc';
+    if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '4px';
+    ctx.fillText(circuitName.toUpperCase(), cw / 2, ch * 0.82);
+
+    return new THREE.CanvasTexture(canvas);
+}
+
+function createStartFinish(circuitGroup, circuitCurve, config, circuitWidth) {
+    const startPos = circuitCurve.getPoint(0);
+    const startTangent = circuitCurve.getTangent(0);
+    const up = new THREE.Vector3(0, 1, 0);
+
+    // 1. Chequered Line
+    const chequeredTex = makeChequeredTexture(12, 2, 32);
+    const startLineGeo = new THREE.PlaneGeometry(circuitWidth, 2);
+    const startLineMat = new THREE.MeshStandardMaterial({
+        map: chequeredTex,
+        roughness: 0.4,
+        metalness: 0.1
+    });
+    const startLine = new THREE.Mesh(startLineGeo, startLineMat);
+    startLine.position.copy(startPos);
+    startLine.position.y = 0.21;
+    startLine.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), startTangent);
+    startLine.rotation.x = -Math.PI / 2;
+    circuitGroup.add(startLine);
+
+    // 2. Gantry Arc
+    const gantryGroup = new THREE.Group();
+    const gantryHeight = 12;
+    const gantryWidth = circuitWidth + 6;
+    const sideVec = new THREE.Vector3().crossVectors(startTangent, up).normalize();
+
+    const pillarGeo = new THREE.CylinderGeometry(0.4, 0.4, gantryHeight, 12);
+    const pillarMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+
+    const leftPillar = new THREE.Mesh(pillarGeo, pillarMat);
+    leftPillar.position.copy(startPos).addScaledVector(sideVec, gantryWidth / 2);
+    leftPillar.position.y = gantryHeight / 2;
+    leftPillar.castShadow = true;
+    gantryGroup.add(leftPillar);
+
+    const rightPillar = new THREE.Mesh(pillarGeo, pillarMat);
+    rightPillar.position.copy(startPos).addScaledVector(sideVec, -gantryWidth / 2);
+    rightPillar.position.y = gantryHeight / 2;
+    rightPillar.castShadow = true;
+    gantryGroup.add(rightPillar);
+
+    const crossbarGeo = new THREE.BoxGeometry(gantryWidth + 1, 2, 1.5);
+    const crossbarMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
+    const crossbar = new THREE.Mesh(crossbarGeo, crossbarMat);
+    crossbar.position.copy(startPos);
+    crossbar.position.y = gantryHeight;
+    const crossbarQuat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1, 0, 0), sideVec);
+    crossbar.quaternion.copy(crossbarQuat);
+    crossbar.castShadow = true;
+    gantryGroup.add(crossbar);
+
+    const signTex = makeGantrySignTexture(config.name);
+    const signGeo = new THREE.PlaneGeometry(gantryWidth * 0.85, 1.8);
+    const signMat = new THREE.MeshStandardMaterial({
+        map: signTex,
+        side: THREE.DoubleSide,
+        roughness: 0.3,
+        metalness: 0.1
+    });
+
+    const signForward = new THREE.Mesh(signGeo, signMat);
+    signForward.position.copy(crossbar.position);
+    signForward.position.y -= 0.1;
+    signForward.position.addScaledVector(startTangent, 0.8);
+    signForward.quaternion.copy(crossbar.quaternion);
+    gantryGroup.add(signForward);
+
+    const signBackward = signForward.clone();
+    signBackward.position.copy(crossbar.position);
+    signBackward.position.y -= 0.1;
+    signBackward.position.addScaledVector(startTangent, -0.8);
+    signBackward.quaternion.copy(crossbar.quaternion);
+    gantryGroup.add(signBackward);
+
+    circuitGroup.add(gantryGroup);
+}
+
 export function createCircuit(scene, config) {
     const circuitGroup = new THREE.Group();
     scene.add(circuitGroup);
@@ -63,11 +209,9 @@ export function createCircuit(scene, config) {
         const tangent = circuitCurve.getTangent(t % 1).normalize();
         const side = new THREE.Vector3().crossVectors(tangent, up).normalize();
 
-        // Left vertex
         const pLeft = new THREE.Vector3().copy(pos).addScaledVector(side, circuitWidth / 2);
         vertices.push(pLeft.x, 0.1, pLeft.z);
 
-        // Right vertex
         const pRight = new THREE.Vector3().copy(pos).addScaledVector(side, -circuitWidth / 2);
         vertices.push(pRight.x, 0.1, pRight.z);
 
@@ -98,7 +242,6 @@ export function createCircuit(scene, config) {
     circuitMesh.receiveShadow = true;
     circuitGroup.add(circuitMesh);
 
-    // Create Curbs (White edges)
     const curbWidth = 0.8;
     const curbGeo = new THREE.BufferGeometry();
     const curbVertices = [];
@@ -110,22 +253,18 @@ export function createCircuit(scene, config) {
         const tangent = circuitCurve.getTangent(t % 1).normalize();
         const side = new THREE.Vector3().crossVectors(tangent, up).normalize();
 
-        // Left curb
         const l1 = new THREE.Vector3().copy(pos).addScaledVector(side, circuitWidth / 2);
         const l2 = new THREE.Vector3().copy(pos).addScaledVector(side, circuitWidth / 2 + curbWidth);
         curbVertices.push(l1.x, 0.15, l1.z, l2.x, 0.15, l2.z);
 
-        // Right curb
         const r1 = new THREE.Vector3().copy(pos).addScaledVector(side, -circuitWidth / 2);
         const r2 = new THREE.Vector3().copy(pos).addScaledVector(side, -circuitWidth / 2 - curbWidth);
         curbVertices.push(r1.x, 0.15, r1.z, r2.x, 0.15, r2.z);
 
         if (i < segments) {
             const base = i * 4;
-            // Left curb faces
             curbIndices.push(base, base + 1, base + 4);
             curbIndices.push(base + 1, base + 5, base + 4);
-            // Right curb faces
             curbIndices.push(base + 2, base + 3, base + 6);
             curbIndices.push(base + 3, base + 7, base + 6);
         }
@@ -137,6 +276,8 @@ export function createCircuit(scene, config) {
     const curbMat = new THREE.MeshStandardMaterial({ color: config.curbColor, side: THREE.DoubleSide });
     const curbs = new THREE.Mesh(curbGeo, curbMat);
     circuitGroup.add(curbs);
+
+    createStartFinish(circuitGroup, circuitCurve, config, circuitWidth);
 
     return { circuitGroup, circuitCurve };
 }
