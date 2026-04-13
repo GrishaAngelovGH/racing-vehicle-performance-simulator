@@ -56,6 +56,30 @@ export const CIRCUIT_CONFIGS = {
         groundColor: 0x0a4d0a,
         curbColor: 0xe10600,
         description: 'An organic, high-speed course winding through dense woodlands. Tight hairpins and flowing curves test both grip and precision.'
+    },
+    city: {
+        name: 'City Street',
+        points: [
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(200, 0, 0),
+            new THREE.Vector3(400, 0, 0),      // Start Straight
+            new THREE.Vector3(400, 0, 20),     // Corner 1 entry
+            new THREE.Vector3(400, 0, 200),    // Turn
+            new THREE.Vector3(380, 0, 200),    // Corner 2 entry
+            new THREE.Vector3(100, 0, 200),    // Short Street
+            new THREE.Vector3(100, 0, 220),    // Turn
+            new THREE.Vector3(100, 0, 400),    // Long Avenue
+            new THREE.Vector3(80, 0, 400),
+            new THREE.Vector3(-100, 0, 400),
+            new THREE.Vector3(-100, 0, 100),
+            new THREE.Vector3(-80, 0, 0),
+            new THREE.Vector3(0, 0, 0)
+        ],
+        treeProb: 0.1,
+        buildingProb: 0.9,
+        groundColor: 0x222222,
+        curbColor: 0xf9d62e,
+        description: 'A technical harbor-style street circuit with sharp 90-degree turns and narrow urban canyons between skyscrapers.'
     }
 };
 
