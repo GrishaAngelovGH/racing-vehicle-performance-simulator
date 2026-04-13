@@ -7,7 +7,7 @@ export class Vehicle {
         this.tireSidewalls = [];
         this.steeringWheel = null;
         this.rainLight = null;
-        
+
         this.init();
     }
 
@@ -28,7 +28,7 @@ export class Vehicle {
             color: bodyColor,
             metalness: 0.7,
             roughness: 0.15,
-            envMapIntensity: 1.0 // Added for reflection matching legacy
+            envMapIntensity: 1.0
         });
         const carbonMat = new THREE.MeshStandardMaterial({
             color: 0x111111,
