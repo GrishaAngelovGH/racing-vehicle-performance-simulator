@@ -7,6 +7,17 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏎️</text></svg>">
 </head>
 <body>
+    <div id="ui-container">
+        <div id="controls" class="panel">
+            <h2>Simulation Setup</h2>
+            <div class="control-group">
+                <label for="circuitSelect">Race Circuit:</label>
+                <select id="circuitSelect">
+                    <option value="classic">High-Speed Classic</option>
+                </select>
+            </div>
+        </div>
+    </div>
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
 </body>
