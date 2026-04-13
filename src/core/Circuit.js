@@ -37,6 +37,25 @@ export const CIRCUIT_CONFIGS = {
         groundColor: 0x116611,
         curbColor: 0xffffff,
         description: 'A flowing open-country circuit with wide sweeping arcs, a large outer loop, and tight infield twists. Smooth, committed driving is rewarded over braking.'
+    },
+    forest: {
+        name: 'Forest Sprint',
+        points: [
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(150, 0, 50),
+            new THREE.Vector3(300, 0, 0),
+            new THREE.Vector3(450, 0, 150),
+            new THREE.Vector3(400, 0, 350),
+            new THREE.Vector3(200, 0, 500),
+            new THREE.Vector3(-100, 0, 400),
+            new THREE.Vector3(-200, 0, 150),
+            new THREE.Vector3(0, 0, 0)
+        ],
+        treeProb: 0.95,
+        buildingProb: 0.05,
+        groundColor: 0x0a4d0a,
+        curbColor: 0xe10600,
+        description: 'An organic, high-speed course winding through dense woodlands. Tight hairpins and flowing curves test both grip and precision.'
     }
 };
 
@@ -129,7 +148,7 @@ function createStartFinish(circuitGroup, circuitCurve, config, circuitWidth) {
     startLine.rotation.x = -Math.PI / 2;
     circuitGroup.add(startLine);
 
-    // 2. Gantry Arc
+    // 2. Gantry Structure
     const gantryGroup = new THREE.Group();
     const gantryHeight = 12;
     const gantryWidth = circuitWidth + 6;
@@ -186,9 +205,9 @@ function createStartFinish(circuitGroup, circuitCurve, config, circuitWidth) {
     circuitGroup.add(gantryGroup);
 }
 
-export function createCircuit(scene, config) {
-    const circuitGroup = new THREE.Group();
-    scene.add(circuitGroup);
+export function createCircuit(circuitGroup, config) {
+    // Clear previous circuit elements
+    circuitGroup.clear();
 
     const points = config.points;
     const circuitCurve = new THREE.CatmullRomCurve3(points, true, 'centripetal');
@@ -279,5 +298,5 @@ export function createCircuit(scene, config) {
 
     createStartFinish(circuitGroup, circuitCurve, config, circuitWidth);
 
-    return { circuitGroup, circuitCurve };
+    return { circuitCurve };
 }
