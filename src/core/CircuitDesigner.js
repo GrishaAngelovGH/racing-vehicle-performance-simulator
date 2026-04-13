@@ -88,6 +88,20 @@ export class CircuitDesigner {
         this.ctx.lineJoin = 'round';
     }
 
+    addCustomOption() {
+        const selector = document.getElementById('circuitSelect');
+        if (selector) {
+            let customOption = selector.querySelector('option[value="custom"]');
+            if (!customOption) {
+                customOption = document.createElement('option');
+                customOption.value = 'custom';
+                customOption.textContent = '-- Custom Track --';
+                selector.appendChild(customOption);
+            }
+            selector.value = 'custom';
+        }
+    }
+
     generateCustomTrack() {
         if (this.drawnPoints.length < 20) {
             alert('Please draw a longer, more complete circuit path!');
@@ -95,9 +109,6 @@ export class CircuitDesigner {
         }
 
         // 1. Map canvas coordinates to 3D World space
-        // Legacy logic: 
-        // Canvas (0 to Width) -> World (-600 to 600)
-        // Canvas (0 to Height) -> World (-400 to 400)
         const worldPoints = [];
         for (let i = 0; i < this.drawnPoints.length; i += 5) {
             const p = this.drawnPoints[i];
@@ -116,17 +127,6 @@ export class CircuitDesigner {
 
         // 4. Close modal and update selector
         document.getElementById('draw-modal').style.display = 'none';
-        const selector = document.getElementById('circuitSelect');
-        if (selector) {
-            // Add custom option if it doesn't exist
-            let customOption = selector.querySelector('option[value="custom"]');
-            if (!customOption) {
-                customOption = document.createElement('option');
-                customOption.value = 'custom';
-                customOption.textContent = '-- Custom Track --';
-                selector.appendChild(customOption);
-            }
-            selector.value = 'custom';
-        }
+        this.addCustomOption();
     }
 }

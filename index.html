@@ -17,7 +17,14 @@
                     <option value="forest">Forest Sprint</option>
                     <option value="city">City Street</option>
                 </select>
-                <button id="openDrawBtn">DRAW NEW CIRCUIT</button>
+                <div class="circuit-actions">
+                    <button id="openDrawBtn">DRAW NEW CIRCUIT</button>
+                    <div class="secondary-actions">
+                        <button id="exportCircuitBtn" title="Export Custom Circuit">📤</button>
+                        <button id="importCircuitBtn" title="Import Custom Circuit">📥</button>
+                    </div>
+                </div>
+                <input type="file" id="circuitInput" style="display: none;" accept=".json">
             </div>
         </div>
     </div>
