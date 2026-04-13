@@ -8,6 +8,7 @@
     --input-border: #d0d0d0;
     --input-text: #0a0a0a;
     --label-color: #555;
+    --value-color: #00a85d;
     --glass-blur: blur(12px);
 }
 
@@ -28,7 +29,7 @@ body {
     height: 100%;
     pointer-events: none;
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
     padding: 20px;
     box-sizing: border-box;
     z-index: 100;
@@ -194,7 +195,8 @@ select {
     margin-top: 20px;
 }
 
-#clearDrawBtn, #generateTrackBtn {
+#clearDrawBtn,
+#generateTrackBtn {
     padding: 12px;
     border: none;
     border-radius: 4px;
@@ -231,4 +233,23 @@ select {
 
 #draw-canvas {
     display: block;
+}
+
+/* Camera Panel Stats */
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+}
+
+.stat-item .label {
+    color: var(--label-color);
+    font-weight: 500;
+}
+
+.stat-item .value {
+    color: var(--value-color);
+    font-weight: 600;
 }

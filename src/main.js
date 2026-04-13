@@ -125,6 +125,21 @@ if (circuitInput) {
     });
 }
 
+// Camera mode labels
+const camModeLabels = ['Chase', 'Onboard', 'T-Cam', "Bird's Eye"];
+
+// Keyboard controls for camera mode
+document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT') return;
+    if (e.key === 'c' || e.key === 'C') {
+        camMode = (camMode + 1) % 4;
+        const camModeEl = document.getElementById('camMode');
+        if (camModeEl) {
+            camModeEl.textContent = camModeLabels[camMode];
+        }
+    }
+});
+
 // Initial load
 loadCircuit('classic');
 
