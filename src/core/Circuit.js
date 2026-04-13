@@ -29,8 +29,7 @@ export const CIRCUIT_CONFIGS = {
             new THREE.Vector3(500, 0, -500),
             new THREE.Vector3(100, 0, -450),
             new THREE.Vector3(-50, 0, -300),
-            new THREE.Vector3(-100, 0, -100),
-            new THREE.Vector3(0, 0, 0)
+            new THREE.Vector3(-100, 0, -100)
         ],
         treeProb: 0.7,
         buildingProb: 0.3,
@@ -48,8 +47,7 @@ export const CIRCUIT_CONFIGS = {
             new THREE.Vector3(400, 0, 350),
             new THREE.Vector3(200, 0, 500),
             new THREE.Vector3(-100, 0, 400),
-            new THREE.Vector3(-200, 0, 150),
-            new THREE.Vector3(0, 0, 0)
+            new THREE.Vector3(-200, 0, 150)
         ],
         treeProb: 0.95,
         buildingProb: 0.05,
@@ -62,18 +60,17 @@ export const CIRCUIT_CONFIGS = {
         points: [
             new THREE.Vector3(0, 0, 0),
             new THREE.Vector3(200, 0, 0),
-            new THREE.Vector3(400, 0, 0),      // Start Straight
-            new THREE.Vector3(400, 0, 20),     // Corner 1 entry
-            new THREE.Vector3(400, 0, 200),    // Turn
-            new THREE.Vector3(380, 0, 200),    // Corner 2 entry
-            new THREE.Vector3(100, 0, 200),    // Short Street
-            new THREE.Vector3(100, 0, 220),    // Turn
-            new THREE.Vector3(100, 0, 400),    // Long Avenue
+            new THREE.Vector3(400, 0, 0),
+            new THREE.Vector3(400, 0, 20),
+            new THREE.Vector3(400, 0, 200),
+            new THREE.Vector3(380, 0, 200),
+            new THREE.Vector3(100, 0, 200),
+            new THREE.Vector3(100, 0, 220),
+            new THREE.Vector3(100, 0, 400),
             new THREE.Vector3(80, 0, 400),
             new THREE.Vector3(-100, 0, 400),
             new THREE.Vector3(-100, 0, 100),
-            new THREE.Vector3(-80, 0, 0),
-            new THREE.Vector3(0, 0, 0)
+            new THREE.Vector3(-80, 0, 0)
         ],
         treeProb: 0.1,
         buildingProb: 0.9,
@@ -167,7 +164,6 @@ function createStartFinish(circuitGroup, circuitCurve, config, circuitWidth) {
     const up = new THREE.Vector3(0, 1, 0);
     const sideVec = new THREE.Vector3().crossVectors(startTangent, up).normalize();
 
-    // 1. Chequered Line
     const chequeredTex = makeChequeredTexture(12, 2, 32);
     const startLineGeo = new THREE.PlaneGeometry(circuitWidth, 2);
     const startLineMat = new THREE.MeshStandardMaterial({
@@ -179,15 +175,12 @@ function createStartFinish(circuitGroup, circuitCurve, config, circuitWidth) {
     startLine.position.copy(startPos);
     startLine.position.y = 0.22;
     
-    // Create orientation matrix: 
-    // Local X = Side, Local Y = Tangent, Local Z = Normal (Up)
     const basis = new THREE.Matrix4();
     basis.makeBasis(sideVec, startTangent, up);
     startLine.quaternion.setFromRotationMatrix(basis);
     
     circuitGroup.add(startLine);
 
-    // 2. Gantry Structure
     const gantryGroup = new THREE.Group();
     const gantryHeight = 12;
     const gantryWidth = circuitWidth + 6;
@@ -213,7 +206,6 @@ function createStartFinish(circuitGroup, circuitCurve, config, circuitWidth) {
     crossbar.position.copy(startPos);
     crossbar.position.y = gantryHeight;
     
-    // Crossbar orientation: Local X points along sideVec
     const crossbarBasis = new THREE.Matrix4();
     crossbarBasis.makeBasis(sideVec, up, startTangent.clone().negate());
     crossbar.quaternion.setFromRotationMatrix(crossbarBasis);
@@ -247,7 +239,6 @@ function createStartFinish(circuitGroup, circuitCurve, config, circuitWidth) {
 }
 
 export function createCircuit(circuitGroup, config) {
-    // Clear previous circuit elements
     circuitGroup.clear();
 
     const points = config.points;

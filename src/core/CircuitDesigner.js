@@ -106,9 +106,6 @@ export class CircuitDesigner {
             worldPoints.push(new THREE.Vector3(worldX, 0, worldZ));
         }
 
-        // Ensure loop is closed for the curve
-        worldPoints.push(worldPoints[0].clone());
-
         // 2. Update the custom config
         CIRCUIT_CONFIGS.custom.points = worldPoints;
 
