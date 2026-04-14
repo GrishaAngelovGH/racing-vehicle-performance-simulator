@@ -27,6 +27,19 @@ let currentSpeed = 0;
 let progress = 0; // 0 to 1 representing progress along the track curve
 let trackCurve = null;
 let lastFrameTime = performance.now();
+let totalLaps = 5;
+let currentLap = 1;
+
+function updateLapDisplay() {
+    const lapEl = document.getElementById('currentLap');
+    if (lapEl) {
+        if (simulationRunning) {
+            lapEl.textContent = `${currentLap} / ${totalLaps}`;
+        } else {
+            lapEl.textContent = '-';
+        }
+    }
+}
 
 function loadCircuit(id) {
     const config = CIRCUIT_CONFIGS[id];
@@ -129,17 +142,34 @@ if (circuitInput) {
     });
 }
 
+// Laps Input Handler
+const lapsInput = document.getElementById('laps');
+if (lapsInput) {
+    lapsInput.addEventListener('change', (e) => {
+        totalLaps = parseInt(e.target.value) || 5;
+    });
+}
+
 // Launch Button Handler
 const launchBtn = document.getElementById('launchBtn');
 if (launchBtn) {
     launchBtn.addEventListener('click', () => {
-        simulationRunning = !simulationRunning;
-        launchBtn.textContent = simulationRunning ? "RESET SIMULATION" : "LAUNCH SIMULATION";
-        if (simulationRunning) {
-            currentSpeed = 100; // Hardcoded speed
+        if (!simulationRunning) {
+            // Starting simulation
+            totalLaps = parseInt(lapsInput?.value) || 5;
+            currentLap = 1;
+            simulationRunning = true;
+            currentSpeed = 100;
+            launchBtn.textContent = "RESET SIMULATION";
             const speedEl = document.getElementById('currentSpeed');
             if (speedEl) speedEl.textContent = "100 km/h";
+            updateLapDisplay();
         } else {
+            // Resetting simulation
+            simulationRunning = false;
+            currentLap = 1;
+            updateLapDisplay();
+            launchBtn.textContent = "LAUNCH SIMULATION";
             loadCircuit(document.getElementById('circuitSelect').value);
         }
     });
@@ -211,8 +241,23 @@ engine.start(() => {
         const metersPerSec = 100 * 0.277778;
         const trackLength = trackCurve.getLength();
 
+        const previousProgress = progress;
         progress += (metersPerSec * dt) / trackLength;
-        if (progress >= 1) progress -= 1;
+
+        // Check if lap completed
+        if (progress >= 1) {
+            progress -= 1;
+            currentLap++;
+            updateLapDisplay();
+
+            if (currentLap > totalLaps) {
+                simulationRunning = false;
+                launchBtn.textContent = "SIMULATION FINISHED - LAUNCH AGAIN";
+                currentSpeed = 0;
+                const speedEl = document.getElementById('currentSpeed');
+                if (speedEl) speedEl.textContent = "0 km/h";
+            }
+        }
 
         const position = trackCurve.getPointAt(progress);
         car.group.position.copy(position);

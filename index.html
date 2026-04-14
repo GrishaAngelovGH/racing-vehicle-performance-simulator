@@ -20,12 +20,20 @@
         <div id="controls" class="panel">
             <h2>Simulation Setup</h2>
             <div class="control-group">
-                <label for="circuitSelect">Race Circuit:</label>
-                <select id="circuitSelect">
-                    <option value="classic">High-Speed Classic</option>
-                    <option value="forest">Forest Sprint</option>
-                    <option value="city">City Street</option>
-                </select>
+                <div class="circuit-row">
+                    <div class="circuit-select-wrapper">
+                        <label for="circuitSelect">Race Circuit:</label>
+                        <select id="circuitSelect">
+                            <option value="classic">High-Speed Classic</option>
+                            <option value="forest">Forest Sprint</option>
+                            <option value="city">City Street</option>
+                        </select>
+                    </div>
+                    <div class="laps-wrapper">
+                        <label for="laps">Laps:</label>
+                        <input type="number" id="laps" min="1" max="100" value="5">
+                    </div>
+                </div>
                 <div class="circuit-actions">
                     <button id="openDrawBtn">DRAW NEW CIRCUIT</button>
                     <div class="secondary-actions">
@@ -40,6 +48,10 @@
 
         <div id="stats" class="panel">
             <h2>Live Stats</h2>
+            <div class="stat-item">
+                <span class="label">Current Lap:</span>
+                <span id="currentLap" class="value">-</span>
+            </div>
             <div class="stat-item">
                 <span class="label">Speed:</span>
                 <span id="currentSpeed" class="value">0 km/h</span>
