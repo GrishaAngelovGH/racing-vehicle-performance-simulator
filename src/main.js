@@ -208,7 +208,7 @@ engine.start(() => {
     }
 
     // Animation loop for camera and simulation updates
-    camera.update(progress);
+    camera.update(progress, currentSpeed, simulationRunning);
 });
 
 // Hide splash screen when ready

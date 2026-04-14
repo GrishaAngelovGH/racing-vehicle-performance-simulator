@@ -14,7 +14,7 @@ export class Camera {
         this.chaseOffset = new THREE.Vector3(0, 12, -22); // Relative offset for chase cam
         this.targetLookAtOffset = new THREE.Vector3(0, 0.5, 2); // Offset for look-at point relative to car
 
-        // Onboard camera offset (legacy F1 driver eye position)
+        // Onboard camera offset
         this.onboardOffset = new THREE.Vector3(0, 1.4, 0.8);
 
         // Bird's Eye camera state
@@ -58,7 +58,7 @@ export class Camera {
             .addScaledVector(sideVec, 30);
     }
 
-    update(progress = 0) {
+    update(progress = 0, currentSpeed = 0, simulationRunning = false) {
         if (!this.car || !this.car.group) return;
 
         // Reset camera UP to default to prevent "leaked" orientation from Bird's Eye mode
@@ -69,7 +69,9 @@ export class Camera {
 
         if (this.camMode === 0) { // Chase camera
             const idealPos = new THREE.Vector3().copy(this.chaseOffset).applyQuaternion(carQuaternion).add(carPosition);
-            const lerpFactor = 0.05;
+
+            // Dynamic lerp: faster at high speed, very fast when not simulating (for preview/reset)
+            const lerpFactor = simulationRunning ? (0.05 + (currentSpeed / 200) * 0.15) : 0.8;
             this.camera.position.lerp(idealPos, lerpFactor);
 
             const lookTarget = new THREE.Vector3().copy(this.targetLookAtOffset).applyQuaternion(carQuaternion).add(carPosition);
@@ -79,7 +81,7 @@ export class Camera {
             this.camera.position.copy(camPos);
 
             if (this.currentCircuitCurve) {
-                // Look ahead 5% of the track to anticipate corners (Legacy logic)
+                // Look ahead 5% of the track to anticipate corners
                 const lookAheadDist = 0.05;
                 const lookAheadU = (progress + lookAheadDist) % 1;
                 const lookTarget = this.currentCircuitCurve.getPointAt(lookAheadU);
