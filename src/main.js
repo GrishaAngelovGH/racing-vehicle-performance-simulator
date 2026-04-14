@@ -30,6 +30,7 @@ let lastFrameTime = performance.now();
 let totalLaps = 5;
 let currentLap = 1;
 let maxSpeed = 200; // Max speed in km/h
+let lapStartTime = 0;
 
 function updateLapDisplay() {
     const lapEl = document.getElementById('currentLap');
@@ -40,6 +41,13 @@ function updateLapDisplay() {
             lapEl.textContent = '-';
         }
     }
+}
+
+function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    const ms = Math.floor((seconds % 1) * 1000);
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
 }
 
 function drawMinimap(config, canvas) {
@@ -147,10 +155,13 @@ function loadCircuit(id) {
     progress = 0;
     currentSpeed = 0;
     simulationRunning = false;
+    lapStartTime = 0;
     const launchBtn = document.getElementById('launchBtn');
     if (launchBtn) launchBtn.textContent = "LAUNCH SIMULATION";
     const speedEl = document.getElementById('currentSpeed');
     if (speedEl) speedEl.textContent = "0 km/h";
+    const currentTimeEl = document.getElementById('currentTime');
+    if (currentTimeEl) currentTimeEl.textContent = '--:--.---';
 }
 
 // Initialize Designer
@@ -254,13 +265,13 @@ if (launchBtn) {
             totalLaps = parseInt(lapsInput?.value) || 5;
             maxSpeed = parseInt(maxSpeedInput?.value) || 200;
             currentLap = 1;
+            lapStartTime = performance.now();
             simulationRunning = true;
             currentSpeed = maxSpeed;
             launchBtn.textContent = "RESET SIMULATION";
             const speedEl = document.getElementById('currentSpeed');
             if (speedEl) speedEl.textContent = `${maxSpeed} km/h`;
             updateLapDisplay();
-
             // Auto-hide circuit info panel on start
             const circuitInfoPanel = document.getElementById('circuit-info');
             if (circuitInfoPanel) circuitInfoPanel.style.display = 'none';
@@ -268,8 +279,11 @@ if (launchBtn) {
             // Resetting simulation
             simulationRunning = false;
             currentLap = 1;
+            lapStartTime = 0;
             updateLapDisplay();
             launchBtn.textContent = "LAUNCH SIMULATION";
+            const currentTimeEl = document.getElementById('currentTime');
+            if (currentTimeEl) currentTimeEl.textContent = '--:--.---';
             loadCircuit(document.getElementById('circuitSelect').value);
         }
     });
@@ -369,6 +383,12 @@ engine.start(() => {
         const speedEl = document.getElementById('currentSpeed');
         if (speedEl) speedEl.textContent = speedText;
 
+        // Update lap time display
+        const lapElapsed = (now - lapStartTime) / 1000;
+        const timeText = formatTime(lapElapsed);
+        const currentTimeEl = document.getElementById('currentTime');
+        if (currentTimeEl) currentTimeEl.textContent = timeText;
+
         // Convert speed from km/h to meters/sec
         const metersPerSec = currentSpeed * 0.277778;
         const trackLength = trackCurve.getLength();
@@ -379,6 +399,7 @@ engine.start(() => {
         // Check if lap completed
         if (progress >= 1) {
             progress -= 1;
+            lapStartTime = now;
             currentLap++;
             updateLapDisplay();
 
@@ -387,6 +408,8 @@ engine.start(() => {
                 launchBtn.textContent = "SIMULATION FINISHED - LAUNCH AGAIN";
                 currentSpeed = 0;
                 if (speedEl) speedEl.textContent = "0 km/h";
+                const currentTimeEl = document.getElementById('currentTime');
+                if (currentTimeEl) currentTimeEl.textContent = '--:--.---';
             }
         }
 
