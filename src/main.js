@@ -18,7 +18,7 @@ const circuitGroup = new THREE.Group();
 engine.scene.add(circuitGroup);
 
 // --- Camera State ---
-let camMode = 0; // 0 = chase, 1 = onboard
+let camMode = 0; // 0 = chase, 1 = onboard, 2 = Bird's Eye
 let simulationRunning = false; // Placeholder state for simulation control
 let currentCircuitCurve = null; // Store reference to current circuit curve
 
@@ -27,6 +27,10 @@ const targetLookAtOffset = new THREE.Vector3(0, 0.5, 2); // Offset for look-at p
 
 // Onboard camera offset (driver's eye position relative to car)
 const onboardOffset = new THREE.Vector3(0, 0.8, 1.2); // Forward of visor, above halo ring for clear view
+
+// Bird's Eye camera state
+const birdseyeDistance = 30; // Fixed distance for Bird's Eye view
+const birdseyeTilt = 0; // Fixed tilt for top-down view
 
 function loadCircuit(id) {
     const config = CIRCUIT_CONFIGS[id];
@@ -129,13 +133,13 @@ if (circuitInput) {
 }
 
 // Camera mode labels
-const camModeLabels = ['Chase', 'Onboard'];
+const camModeLabels = ['Chase', 'Onboard', "Bird's Eye"];
 
 // Keyboard controls for camera mode
 document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT') return;
     if (e.key === 'c' || e.key === 'C') {
-        camMode = (camMode + 1) % 2;
+        camMode = (camMode + 1) % camModeLabels.length;
         const camModeEl = document.getElementById('camMode');
         if (camModeEl) {
             camModeEl.textContent = camModeLabels[camMode];
@@ -162,32 +166,37 @@ engine.start(() => {
         const carPosition = car.group.position;
         const carQuaternion = car.group.quaternion;
 
+        // Camera update logic based on camMode
+        if (camMode === 0) { // Chase camera
+            const idealPos = new THREE.Vector3().copy(chaseOffset).applyQuaternion(carQuaternion).add(carPosition);
+            const lerpFactor = 0.05;
+            engine.camera.position.lerp(idealPos, lerpFactor);
 
-            // Camera update logic based on camMode
-            if (camMode === 0) { // Chase camera
-                const idealPos = new THREE.Vector3().copy(chaseOffset).applyQuaternion(carQuaternion).add(carPosition);
-                const lerpFactor = 0.05;
-                engine.camera.position.lerp(idealPos, lerpFactor);
+            const lookTarget = new THREE.Vector3().copy(targetLookAtOffset).applyQuaternion(carQuaternion).add(carPosition);
+            engine.camera.lookAt(lookTarget);
+        } else if (camMode === 1) { // Onboard camera
+            const camPos = new THREE.Vector3().copy(onboardOffset).applyQuaternion(carQuaternion).add(carPosition);
+            engine.camera.position.copy(camPos);
 
-                const lookTarget = new THREE.Vector3().copy(targetLookAtOffset).applyQuaternion(carQuaternion).add(carPosition);
-                engine.camera.lookAt(lookTarget);
-            } else if (camMode === 1) { // Onboard camera
-                // Position camera at driver's eye level, slightly higher and forward
-                const onboardOffset = new THREE.Vector3(0, 0.8, 1.2);
-                const camPos = new THREE.Vector3().copy(onboardOffset).applyQuaternion(carQuaternion).add(carPosition);
-                engine.camera.position.copy(camPos);
+            const forwardVector = new THREE.Vector3(0, 0, 1).applyQuaternion(carQuaternion);
+            const lookAhead = new THREE.Vector3().copy(carPosition).addScaledVector(forwardVector, 20);
+            engine.camera.lookAt(lookAhead);
+        } else if (camMode === 2) { // Bird's Eye Camera
+            // Position camera at a fixed distance above the car, looking down, aligned with car's direction.
+            const localOffset = new THREE.Vector3(0, birdseyeDistance * Math.cos(birdseyeTilt), -birdseyeDistance * Math.sin(birdseyeTilt));
+            const idealPos = new THREE.Vector3().copy(localOffset).applyQuaternion(carQuaternion).add(carPosition);
 
-                // Look ahead in the direction the car is facing
-                // Get the car's forward vector
-                const forwardVector = new THREE.Vector3(0, 0, 1).applyQuaternion(carQuaternion);
-                // Calculate the look-at point by extending the forward vector from the car's position
-                const lookAhead = new THREE.Vector3().copy(carPosition).addScaledVector(forwardVector, 20); // 20 units ahead
-                engine.camera.lookAt(lookAhead);
-            }
+            engine.camera.position.copy(idealPos);
 
-            // Update controls if enabled/disabled state changed - this line is removed as OrbitControls are no longer used.
-            // engine.controls.update(); 
+            // Calculate car's forward direction
+            const carForward = new THREE.Vector3(0, 0, 1).applyQuaternion(carQuaternion);
+
+            // Align camera's 'up' vector with the car's forward direction for orientation.
+            // This ensures the camera's orientation is consistent with the car's movement.
+            engine.camera.up.copy(carForward);
+
+            // Look at the car's position (straight down from camera's perspective)
+            engine.camera.lookAt(carPosition);
         }
-
-        // Add future simulation update logic here (e.g., car physics, race state)
-    });
+    }
+});
