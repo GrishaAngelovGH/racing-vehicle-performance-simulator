@@ -29,6 +29,7 @@ let trackCurve = null;
 let lastFrameTime = performance.now();
 let totalLaps = 5;
 let currentLap = 1;
+let maxSpeed = 200; // Max speed in km/h
 
 function updateLapDisplay() {
     const lapEl = document.getElementById('currentLap');
@@ -139,6 +140,8 @@ function loadCircuit(id) {
 
     // 5. Update Circuit Info Display
     updateCircuitDisplay(config);
+    const circuitInfoPanel = document.getElementById('circuit-info');
+    if (circuitInfoPanel) circuitInfoPanel.style.display = 'flex';
 
     // Reset simulation state
     progress = 0;
@@ -225,6 +228,23 @@ if (lapsInput) {
     });
 }
 
+// Max Speed Input Handler
+const maxSpeedInput = document.getElementById('maxSpeed');
+const maxSpeedValue = document.getElementById('maxSpeedValue');
+if (maxSpeedInput) {
+    maxSpeedInput.addEventListener('input', (e) => {
+        const value = parseInt(e.target.value);
+        maxSpeed = value;
+        if (maxSpeedValue) maxSpeedValue.textContent = value;
+        // Update live speed display if simulation is running
+        if (simulationRunning) {
+            currentSpeed = value;
+            const speedEl = document.getElementById('currentSpeed');
+            if (speedEl) speedEl.textContent = `${value} km/h`;
+        }
+    });
+}
+
 // Launch Button Handler
 const launchBtn = document.getElementById('launchBtn');
 if (launchBtn) {
@@ -232,13 +252,18 @@ if (launchBtn) {
         if (!simulationRunning) {
             // Starting simulation
             totalLaps = parseInt(lapsInput?.value) || 5;
+            maxSpeed = parseInt(maxSpeedInput?.value) || 200;
             currentLap = 1;
             simulationRunning = true;
-            currentSpeed = 100;
+            currentSpeed = maxSpeed;
             launchBtn.textContent = "RESET SIMULATION";
             const speedEl = document.getElementById('currentSpeed');
-            if (speedEl) speedEl.textContent = "100 km/h";
+            if (speedEl) speedEl.textContent = `${maxSpeed} km/h`;
             updateLapDisplay();
+
+            // Auto-hide circuit info panel on start
+            const circuitInfoPanel = document.getElementById('circuit-info');
+            if (circuitInfoPanel) circuitInfoPanel.style.display = 'none';
         } else {
             // Resetting simulation
             simulationRunning = false;
@@ -312,8 +337,40 @@ engine.start(() => {
     lastFrameTime = now;
 
     if (simulationRunning && trackCurve) {
-        // Hardcoded speed of 100 km/h -> ~27.78 meters/sec
-        const metersPerSec = 100 * 0.277778;
+        // Calculate track curvature at current position
+        const tangent = trackCurve.getTangentAt(progress);
+        const lookAhead = (progress + 0.02) % 1;
+        const nextTangent = trackCurve.getTangentAt(lookAhead);
+        const angle = tangent.angleTo(nextTangent);
+        const curvature = Math.min(1.0, angle * 15.0); // Normalized curvature [0, 1]
+
+        // Target speed calculation - slower in corners, faster on straights
+        // Grip factor affects cornering speed (lower grip = slower corners)
+        const gripFactor = 0.8; // Base grip value
+        const speedPenalty = curvature * (1.2 - gripFactor);
+        let targetSpeed = maxSpeed * (1.0 - Math.min(0.8, speedPenalty));
+        targetSpeed = Math.max(maxSpeed * 0.2, targetSpeed); // Minimum 20% of max speed
+
+        // Acceleration/deceleration logic
+        const accelKmhPerSec = 100; // Acceleration rate
+        const brakePower = 2.0; // Braking is faster than accelerating
+        const accelRate = accelKmhPerSec * dt;
+
+        if (currentSpeed < targetSpeed) {
+            currentSpeed = Math.min(currentSpeed + accelRate, targetSpeed);
+        } else {
+            currentSpeed = Math.max(currentSpeed - accelRate * brakePower, targetSpeed);
+        }
+
+        currentSpeed = Math.max(maxSpeed * 0.1, Math.min(currentSpeed, maxSpeed));
+
+        // Update speed display
+        const speedText = `${Math.round(currentSpeed)} km/h`;
+        const speedEl = document.getElementById('currentSpeed');
+        if (speedEl) speedEl.textContent = speedText;
+
+        // Convert speed from km/h to meters/sec
+        const metersPerSec = currentSpeed * 0.277778;
         const trackLength = trackCurve.getLength();
 
         const previousProgress = progress;
@@ -329,7 +386,6 @@ engine.start(() => {
                 simulationRunning = false;
                 launchBtn.textContent = "SIMULATION FINISHED - LAUNCH AGAIN";
                 currentSpeed = 0;
-                const speedEl = document.getElementById('currentSpeed');
                 if (speedEl) speedEl.textContent = "0 km/h";
             }
         }
