@@ -7,9 +7,15 @@
     <title>Racing Vehicle Performance Simulator</title>
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏎️</text></svg>">
+    <link rel="stylesheet" href="/src/style.css">
 </head>
 
 <body>
+    <div id="splash-screen">
+        <div class="splash-title">🏎️ Racing Simulator</div>
+        <div class="splash-loader"></div>
+    </div>
+
     <div id="ui-container">
         <div id="controls" class="panel">
             <h2>Simulation Setup</h2>
@@ -66,7 +72,6 @@
         </div>
     </div>
 
-    <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
 </body>
 

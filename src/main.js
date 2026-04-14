@@ -5,7 +5,6 @@ import { CIRCUIT_CONFIGS, createCircuit } from './core/Circuit.js';
 import { CircuitDesigner } from './core/CircuitDesigner.js';
 import { Vehicle } from './core/Vehicle.js';
 import { Camera } from './core/Camera.js';
-import './style.css';
 
 const engine = new Engine();
 initEnvironment(engine.scene);
@@ -210,4 +209,15 @@ engine.start(() => {
 
     // Animation loop for camera and simulation updates
     camera.update();
+});
+
+// Hide splash screen when ready
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        const splash = document.getElementById('splash-screen');
+        if (splash) {
+            splash.style.opacity = '0';
+            splash.style.visibility = 'hidden';
+        }
+    }, 500); // Small delay to ensure WebGL context is fully rendered
 });
