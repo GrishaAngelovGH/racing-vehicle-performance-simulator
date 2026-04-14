@@ -14,8 +14,8 @@ export class Camera {
         this.chaseOffset = new THREE.Vector3(0, 12, -22); // Relative offset for chase cam
         this.targetLookAtOffset = new THREE.Vector3(0, 0.5, 2); // Offset for look-at point relative to car
 
-        // Onboard camera offset (driver's eye position relative to car)
-        this.onboardOffset = new THREE.Vector3(0, 0.8, 1.2); // Forward of visor, above halo ring for clear view
+        // Onboard camera offset (legacy F1 driver eye position)
+        this.onboardOffset = new THREE.Vector3(0, 1.4, 0.8);
 
         // Bird's Eye camera state
         this.birdseyeDistance = 30; // Fixed distance for Bird's Eye view
@@ -58,7 +58,7 @@ export class Camera {
             .addScaledVector(sideVec, 30);
     }
 
-    update() {
+    update(progress = 0) {
         if (!this.car || !this.car.group) return;
 
         const carPosition = this.car.group.position;
@@ -75,9 +75,19 @@ export class Camera {
             const camPos = new THREE.Vector3().copy(this.onboardOffset).applyQuaternion(carQuaternion).add(carPosition);
             this.camera.position.copy(camPos);
 
-            const forwardVector = new THREE.Vector3(0, 0, 1).applyQuaternion(carQuaternion);
-            const lookAhead = new THREE.Vector3().copy(carPosition).addScaledVector(forwardVector, 20);
-            this.camera.lookAt(lookAhead);
+            if (this.currentCircuitCurve) {
+                // Look ahead 5% of the track to anticipate corners (Legacy logic)
+                const lookAheadDist = 0.05;
+                const lookAheadU = (progress + lookAheadDist) % 1;
+                const lookTarget = this.currentCircuitCurve.getPointAt(lookAheadU);
+                lookTarget.y = carPosition.y + 0.5;
+                this.camera.lookAt(lookTarget);
+            } else {
+                // Fallback: look ahead in car direction if no track curve exists
+                const forwardVector = new THREE.Vector3(0, 0, 1).applyQuaternion(carQuaternion);
+                const lookAhead = new THREE.Vector3().copy(carPosition).addScaledVector(forwardVector, 20);
+                this.camera.lookAt(lookAhead);
+            }
         } else if (this.camMode === 2) { // Bird's Eye Camera
             const localOffset = new THREE.Vector3(0, this.birdseyeDistance * Math.cos(this.birdseyeTilt), -this.birdseyeDistance * Math.sin(this.birdseyeTilt));
             const idealPos = new THREE.Vector3().copy(localOffset).applyQuaternion(carQuaternion).add(carPosition);
