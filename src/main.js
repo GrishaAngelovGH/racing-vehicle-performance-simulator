@@ -5,6 +5,7 @@ import { CIRCUIT_CONFIGS, createCircuit } from './core/Circuit.js';
 import { CircuitDesigner } from './core/CircuitDesigner.js';
 import { Vehicle } from './core/Vehicle.js';
 import { Camera } from './core/Camera.js';
+import { initAudio, updateEngineSound, toggleSound, enableSound, isAudioInitialized } from './core/Audio.js';
 
 const engine = new Engine();
 initEnvironment(engine.scene);
@@ -154,10 +155,25 @@ document.addEventListener('keydown', (e) => {
         if (launchBtn) launchBtn.click();
     }
 
+    if (e.key === 's' || e.key === 'S') {
+        let isEnabled;
+        if (!isAudioInitialized()) {
+            initAudio();
+            isEnabled = enableSound();
+        } else {
+            isEnabled = toggleSound();
+        }
+        const soundValue = document.getElementById('soundStatus');
+        if (soundValue) {
+            soundValue.textContent = isEnabled ? 'On' : 'Off';
+            soundValue.className = isEnabled ? 'value' : 'value off';
+        }
+    }
+
     // Panel toggle with 'h' key
     if (e.key === 'h' || e.key === 'H') {
         uiHideMode = (uiHideMode + 1) % 3; // Cycle through 3 states: 0=All, 1=Stats only, 2=None
-        
+
         const controlsPanel = document.getElementById('controls');
         const statsPanel = document.getElementById('stats');
 
@@ -194,7 +210,7 @@ engine.start(() => {
         // Hardcoded speed of 100 km/h -> ~27.78 meters/sec
         const metersPerSec = 100 * 0.277778;
         const trackLength = trackCurve.getLength();
-        
+
         progress += (metersPerSec * dt) / trackLength;
         if (progress >= 1) progress -= 1;
 
@@ -206,6 +222,9 @@ engine.start(() => {
         const lookAtPos = trackCurve.getPointAt(lookAheadU);
         car.group.lookAt(lookAtPos.x, 0.5, lookAtPos.z);
     }
+
+    // Update engine sound
+    updateEngineSound(currentSpeed, 200, simulationRunning);
 
     // Animation loop for camera and simulation updates
     camera.update(progress, currentSpeed, simulationRunning);
