@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Building } from '../decorations/Building.js';
 
 export const CIRCUIT_CONFIGS = {
     classic: {
@@ -328,7 +329,65 @@ export function createCircuit(circuitGroup, config) {
     const curbs = new THREE.Mesh(curbGeo, curbMat);
     circuitGroup.add(curbs);
 
+    populateDecorations(circuitGroup, circuitCurve, config, circuitWidth);
     createStartFinish(circuitGroup, circuitCurve, config, circuitWidth);
 
     return { circuitCurve };
+}
+
+function populateDecorations(circuitGroup, circuitCurve, config, trackWidth) {
+    const isCity = config.name.toLowerCase().includes('city');
+    const count = isCity ? 180 : 150; // Match legacy counts
+    const offsetDistance = isCity ? 15 : 20;
+
+    // Create a cached list of track points for collision checking
+    const trackPoints = [];
+    const numSamples = 400; // Increased to match legacy
+    for (let i = 0; i <= numSamples; i++) {
+        trackPoints.push(circuitCurve.getPointAt(i / numSamples));
+    }
+
+    const minClearance = trackWidth / 2 + 8; // Half-width + safety buffer for buildings
+
+    for (let i = 0; i < count; i++) {
+        let placed = false;
+        let attempts = 0;
+
+        // Try up to 10 times to find a clear spot (Legacy logic)
+        while (!placed && attempts < 10) {
+            attempts++;
+            const t = Math.random();
+            const pos = circuitCurve.getPointAt(t);
+            const tangent = circuitCurve.getTangentAt(t).normalize();
+            const up = new THREE.Vector3(0, 1, 0);
+            const side = new THREE.Vector3().crossVectors(tangent, up).normalize();
+
+            // Randomly choose left or right side of track
+            const sideDir = Math.random() > 0.5 ? 1 : -1;
+            
+            // Only place if it passes the building probability check
+            if (Math.random() < config.buildingProb) {
+                const dist = (trackWidth / 2 + offsetDistance) + Math.random() * 40;
+                const finalPos = new THREE.Vector3().copy(pos).addScaledVector(side, sideDir * dist);
+
+                // Collision check against ALL points on the track curve
+                let tooClose = false;
+                for (let j = 0; j < trackPoints.length; j++) {
+                    if (finalPos.distanceTo(trackPoints[j]) < minClearance) {
+                        tooClose = true;
+                        break;
+                    }
+                }
+
+                if (!tooClose) {
+                    const building = new Building(finalPos);
+                    circuitGroup.add(building.group);
+                    placed = true;
+                }
+            } else {
+                // If the probability check fails, we consider this "slot" filled by nothing (or later, a tree)
+                placed = true; 
+            }
+        }
+    }
 }
