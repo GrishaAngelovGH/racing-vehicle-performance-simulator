@@ -29,10 +29,15 @@
                 </div>
                 <input type="file" id="circuitInput" style="display: none;" accept=".json">
             </div>
+            <button id="launchBtn">LAUNCH SIMULATION</button>
         </div>
 
         <div id="stats" class="panel">
             <h2>Live Stats</h2>
+            <div class="stat-item">
+                <span class="label">Speed:</span>
+                <span id="currentSpeed" class="value">0 km/h</span>
+            </div>
             <div class="stat-item">
                 <span class="label">Camera:</span>
                 <span id="camMode" class="value">Chase</span>

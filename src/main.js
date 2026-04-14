@@ -20,10 +20,13 @@ engine.scene.add(circuitGroup);
 
 const camera = new Camera(engine.camera, car, engine.scene);
 
-// --- UI State for 'h' key toggle ---
-// This state variable is essential for managing the UI visibility modes for controls and stats panels.
+// --- UI State & Simulation Variables ---
 let uiHideMode = 0; // 0 = controls & stats shown, 1 = controls hidden & stats shown, 2 = both hidden
-
+let simulationRunning = false;
+let currentSpeed = 0;
+let progress = 0; // 0 to 1 representing progress along the track curve
+let trackCurve = null;
+let lastFrameTime = performance.now();
 
 function loadCircuit(id) {
     const config = CIRCUIT_CONFIGS[id];
@@ -34,11 +37,12 @@ function loadCircuit(id) {
     if (ground) ground.material.color.set(config.groundColor);
 
     // 2. Rebuild Circuit
-    const { circuitCurve } = createCircuit(circuitGroup, config);
+    const result = createCircuit(circuitGroup, config);
+    trackCurve = result.circuitCurve;
 
     // 3. Reset Car Position
-    const startPos = circuitCurve.getPointAt(0);
-    const startTangent = circuitCurve.getTangentAt(0).normalize();
+    const startPos = trackCurve.getPointAt(0);
+    const startTangent = trackCurve.getTangentAt(0).normalize();
 
     car.group.position.copy(startPos);
     car.group.position.y = 0.5;
@@ -46,8 +50,17 @@ function loadCircuit(id) {
     car.group.lookAt(lookAtPos.x, 0.5, lookAtPos.z);
 
     // 4. Reset Camera to Start
-    camera.resetCameraForCircuit(circuitCurve);
-} // <-- loadCircuit ends here
+    camera.resetCameraForCircuit(trackCurve);
+
+    // Reset simulation state
+    progress = 0;
+    currentSpeed = 0;
+    simulationRunning = false;
+    const launchBtn = document.getElementById('launchBtn');
+    if (launchBtn) launchBtn.textContent = "LAUNCH SIMULATION";
+    const speedEl = document.getElementById('currentSpeed');
+    if (speedEl) speedEl.textContent = "0 km/h";
+}
 
 // Initialize Designer
 const designer = new CircuitDesigner(() => loadCircuit('custom'));
@@ -116,9 +129,31 @@ if (circuitInput) {
     });
 }
 
+// Launch Button Handler
+const launchBtn = document.getElementById('launchBtn');
+if (launchBtn) {
+    launchBtn.addEventListener('click', () => {
+        simulationRunning = !simulationRunning;
+        launchBtn.textContent = simulationRunning ? "RESET SIMULATION" : "LAUNCH SIMULATION";
+        if (simulationRunning) {
+            currentSpeed = 100; // Hardcoded speed
+            const speedEl = document.getElementById('currentSpeed');
+            if (speedEl) speedEl.textContent = "100 km/h";
+        } else {
+            loadCircuit(document.getElementById('circuitSelect').value);
+        }
+    });
+}
+
 // Keyboard controls for panel toggle
 document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT') return; // Prevent shortcuts when typing in inputs
+
+    // Space to toggle simulation
+    if (e.key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        if (launchBtn) launchBtn.click();
+    }
 
     // Panel toggle with 'h' key
     if (e.key === 'h' || e.key === 'H') {
@@ -152,6 +187,27 @@ if (circuitSelect) {
 }
 
 engine.start(() => {
+    const now = performance.now();
+    const dt = (now - lastFrameTime) / 1000;
+    lastFrameTime = now;
+
+    if (simulationRunning && trackCurve) {
+        // Hardcoded speed of 100 km/h -> ~27.78 meters/sec
+        const metersPerSec = 100 * 0.277778;
+        const trackLength = trackCurve.getLength();
+        
+        progress += (metersPerSec * dt) / trackLength;
+        if (progress >= 1) progress -= 1;
+
+        const position = trackCurve.getPointAt(progress);
+        car.group.position.copy(position);
+        car.group.position.y = 0.5;
+
+        const lookAheadU = (progress + 0.01) % 1;
+        const lookAtPos = trackCurve.getPointAt(lookAheadU);
+        car.group.lookAt(lookAtPos.x, 0.5, lookAtPos.z);
+    }
+
     // Animation loop for camera and simulation updates
     camera.update();
 });
