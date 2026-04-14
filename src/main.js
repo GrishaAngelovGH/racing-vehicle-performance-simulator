@@ -20,6 +20,11 @@ engine.scene.add(circuitGroup);
 
 const camera = new Camera(engine.camera, car, engine.scene);
 
+// --- UI State for 'h' key toggle ---
+// This state variable is essential for managing the UI visibility modes for controls and stats panels.
+let uiHideMode = 0; // 0 = controls & stats shown, 1 = controls hidden & stats shown, 2 = both hidden
+
+
 function loadCircuit(id) {
     const config = CIRCUIT_CONFIGS[id];
     if (!config || (id === 'custom' && config.points.length === 0)) return;
@@ -111,17 +116,26 @@ if (circuitInput) {
     });
 }
 
-// Camera mode labels
-const camModeLabels = ['Chase', 'Onboard', "Bird's Eye"];
-
-// Keyboard controls for camera mode
+// Keyboard controls for panel toggle
 document.addEventListener('keydown', (e) => {
-    if (e.target.tagName === 'INPUT') return;
-    if (e.key === 'c' || e.key === 'C') {
-        camMode = (camMode + 1) % camModeLabels.length;
-        const camModeEl = document.getElementById('camMode');
-        if (camModeEl) {
-            camModeEl.textContent = camModeLabels[camMode];
+    if (e.target.tagName === 'INPUT') return; // Prevent shortcuts when typing in inputs
+
+    // Panel toggle with 'h' key
+    if (e.key === 'h' || e.key === 'H') {
+        uiHideMode = (uiHideMode + 1) % 3; // Cycle through 3 states: 0=All, 1=Stats only, 2=None
+        
+        const controlsPanel = document.getElementById('controls');
+        const statsPanel = document.getElementById('stats');
+
+        if (uiHideMode === 0) {
+            if (controlsPanel) controlsPanel.style.display = 'block';
+            if (statsPanel) statsPanel.style.display = 'block';
+        } else if (uiHideMode === 1) {
+            if (controlsPanel) controlsPanel.style.display = 'none';
+            if (statsPanel) statsPanel.style.display = 'block';
+        } else {
+            if (controlsPanel) controlsPanel.style.display = 'none';
+            if (statsPanel) statsPanel.style.display = 'none';
         }
     }
 });

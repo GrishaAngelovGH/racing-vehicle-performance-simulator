@@ -9,7 +9,25 @@
     --input-text: #0a0a0a;
     --label-color: #555;
     --value-color: #00a85d;
+    --value-shadow: rgba(0, 168, 93, 0.2);
     --glass-blur: blur(12px);
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+.label {
+    color: var(--label-color);
+}
+
+.value {
+    font-weight: 800;
+    color: var(--value-color);
+    text-shadow: 0 0 10px var(--value-shadow);
 }
 
 body {
@@ -221,35 +239,37 @@ select {
     background: #ff0800;
 }
 
-/* Simulation Canvas */
-#simulation-canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
+/* Styles for the controls and stats panels */
+#controls,
+#stats {
+    background-color: var(--panel-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--panel-border);
+    padding: 25px 30px;
+    border-radius: 12px;
+    pointer-events: auto;
+    width: 320px; /* Default width, adjust if necessary */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto; /* Enable scrolling if content overflows */
+    scrollbar-width: thin;
+    scrollbar-color: var(--header-border) transparent;
 }
 
-#draw-canvas {
-    display: block;
+/* Webkit scrollbar styling */
+#controls::-webkit-scrollbar,
+#stats::-webkit-scrollbar {
+    width: 6px;
 }
 
-/* Camera Panel Stats */
-.stat-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 10px;
-    font-size: 0.95rem;
+#controls::-webkit-scrollbar-thumb,
+#stats::-webkit-scrollbar-thumb {
+    background-color: var(--header-border);
+    border-radius: 3px;
 }
 
-.stat-item .label {
-    color: var(--label-color);
-    font-weight: 500;
-}
-
-.stat-item .value {
-    color: var(--value-color);
-    font-weight: 600;
+#controls:hover,
+#stats:hover {
+    border: 1px solid rgba(225, 6, 0, 0.3);
 }
