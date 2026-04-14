@@ -19,7 +19,8 @@ export class Camera {
 
         // Bird's Eye camera state
         this.birdseyeDistance = 100;
-        this.birdseyeTilt = 0; // Fixed tilt for top-down view
+        this.birdseyeTilt = 0;
+        this.birdseyeRotation = 0;
 
         this.setupEventListeners();
     }
@@ -32,7 +33,7 @@ export class Camera {
             }
         });
 
-        // Add mouse wheel listener for Bird's Eye zoom and tilt
+        // Add mouse wheel listener for Bird's Eye zoom, tilt, and rotation
         window.addEventListener('wheel', (e) => {
             if (this.camMode !== 2) return;
 
@@ -43,6 +44,11 @@ export class Camera {
                 this.birdseyeTilt += tiltDirection;
                 // Clamp tilt: 0 is top-down, ~1.3 is near-horizon (approx 75 deg)
                 this.birdseyeTilt = Math.max(0, Math.min(1.3, this.birdseyeTilt));
+            } else if (e.shiftKey) {
+                e.preventDefault(); // Prevent page scrolling
+                // Change horizontal rotation
+                const rotDirection = e.deltaY > 0 ? 0.1 : -0.1;
+                this.birdseyeRotation += rotDirection;
             } else {
                 // Logarithmic zooming for smoother feel at different scales
                 const zoomFactor = e.deltaY > 0 ? 1.15 : 0.85;
@@ -54,7 +60,23 @@ export class Camera {
     }
 
     cycleCamMode() {
-        this.camMode = (this.camMode + 1) % this.camModeLabels.length;
+        const nextMode = (this.camMode + 1) % this.camModeLabels.length;
+
+        // When entering Bird's Eye, seed rotation/tilt from the current camera position
+        // so it snaps to where the camera already is rather than jumping to angle 0.
+        if (nextMode === 2 && this.car && this.car.group) {
+            // Seed the orbit angle from the car's facing direction so the camera
+            // starts behind the car, matching what the chase cam looked like.
+            // Car's local +Z is forward; we want to start behind it, so we take
+            // the world-space forward vector and compute its world angle.
+            const carForward = new THREE.Vector3(0, 0, 1).applyQuaternion(this.car.group.quaternion);
+            // Place camera behind the car: negate forward to get the "behind" direction
+            this.birdseyeRotation = Math.atan2(-carForward.x, -carForward.z);
+            this.birdseyeTilt = 0.5;   // ~29 degrees, a natural overview angle
+            this.birdseyeDistance = 100;
+        }
+
+        this.camMode = nextMode;
         const camModeEl = document.getElementById('camMode');
         if (camModeEl) {
             camModeEl.textContent = this.camModeLabels[this.camMode];
@@ -114,14 +136,29 @@ export class Camera {
                 this.camera.lookAt(lookAhead);
             }
         } else if (this.camMode === 2) { // Bird's Eye Camera
-            const localOffset = new THREE.Vector3(0, this.birdseyeDistance * Math.cos(this.birdseyeTilt), -this.birdseyeDistance * Math.sin(this.birdseyeTilt));
-            const idealPos = new THREE.Vector3().copy(localOffset).applyQuaternion(carQuaternion).add(carPosition);
+            // Orbit purely in world space around the world Y axis.
+            // birdseyeTilt controls elevation (0 = top-down, ~1.3 = near-horizon)
+            // birdseyeRotation controls horizontal orbit angle in world space
 
-            this.camera.position.copy(idealPos);
+            const height = this.birdseyeDistance * Math.cos(this.birdseyeTilt);
+            const radius = this.birdseyeDistance * Math.sin(this.birdseyeTilt);
 
-            const carForward = new THREE.Vector3(0, 0, 1).applyQuaternion(carQuaternion);
-            this.camera.up.copy(carForward);
+            // World-space offset — rotation is around the world Y axis, no car quaternion involved
+            const wx = Math.sin(this.birdseyeRotation) * radius;
+            const wy = height;
+            const wz = Math.cos(this.birdseyeRotation) * radius;
+
+            this.camera.position.set(
+                carPosition.x + wx,
+                carPosition.y + wy,
+                carPosition.z + wz
+            );
+
+            // Always look at the car
             this.camera.lookAt(carPosition);
+
+            // Keep world up so there's no roll/twist
+            this.camera.up.set(0, 1, 0);
         }
     }
 }
