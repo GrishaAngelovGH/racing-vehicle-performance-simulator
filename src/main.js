@@ -285,3 +285,16 @@ window.addEventListener('load', () => {
         }
     }, 500); // Small delay to ensure WebGL context is fully rendered
 });
+
+// Request fullscreen on first user interaction (required by browser security)
+let fullscreenRequested = false;
+document.addEventListener('click', () => {
+    if (!fullscreenRequested && !document.fullscreenElement) {
+        fullscreenRequested = true;
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(() => { });
+        } else if (document.documentElement.webkitRequestFullscreen) {
+            document.documentElement.webkitRequestFullscreen();
+        }
+    }
+}, { once: true });
