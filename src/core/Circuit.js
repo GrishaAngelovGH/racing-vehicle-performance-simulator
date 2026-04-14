@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Building } from '../decorations/Building.js';
+import { Tree } from '../decorations/Tree.js';
 
 export const CIRCUIT_CONFIGS = {
     classic: {
@@ -175,11 +176,11 @@ function createStartFinish(circuitGroup, circuitCurve, config, circuitWidth) {
     const startLine = new THREE.Mesh(startLineGeo, startLineMat);
     startLine.position.copy(startPos);
     startLine.position.y = 0.22;
-    
+
     const basis = new THREE.Matrix4();
     basis.makeBasis(sideVec, startTangent, up);
     startLine.quaternion.setFromRotationMatrix(basis);
-    
+
     circuitGroup.add(startLine);
 
     const gantryGroup = new THREE.Group();
@@ -206,7 +207,7 @@ function createStartFinish(circuitGroup, circuitCurve, config, circuitWidth) {
     const crossbar = new THREE.Mesh(crossbarGeo, crossbarMat);
     crossbar.position.copy(startPos);
     crossbar.position.y = gantryHeight;
-    
+
     const crossbarBasis = new THREE.Matrix4();
     crossbarBasis.makeBasis(sideVec, up, startTangent.clone().negate());
     crossbar.quaternion.setFromRotationMatrix(crossbarBasis);
@@ -337,12 +338,12 @@ export function createCircuit(circuitGroup, config) {
 
 function populateDecorations(circuitGroup, circuitCurve, config, trackWidth) {
     const isCity = config.name.toLowerCase().includes('city');
-    const count = isCity ? 180 : 150; // Match legacy counts
+    const count = isCity ? 180 : 150;
     const offsetDistance = isCity ? 15 : 20;
 
     // Create a cached list of track points for collision checking
     const trackPoints = [];
-    const numSamples = 400; // Increased to match legacy
+    const numSamples = 400;
     for (let i = 0; i <= numSamples; i++) {
         trackPoints.push(circuitCurve.getPointAt(i / numSamples));
     }
@@ -353,7 +354,7 @@ function populateDecorations(circuitGroup, circuitCurve, config, trackWidth) {
         let placed = false;
         let attempts = 0;
 
-        // Try up to 10 times to find a clear spot (Legacy logic)
+        // Try up to 10 times to find a clear spot
         while (!placed && attempts < 10) {
             attempts++;
             const t = Math.random();
@@ -364,9 +365,12 @@ function populateDecorations(circuitGroup, circuitCurve, config, trackWidth) {
 
             // Randomly choose left or right side of track
             const sideDir = Math.random() > 0.5 ? 1 : -1;
-            
-            // Only place if it passes the building probability check
-            if (Math.random() < config.buildingProb) {
+
+            const rand = Math.random();
+            const shouldPlaceTree = rand < config.treeProb;
+            const shouldPlaceBuilding = !shouldPlaceTree && rand < (config.treeProb + config.buildingProb);
+
+            if (shouldPlaceTree || shouldPlaceBuilding) {
                 const dist = (trackWidth / 2 + offsetDistance) + Math.random() * 40;
                 const finalPos = new THREE.Vector3().copy(pos).addScaledVector(side, sideDir * dist);
 
@@ -380,13 +384,18 @@ function populateDecorations(circuitGroup, circuitCurve, config, trackWidth) {
                 }
 
                 if (!tooClose) {
-                    const building = new Building(finalPos);
-                    circuitGroup.add(building.group);
+                    if (shouldPlaceTree) {
+                        const tree = new Tree(finalPos);
+                        circuitGroup.add(tree.group);
+                    } else {
+                        const building = new Building(finalPos);
+                        circuitGroup.add(building.group);
+                    }
                     placed = true;
                 }
             } else {
-                // If the probability check fails, we consider this "slot" filled by nothing (or later, a tree)
-                placed = true; 
+                // If the probability check fails for both, we consider this attempt "placed" as empty space
+                placed = true;
             }
         }
     }

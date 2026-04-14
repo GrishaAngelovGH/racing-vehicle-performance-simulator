@@ -18,7 +18,7 @@ export class Camera {
         this.onboardOffset = new THREE.Vector3(0, 1.4, 0.8);
 
         // Bird's Eye camera state
-        this.birdseyeDistance = 100; // Match legacy initial distance
+        this.birdseyeDistance = 100;
         this.birdseyeTilt = 0; // Fixed tilt for top-down view
 
         this.setupEventListeners();
@@ -45,9 +45,9 @@ export class Camera {
                 this.birdseyeTilt = Math.max(0, Math.min(1.3, this.birdseyeTilt));
             } else {
                 // Logarithmic zooming for smoother feel at different scales
-                const zoomFactor = e.deltaY > 0 ? 1.15 : 0.85; // Match legacy zoom factor
+                const zoomFactor = e.deltaY > 0 ? 1.15 : 0.85;
                 this.birdseyeDistance *= zoomFactor;
-                // Clamp distance between 5 and 1500 to match legacy range (0.05 to 15.0 zoom * 100)
+                // Clamp distance between 5 and 1500
                 this.birdseyeDistance = Math.max(5, Math.min(1500, this.birdseyeDistance));
             }
         }, { passive: false });
