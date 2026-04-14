@@ -61,6 +61,9 @@ export class Camera {
     update(progress = 0) {
         if (!this.car || !this.car.group) return;
 
+        // Reset camera UP to default to prevent "leaked" orientation from Bird's Eye mode
+        this.camera.up.set(0, 1, 0);
+
         const carPosition = this.car.group.position;
         const carQuaternion = this.car.group.quaternion;
 
