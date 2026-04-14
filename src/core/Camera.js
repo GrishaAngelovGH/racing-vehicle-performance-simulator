@@ -18,7 +18,7 @@ export class Camera {
         this.onboardOffset = new THREE.Vector3(0, 1.4, 0.8);
 
         // Bird's Eye camera state
-        this.birdseyeDistance = 30; // Fixed distance for Bird's Eye view
+        this.birdseyeDistance = 100; // Match legacy initial distance
         this.birdseyeTilt = 0; // Fixed tilt for top-down view
 
         this.setupEventListeners();
@@ -31,6 +31,26 @@ export class Camera {
                 this.cycleCamMode();
             }
         });
+
+        // Add mouse wheel listener for Bird's Eye zoom and tilt
+        window.addEventListener('wheel', (e) => {
+            if (this.camMode !== 2) return;
+
+            if (e.ctrlKey) {
+                e.preventDefault(); // Prevent browser from zooming the page
+                // Change tilt
+                const tiltDirection = e.deltaY > 0 ? 0.05 : -0.05;
+                this.birdseyeTilt += tiltDirection;
+                // Clamp tilt: 0 is top-down, ~1.3 is near-horizon (approx 75 deg)
+                this.birdseyeTilt = Math.max(0, Math.min(1.3, this.birdseyeTilt));
+            } else {
+                // Logarithmic zooming for smoother feel at different scales
+                const zoomFactor = e.deltaY > 0 ? 1.15 : 0.85; // Match legacy zoom factor
+                this.birdseyeDistance *= zoomFactor;
+                // Clamp distance between 5 and 1500 to match legacy range (0.05 to 15.0 zoom * 100)
+                this.birdseyeDistance = Math.max(5, Math.min(1500, this.birdseyeDistance));
+            }
+        }, { passive: false });
     }
 
     cycleCamMode() {
