@@ -375,3 +375,39 @@ select {
 #stats:hover {
     border: 1px solid rgba(225, 6, 0, 0.3);
 }
+
+/* Circuit Info Panel */
+#circuit-info {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+}
+
+#info-circuit-name {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+#info-circuit-desc {
+    font-size: 0.85rem;
+    color: var(--label-color);
+    margin-bottom: 15px;
+    line-height: 1.4;
+}
+
+.minimap-container {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+}
+
+#track-minimap {
+    max-width: 100%;
+    display: block;
+    margin: 0 auto;
+}

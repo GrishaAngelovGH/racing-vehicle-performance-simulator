@@ -41,6 +41,78 @@ function updateLapDisplay() {
     }
 }
 
+function drawMinimap(config, canvas) {
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+
+    // Clear
+    ctx.clearRect(0, 0, w, h);
+
+    // Get points with high sampling for smoothness
+    const tempCurve = new THREE.CatmullRomCurve3(config.points);
+    tempCurve.closed = true;
+    const drawPoints = tempCurve.getPoints(100);
+
+    // Normalize coordinates
+    let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+    drawPoints.forEach(p => {
+        minX = Math.min(minX, p.x);
+        maxX = Math.max(maxX, p.x);
+        minZ = Math.min(minZ, p.z);
+        maxZ = Math.max(maxZ, p.z);
+    });
+
+    const rangeX = maxX - minX;
+    const rangeZ = maxZ - minZ;
+    const padding = 20;
+    const scale = Math.min((w - padding * 2) / rangeX, (h - padding * 2) / rangeZ);
+
+    const offsetX = (w - rangeX * scale) / 2 - minX * scale;
+    const offsetZ = (h - rangeZ * scale) / 2 - minZ * scale;
+
+    // Draw track path
+    ctx.beginPath();
+    ctx.strokeStyle = '#e10600';
+    ctx.lineWidth = 4;
+    ctx.lineJoin = 'round';
+    ctx.setLineDash([]);
+
+    // Add glow
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#e10600';
+
+    drawPoints.forEach((p, i) => {
+        const x = p.x * scale + offsetX;
+        const z = p.z * scale + offsetZ;
+        if (i === 0) ctx.moveTo(x, z);
+        else ctx.lineTo(x, z);
+    });
+
+    ctx.closePath();
+    ctx.stroke();
+
+    // Reset shadow
+    ctx.shadowBlur = 0;
+
+    // Draw start/finish indicator
+    const sP = drawPoints[0];
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(sP.x * scale + offsetX, sP.z * scale + offsetZ, 4, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function updateCircuitDisplay(config) {
+    const nameEl = document.getElementById('info-circuit-name');
+    const descEl = document.getElementById('info-circuit-desc');
+    const canvas = document.getElementById('track-minimap');
+
+    if (nameEl) nameEl.textContent = config.name;
+    if (descEl) descEl.textContent = config.description;
+    if (canvas) drawMinimap(config, canvas);
+}
+
 function loadCircuit(id) {
     const config = CIRCUIT_CONFIGS[id];
     if (!config || (id === 'custom' && config.points.length === 0)) return;
@@ -64,6 +136,9 @@ function loadCircuit(id) {
 
     // 4. Reset Camera to Start
     camera.resetCameraForCircuit(trackCurve);
+
+    // 5. Update Circuit Info Display
+    updateCircuitDisplay(config);
 
     // Reset simulation state
     progress = 0;
