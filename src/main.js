@@ -31,9 +31,14 @@ let totalLaps = 5;
 let currentLap = 1;
 let maxSpeed = 200; // Max speed in km/h
 let acceleration = 50; // Acceleration rating (10-100)
+let grip = 0.8;
+let tireHealth = 1.0;
 let lapStartTime = 0;
 let lapTimes = [];
 let bestLap = Infinity;
+
+const TIRE_WEAR_RATE = 0.03;
+const TIRE_GRIP_BONUS = 0.1;
 
 function updateLapDisplay() {
     const lapEl = document.getElementById('currentLap');
@@ -316,6 +321,17 @@ if (accelerationInput) {
     });
 }
 
+// Grip Input Handler
+const gripInput = document.getElementById('grip');
+const gripValue = document.getElementById('gripValue');
+if (gripInput) {
+    gripInput.addEventListener('input', (e) => {
+        const value = parseFloat(e.target.value);
+        grip = value;
+        if (gripValue) gripValue.textContent = value.toFixed(1);
+    });
+}
+
 // Launch Button Handler
 const launchBtn = document.getElementById('launchBtn');
 if (launchBtn) {
@@ -324,6 +340,7 @@ if (launchBtn) {
             // Starting simulation
             totalLaps = parseInt(lapsInput?.value) || 5;
             maxSpeed = parseInt(maxSpeedInput?.value) || 200;
+            tireHealth = 1.0;
             currentLap = 1;
             clearLapHistory();
             lapStartTime = performance.now();
@@ -463,25 +480,31 @@ engine.start(() => {
         const angle = tangent.angleTo(nextTangent);
         const curvature = Math.min(1.0, angle * 15.0); // Normalized curvature [0, 1]
 
+        // --- Cornering Grip Logic ---
+        const compoundBonus = TIRE_GRIP_BONUS;
+        const wearPenalty = (1.0 - tireHealth) * 0.45; // Max 0.45 grip loss at 0% health
+
+        const baseGrip = grip + compoundBonus - wearPenalty;
+        const effectiveGrip = Math.min(1.4, Math.max(0.1, baseGrip));
+
         // Target speed calculation - slower in corners, faster on straights
-        // Grip factor affects cornering speed (lower grip = slower corners)
-        const gripFactor = 0.8; // Base grip value
-        const speedPenalty = curvature * (1.2 - gripFactor);
+        const speedPenalty = curvature * (1.2 - effectiveGrip);
         let targetSpeed = maxSpeed * (1.0 - Math.min(0.8, speedPenalty));
-        targetSpeed = Math.max(maxSpeed * 0.2, targetSpeed); // Minimum 20% of max speed
+
+        targetSpeed = Math.max(maxSpeed * 0.15, targetSpeed); // Minimum 15% of max speed
 
         // Acceleration/deceleration logic
-        const accelKmhPerSec = (acceleration / 100) * 200; // Dynamic acceleration rate based on parameter
-        const brakePower = 2.0; // Braking is faster than accelerating
+        const accelKmhPerSec = (acceleration / 100) * 200;
+        const brakePowerConstant = 2.0;
         const accelRate = accelKmhPerSec * dt;
 
-        let estimatedAccel = 0; // Used for chassis pitch/visual effects
+        let estimatedAccel = 0;
         if (currentSpeed < targetSpeed) {
             currentSpeed = Math.min(currentSpeed + accelRate, targetSpeed);
             estimatedAccel = accelKmhPerSec;
         } else {
-            currentSpeed = Math.max(currentSpeed - accelRate * brakePower, targetSpeed);
-            estimatedAccel = -accelKmhPerSec * brakePower;
+            currentSpeed = Math.max(currentSpeed - accelRate * brakePowerConstant, targetSpeed);
+            estimatedAccel = -accelKmhPerSec * brakePowerConstant;
         }
 
         // Apply visual effects (Chassis Pitch: Dive under braking, Squat under acceleration)
@@ -497,6 +520,16 @@ engine.start(() => {
         const speedText = `${Math.round(currentSpeed)} km/h`;
         const speedEl = document.getElementById('currentSpeed');
         if (speedEl) speedEl.textContent = speedText;
+
+        // Update tire health display
+        const tireHealthEl = document.getElementById('tireHealth');
+        if (tireHealthEl) {
+            tireHealthEl.textContent = `${Math.max(0, Math.round(tireHealth * 100))}%`;
+            // Color interpolation: Red (0%) to Green (100%)
+            const r = Math.round(255 * (1 - tireHealth));
+            const g = Math.round(200 * tireHealth);
+            tireHealthEl.style.color = `rgb(${r}, ${g}, 0)`;
+        }
 
         // Update lap time display
         const lapElapsed = (now - lapStartTime) / 1000;
@@ -518,6 +551,10 @@ engine.start(() => {
             progress -= 1;
             lapStartTime = now;
             currentLap++;
+
+            // Reduce tire health
+            tireHealth = Math.max(0, tireHealth - TIRE_WEAR_RATE);
+
             updateLapDisplay();
 
             if (currentLap > totalLaps) {
