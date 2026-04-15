@@ -5,7 +5,7 @@ import { CIRCUIT_CONFIGS, createCircuit } from './core/Circuit.js';
 import { CircuitDesigner } from './core/CircuitDesigner.js';
 import { Vehicle } from './core/Vehicle.js';
 import { Camera } from './core/Camera.js';
-import { initAudio, updateEngineSound, toggleSound, enableSound, isAudioInitialized } from './core/Audio.js';
+import { initAudio, updateEngineSound, toggleSound, enableSound, isAudioInitialized, playFastestLapSound } from './core/Audio.js';
 
 const engine = new Engine();
 initEnvironment(engine.scene);
@@ -54,6 +54,12 @@ function recordLap(time) {
     if (time < bestLap) {
         bestLap = time;
 
+        const bestLapEl = document.getElementById('bestLap');
+        if (bestLapEl) {
+            bestLapEl.textContent = formatTime(bestLap);
+        }
+        playFastestLapSound();
+
         // Remove 'fastest' class from previous and add to this one
         const allLaps = document.querySelectorAll('#lapHistory li');
         allLaps.forEach(el => el.classList.remove('fastest'));
@@ -70,6 +76,10 @@ function recordLap(time) {
 function clearLapHistory() {
     lapTimes = [];
     bestLap = Infinity;
+    const bestLapEl = document.getElementById('bestLap');
+    if (bestLapEl) {
+        bestLapEl.textContent = '--:--.---';
+    }
     const lapHistoryEl = document.getElementById('lapHistory');
     if (lapHistoryEl) lapHistoryEl.innerHTML = '';
 }

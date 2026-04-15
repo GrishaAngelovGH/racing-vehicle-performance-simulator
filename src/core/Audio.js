@@ -139,3 +139,31 @@ export function updateEngineSound(speed, maxSpeed, simulationRunning) {
     const targetVolume = 0.07 + speedRatio * 0.13;
     engineGain.gain.setTargetAtTime(targetVolume, now, 0.2);
 }
+
+export function playFastestLapSound() {
+    if (!audioInitialized || !soundEnabled) return;
+
+    const now = audioCtx.currentTime;
+
+    // A celebratory two-note chime (Perfect Fifth)
+    const playNote = (freq, startTime, duration) => {
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, startTime);
+
+        g.gain.setValueAtTime(0, startTime);
+        g.gain.linearRampToValueAtTime(0.3, startTime + 0.05);
+        g.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+        osc.connect(g);
+        g.connect(audioCtx.destination);
+
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+    };
+
+    playNote(880, now, 0.4); // A5
+    playNote(1320, now + 0.1, 0.5); // E6
+}
