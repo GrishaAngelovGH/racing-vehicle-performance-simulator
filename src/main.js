@@ -333,6 +333,17 @@ if (gripInput) {
 }
 
 // Launch Button Handler
+const brakePowerInput = document.getElementById('brakePower');
+const brakePowerValue = document.getElementById('brakePowerValue');
+if (brakePowerInput) {
+    brakePowerInput.addEventListener('input', (e) => {
+        const value = parseInt(e.target.value);
+        brakePower = value;
+        if (brakePowerValue) brakePowerValue.textContent = value;
+    });
+}
+
+// Launch Button Handler
 const launchBtn = document.getElementById('launchBtn');
 if (launchBtn) {
     launchBtn.addEventListener('click', () => {
@@ -495,7 +506,6 @@ engine.start(() => {
 
         // Acceleration/deceleration logic
         const accelKmhPerSec = (acceleration / 100) * 200;
-        const brakePowerConstant = 2.0;
         const accelRate = accelKmhPerSec * dt;
 
         let estimatedAccel = 0;
@@ -503,8 +513,8 @@ engine.start(() => {
             currentSpeed = Math.min(currentSpeed + accelRate, targetSpeed);
             estimatedAccel = accelKmhPerSec;
         } else {
-            currentSpeed = Math.max(currentSpeed - accelRate * brakePowerConstant, targetSpeed);
-            estimatedAccel = -accelKmhPerSec * brakePowerConstant;
+            currentSpeed = Math.max(currentSpeed - accelRate * brakePower, targetSpeed);
+            estimatedAccel = -accelKmhPerSec * brakePower;
         }
 
         // Apply visual effects (Chassis Pitch: Dive under braking, Squat under acceleration)
