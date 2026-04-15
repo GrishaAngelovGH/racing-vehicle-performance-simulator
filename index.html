@@ -71,6 +71,18 @@
             </div>
 
             <div class="control-group">
+                <label>Tyre Compound:</label>
+                <div class="compound-group">
+                    <button id="softTyreBtn" class="compound-btn soft">Soft</button>
+                    <button id="mediumTyreBtn" class="compound-btn medium active">Medium</button>
+                    <button id="hardTyreBtn" class="compound-btn hard">Hard</button>
+                </div>
+                <div class="compound-stats">
+                    <span id="compoundGrip">Grip: +0.1</span> | <span id="compoundWear">Wear: 0.03/lap</span>
+                </div>
+            </div>
+
+            <div class="control-group">
                 <label>Engine Sound Mode:</label>
                 <div class="sound-mode-group">
                     <button id="dynamicSoundBtn" class="sound-mode-btn active">Dynamic</button>
@@ -106,6 +118,10 @@
             <div class="stat-item">
                 <span class="label">Sound:</span>
                 <span id="soundStatus" class="value off">Off</span>
+            </div>
+            <div class="stat-item">
+                <span class="label">Tyre Compound:</span>
+                <span id="currentCompound" class="value compound-medium">Medium</span>
             </div>
             <div class="stat-item">
                 <span class="label">Tire Health:</span>

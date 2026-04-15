@@ -8,19 +8,32 @@ export class Vehicle {
         this.steeringWheel = null;
         this.rainLight = null;
 
+        // --- Constants for Tire Compounds and State ---
+        this.tireCompounds = {
+            soft: { name: 'Soft', color: 0xe10600, grip: 0.18, wear: 0.10 },
+            medium: { name: 'Medium', color: 0xf9d62e, grip: 0.08, wear: 0.04 },
+            hard: { name: 'Hard', color: 0xffffff, grip: -0.04, wear: 0.015 }
+        };
+        this.currentCompound = 'medium'; // Default to medium
+
         this.init();
+    }
+
+    setCompound(compoundKey) {
+        if (!this.tireCompounds[compoundKey]) return;
+
+        this.currentCompound = compoundKey;
+        const compound = this.tireCompounds[compoundKey];
+
+        // Update all sidewall colors
+        this.tireSidewalls.forEach(sidewall => {
+            sidewall.material.color.setHex(compound.color);
+            sidewall.material.emissive.setHex(compound.color);
+        });
     }
 
     init() {
         this.group.add(this.body);
-
-        // --- Constants for Tire Compounds and State ---
-        const tireCompounds = {
-            soft: { name: 'Soft', color: 0xe10600, grip: 0.25, wear: 0.08 },
-            medium: { name: 'Medium', color: 0xf9d62e, grip: 0.1, wear: 0.03 },
-            hard: { name: 'Hard', color: 0xffffff, grip: -0.05, wear: 0.01 }
-        };
-        let currentCompound = 'medium'; // Default to medium
 
         // --- Materials ---
         const bodyColor = 0xe10600; // Red
@@ -253,8 +266,8 @@ export class Vehicle {
 
             // Sidewall color based on current compound
             const sidewallMat = new THREE.MeshStandardMaterial({
-                color: tireCompounds[currentCompound].color,
-                emissive: tireCompounds[currentCompound].color,
+                color: this.tireCompounds[this.currentCompound].color,
+                emissive: this.tireCompounds[this.currentCompound].color,
                 emissiveIntensity: 0.3
             });
             const sidewall = new THREE.Mesh(sidewallGeo, sidewallMat);

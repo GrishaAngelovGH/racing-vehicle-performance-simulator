@@ -285,6 +285,26 @@ select {
     color: #333;
 }
 
+.compound-stats {
+    font-size: 0.75rem;
+    color: var(--label-color);
+    margin-top: 5px;
+    text-align: center;
+}
+
+#currentCompound.compound-soft {
+    color: #e10600;
+}
+
+#currentCompound.compound-medium {
+    color: #f9d62e;
+}
+
+#currentCompound.compound-hard {
+    color: #ffffff;
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
 .env-btn {
     font-size: 1.2rem;
     padding: 4px;
@@ -564,7 +584,7 @@ input[type="range"] {
     flex: 1 1 auto;
     display: flex;
     flex-direction: column;
-    min-height: 320px;
+    min-height: 250px;
 }
 
 #minimap-panel-section {

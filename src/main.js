@@ -38,9 +38,16 @@ let tireHealth = 1.0;
 let lapStartTime = 0;
 let lapTimes = [];
 let bestLap = Infinity;
+let currentTireCompound = 'medium'; // soft, medium, hard
 
-const TIRE_WEAR_RATE = 0.03;
-const TIRE_GRIP_BONUS = 0.1;
+// Get compound-specific values from the car's tire compound definitions
+function getTireWearRate() {
+    return car.tireCompounds[currentTireCompound].wear;
+}
+
+function getTireGripBonus() {
+    return car.tireCompounds[currentTireCompound].grip;
+}
 
 function updateLapDisplay() {
     const lapEl = document.getElementById('currentLap');
@@ -429,6 +436,52 @@ if (dynamicSoundBtn && realSoundBtn) {
     });
 }
 
+// --- Tyre Compound Selection ---
+const softTyreBtn = document.getElementById('softTyreBtn');
+const mediumTyreBtn = document.getElementById('mediumTyreBtn');
+const hardTyreBtn = document.getElementById('hardTyreBtn');
+const compoundGripEl = document.getElementById('compoundGrip');
+const compoundWearEl = document.getElementById('compoundWear');
+const currentCompoundEl = document.getElementById('currentCompound');
+
+function updateCompoundUI(compound) {
+    currentTireCompound = compound;
+
+    // Update button states
+    softTyreBtn?.classList.remove('active');
+    mediumTyreBtn?.classList.remove('active');
+    hardTyreBtn?.classList.remove('active');
+
+    if (compound === 'soft') softTyreBtn?.classList.add('active');
+    if (compound === 'medium') mediumTyreBtn?.classList.add('active');
+    if (compound === 'hard') hardTyreBtn?.classList.add('active');
+
+    // Update stats display
+    const compoundData = car.tireCompounds[compound];
+    if (compoundGripEl) {
+        const sign = compoundData.grip >= 0 ? '+' : '';
+        compoundGripEl.textContent = `Grip: ${sign}${compoundData.grip}`;
+    }
+    if (compoundWearEl) {
+        compoundWearEl.textContent = `Wear: ${compoundData.wear}/lap`;
+    }
+
+    // Update stats panel
+    if (currentCompoundEl) {
+        currentCompoundEl.textContent = compoundData.name;
+        currentCompoundEl.className = `value compound-${compound}`;
+    }
+
+    // Update car visuals
+    car.setCompound(compound);
+}
+
+if (softTyreBtn && mediumTyreBtn && hardTyreBtn) {
+    softTyreBtn.addEventListener('click', () => updateCompoundUI('soft'));
+    mediumTyreBtn.addEventListener('click', () => updateCompoundUI('medium'));
+    hardTyreBtn.addEventListener('click', () => updateCompoundUI('hard'));
+}
+
 // Keyboard controls for panel toggle
 document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT') return; // Prevent shortcuts when typing in inputs
@@ -609,6 +662,9 @@ function updateFloatingMinimapHUD() {
 // Initial load
 loadCircuit('classic');
 
+// Initialize tyre compound UI
+updateCompoundUI('medium');
+
 // UI Event Listeners
 const circuitSelect = document.getElementById('circuitSelect');
 if (circuitSelect) {
@@ -631,7 +687,7 @@ engine.start(() => {
         const curvature = Math.min(1.0, angle * 15.0); // Normalized curvature [0, 1]
 
         // --- Cornering Grip Logic ---
-        const compoundBonus = TIRE_GRIP_BONUS;
+        const compoundBonus = getTireGripBonus();
         const wearPenalty = (1.0 - tireHealth) * 0.45; // Max 0.45 grip loss at 0% health
         const downforceGripBonus = (downforce - 1.0) * 0.4;
 
@@ -706,7 +762,7 @@ engine.start(() => {
             currentLap++;
 
             // Reduce tire health
-            tireHealth = Math.max(0, tireHealth - TIRE_WEAR_RATE);
+            tireHealth = Math.max(0, tireHealth - getTireWearRate());
 
             updateLapDisplay();
 
