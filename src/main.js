@@ -541,7 +541,7 @@ engine.start(() => {
             car.body.rotation.x = THREE.MathUtils.lerp(car.body.rotation.x, targetPitch, 0.1);
         }
 
-        currentSpeed = Math.max(maxSpeed * 0.1, Math.min(currentSpeed, maxSpeed));
+        currentSpeed = Math.max(effectiveMaxSpeed * 0.1, Math.min(currentSpeed, effectiveMaxSpeed));
 
         // Update speed display
         const speedText = `${Math.round(currentSpeed)} km/h`;
