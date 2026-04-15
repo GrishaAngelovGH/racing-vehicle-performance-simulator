@@ -31,6 +31,8 @@ let totalLaps = 5;
 let currentLap = 1;
 let maxSpeed = 200; // Max speed in km/h
 let lapStartTime = 0;
+let lapTimes = [];
+let bestLap = Infinity;
 
 function updateLapDisplay() {
     const lapEl = document.getElementById('currentLap');
@@ -41,6 +43,35 @@ function updateLapDisplay() {
             lapEl.textContent = '-';
         }
     }
+}
+
+function recordLap(time) {
+    lapTimes.push(time);
+
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="lap-num">Lap ${lapTimes.length}:</span> <span>${formatTime(time)}</span>`;
+
+    if (time < bestLap) {
+        bestLap = time;
+
+        // Remove 'fastest' class from previous and add to this one
+        const allLaps = document.querySelectorAll('#lapHistory li');
+        allLaps.forEach(el => el.classList.remove('fastest'));
+        li.classList.add('fastest');
+    }
+
+    const lapHistoryEl = document.getElementById('lapHistory');
+    if (lapHistoryEl) {
+        lapHistoryEl.appendChild(li);
+        lapHistoryEl.scrollTop = lapHistoryEl.scrollHeight;
+    }
+}
+
+function clearLapHistory() {
+    lapTimes = [];
+    bestLap = Infinity;
+    const lapHistoryEl = document.getElementById('lapHistory');
+    if (lapHistoryEl) lapHistoryEl.innerHTML = '';
 }
 
 function formatTime(seconds) {
@@ -156,6 +187,7 @@ function loadCircuit(id) {
     currentSpeed = 0;
     simulationRunning = false;
     lapStartTime = 0;
+    clearLapHistory();
     const launchBtn = document.getElementById('launchBtn');
     if (launchBtn) launchBtn.textContent = "LAUNCH SIMULATION";
     const speedEl = document.getElementById('currentSpeed');
@@ -265,6 +297,7 @@ if (launchBtn) {
             totalLaps = parseInt(lapsInput?.value) || 5;
             maxSpeed = parseInt(maxSpeedInput?.value) || 200;
             currentLap = 1;
+            clearLapHistory();
             lapStartTime = performance.now();
             simulationRunning = true;
             currentSpeed = maxSpeed;
@@ -398,6 +431,8 @@ engine.start(() => {
 
         // Check if lap completed
         if (progress >= 1) {
+            const lapTime = (now - lapStartTime) / 1000;
+            recordLap(lapTime);
             progress -= 1;
             lapStartTime = now;
             currentLap++;
