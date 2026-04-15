@@ -5,7 +5,8 @@ import { CIRCUIT_CONFIGS, createCircuit } from './core/Circuit.js';
 import { CircuitDesigner } from './core/CircuitDesigner.js';
 import { Vehicle } from './core/Vehicle.js';
 import { Camera } from './core/Camera.js';
-import { initAudio, updateEngineSound, toggleSound, enableSound, isAudioInitialized, playFastestLapSound, setSoundMode } from './core/Audio.js';
+import { Weather } from './core/Weather.js';
+import { initAudio, updateEngineSound, toggleSound, enableSound, isAudioInitialized, playFastestLapSound, setSoundMode, getAudioContext } from './core/Audio.js';
 
 const engine = new Engine();
 initEnvironment(engine.scene);
@@ -26,6 +27,9 @@ engine.scene.add(decorationsGroup);
 let showDecorations = true;
 
 const camera = new Camera(engine.camera, car, engine.scene);
+
+// Initialize Weather system
+const weather = new Weather(engine.scene);
 
 // --- UI State & Simulation Variables ---
 let uiHideMode = 0; // 0 = controls & stats shown, 1 = controls hidden & stats shown, 2 = both hidden
@@ -431,6 +435,29 @@ if (toggleDecorBtn) {
     });
 }
 
+// --- Rain Toggle ---
+const toggleRainBtn = document.getElementById('toggleRainBtn');
+const rainHint = document.getElementById('rainHint');
+if (toggleRainBtn) {
+    toggleRainBtn.addEventListener('click', () => {
+        // Initialize audio if needed
+        if (!isAudioInitialized()) {
+            initAudio();
+        }
+        const isRaining = weather.toggle(getAudioContext());
+        // Update button visual state
+        if (isRaining) {
+            toggleRainBtn.classList.add('active');
+        } else {
+            toggleRainBtn.classList.remove('active');
+        }
+        // Show/hide rain hint
+        if (rainHint) {
+            rainHint.style.display = isRaining ? 'block' : 'none';
+        }
+    });
+}
+
 function updateSoundUI(enabled) {
     const soundValue = document.getElementById('soundStatus');
     if (soundValue) {
@@ -719,8 +746,9 @@ engine.start(() => {
         const compoundBonus = getTireGripBonus();
         const wearPenalty = (1.0 - tireHealth) * 0.45; // Max 0.45 grip loss at 0% health
         const downforceGripBonus = (downforce - 1.0) * 0.4;
+        const rainGripFactor = weather.isRainEnabled() ? 0.6 : 1.0; // 40% grip reduction in rain
 
-        const baseGrip = grip + compoundBonus - wearPenalty + downforceGripBonus; // Include downforce grip bonus
+        const baseGrip = (grip + compoundBonus - wearPenalty + downforceGripBonus) * rainGripFactor;
         const effectiveGrip = Math.min(1.4, Math.max(0.1, baseGrip));
 
         // Aero drag penalty from downforce (higher downforce = lower top speed)
@@ -819,6 +847,9 @@ engine.start(() => {
 
     // Animation loop for camera and simulation updates
     camera.update(progress, currentSpeed, simulationRunning);
+
+    // Update weather effects
+    weather.update(dt, engine.camera);
 
     // Draw real-time minimaps
     if (uiHideMode === 0 || uiHideMode === 1) {

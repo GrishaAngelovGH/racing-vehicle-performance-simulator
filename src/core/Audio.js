@@ -12,6 +12,10 @@ export function isAudioInitialized() {
     return audioInitialized;
 }
 
+export function getAudioContext() {
+    return audioCtx;
+}
+
 export function isSoundEnabled() {
     return soundEnabled;
 }
@@ -47,12 +51,12 @@ async function loadCarSound() {
 
 function startCarSoundLoop() {
     if (!carSoundBuffer || !audioCtx) return;
-    
+
     // Stop previous if any
     if (carSoundSource) {
-        try { carSoundSource.stop(); } catch(e) {}
+        try { carSoundSource.stop(); } catch (e) { }
     }
-    
+
     carSoundSource = audioCtx.createBufferSource();
     carSoundSource.buffer = carSoundBuffer;
     carSoundSource.loop = true;
@@ -202,14 +206,14 @@ export function updateEngineSound(speed, maxSpeed, simulationRunning) {
             if (!carSoundSource) {
                 startCarSoundLoop();
             }
-            
+
             // Adjust playback rate (pitch) based on speed for "realism"
             // Base speed (60%) to max speed (160%)
             const playbackRate = 0.6 + (speedRatio * 1.0);
             if (carSoundSource) {
                 carSoundSource.playbackRate.setTargetAtTime(playbackRate, now, 0.1);
             }
-            
+
             // Volume control
             const targetVolume = 0.3 + (speedRatio * 0.4);
             carSoundGain.gain.setTargetAtTime(targetVolume, now, 0.2);
