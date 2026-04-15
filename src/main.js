@@ -5,7 +5,7 @@ import { CIRCUIT_CONFIGS, createCircuit } from './core/Circuit.js';
 import { CircuitDesigner } from './core/CircuitDesigner.js';
 import { Vehicle } from './core/Vehicle.js';
 import { Camera } from './core/Camera.js';
-import { initAudio, updateEngineSound, toggleSound, enableSound, isAudioInitialized, playFastestLapSound } from './core/Audio.js';
+import { initAudio, updateEngineSound, toggleSound, enableSound, isAudioInitialized, playFastestLapSound, setSoundMode } from './core/Audio.js';
 
 const engine = new Engine();
 initEnvironment(engine.scene);
@@ -338,6 +338,44 @@ if (launchBtn) {
     });
 }
 
+// --- Sound Mode Selection ---
+const dynamicSoundBtn = document.getElementById('dynamicSoundBtn');
+const realSoundBtn = document.getElementById('realSoundBtn');
+
+function updateSoundUI(enabled) {
+    const soundValue = document.getElementById('soundStatus');
+    if (soundValue) {
+        soundValue.textContent = enabled ? 'On' : 'Off';
+        soundValue.className = enabled ? 'value' : 'value off';
+    }
+}
+
+if (dynamicSoundBtn && realSoundBtn) {
+    dynamicSoundBtn.addEventListener('click', () => {
+        setSoundMode('dynamic');
+        dynamicSoundBtn.classList.add('active');
+        realSoundBtn.classList.remove('active');
+        // Initialize and enable audio on first explicit mode choice
+        if (!isAudioInitialized()) {
+            initAudio();
+            enableSound();
+            updateSoundUI(true);
+        }
+    });
+
+    realSoundBtn.addEventListener('click', () => {
+        setSoundMode('real');
+        realSoundBtn.classList.add('active');
+        dynamicSoundBtn.classList.remove('active');
+        // Initialize and enable audio on first explicit mode choice
+        if (!isAudioInitialized()) {
+            initAudio();
+            enableSound();
+            updateSoundUI(true);
+        }
+    });
+}
+
 // Keyboard controls for panel toggle
 document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT') return; // Prevent shortcuts when typing in inputs
@@ -356,11 +394,7 @@ document.addEventListener('keydown', (e) => {
         } else {
             isEnabled = toggleSound();
         }
-        const soundValue = document.getElementById('soundStatus');
-        if (soundValue) {
-            soundValue.textContent = isEnabled ? 'On' : 'Off';
-            soundValue.className = isEnabled ? 'value' : 'value off';
-        }
+        updateSoundUI(isEnabled);
     }
 
     // Panel toggle with 'h' key

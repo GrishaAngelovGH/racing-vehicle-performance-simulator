@@ -34,10 +34,7 @@
                         <input type="number" id="laps" min="1" max="100" value="5">
                     </div>
                 </div>
-                <div class="control-group">
-                    <label for="maxSpeed">Max Speed: <span id="maxSpeedValue">200</span> km/h</label>
-                    <input type="range" id="maxSpeed" min="100" max="350" value="200">
-                </div>
+
                 <div class="circuit-actions">
                     <button id="openDrawBtn">DRAW NEW CIRCUIT</button>
                     <div class="secondary-actions">
@@ -47,6 +44,20 @@
                 </div>
                 <input type="file" id="circuitInput" style="display: none;" accept=".json">
             </div>
+
+            <div class="control-group">
+                <label for="maxSpeed">Max Speed: <span id="maxSpeedValue">200</span> km/h</label>
+                <input type="range" id="maxSpeed" min="100" max="350" value="200">
+            </div>
+
+            <div class="control-group">
+                <label>Engine Sound Mode:</label>
+                <div class="sound-mode-group">
+                    <button id="dynamicSoundBtn" class="sound-mode-btn active">Dynamic</button>
+                    <button id="realSoundBtn" class="sound-mode-btn">Real</button>
+                </div>
+            </div>
+
             <button id="launchBtn">LAUNCH SIMULATION</button>
         </div>
 

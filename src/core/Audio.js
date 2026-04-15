@@ -1,6 +1,12 @@
 let audioCtx, engineGain, audioInitialized = false;
-let soundEnabled = true;
+let soundEnabled = false; // Match UI default
 let primaryOsc1, primaryOsc2, whineOsc, modulator, modGain, noiseNode, noiseGain, bandpass;
+
+// Real sound variables
+let carSoundBuffer = null;
+let carSoundSource = null;
+let carSoundGain = null;
+let soundMode = 'dynamic'; // 'dynamic' or 'real'
 
 export function isAudioInitialized() {
     return audioInitialized;
@@ -20,15 +26,54 @@ export function enableSound() {
     return soundEnabled;
 }
 
+export function setSoundMode(mode) {
+    soundMode = mode;
+}
+
+export function getSoundMode() {
+    return soundMode;
+}
+
+async function loadCarSound() {
+    try {
+        const response = await fetch('/src/assets/audio/car-sound.mp3');
+        const arrayBuffer = await response.arrayBuffer();
+        carSoundBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+        console.log("Car sound MP3 loaded");
+    } catch (e) {
+        console.error("Error loading car sound:", e);
+    }
+}
+
+function startCarSoundLoop() {
+    if (!carSoundBuffer || !audioCtx) return;
+    
+    // Stop previous if any
+    if (carSoundSource) {
+        try { carSoundSource.stop(); } catch(e) {}
+    }
+    
+    carSoundSource = audioCtx.createBufferSource();
+    carSoundSource.buffer = carSoundBuffer;
+    carSoundSource.loop = true;
+    carSoundSource.connect(carSoundGain);
+    carSoundSource.start(0);
+}
+
 export function initAudio() {
     if (audioInitialized) return;
 
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-    // Main Volume
+    // Main Volume for Dynamic Engine
     engineGain = audioCtx.createGain();
     engineGain.gain.setValueAtTime(0, audioCtx.currentTime);
     engineGain.connect(audioCtx.destination);
+
+    // Gain for Real MP3 Engine
+    carSoundGain = audioCtx.createGain();
+    carSoundGain.gain.setValueAtTime(0, audioCtx.currentTime);
+    carSoundGain.connect(audioCtx.destination);
 
     // 1. Primary Engine Layer (Detuned Sawtooths)
     primaryOsc1 = audioCtx.createOscillator();
@@ -86,6 +131,9 @@ export function initAudio() {
     modulator.start();
     noiseNode.start();
 
+    // Load external MP3
+    loadCarSound();
+
     audioInitialized = true;
 
     // Resume context if suspended (browser requires user gesture)
@@ -102,42 +150,71 @@ export function updateEngineSound(speed, maxSpeed, simulationRunning) {
         audioCtx.resume();
     }
 
+    const now = audioCtx.currentTime;
+
     if (!soundEnabled || !simulationRunning) {
-        engineGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+        engineGain.gain.setTargetAtTime(0, now, 0.1);
+        if (carSoundGain) carSoundGain.gain.setTargetAtTime(0, now, 0.1);
         return;
     }
 
     const speedRatio = speed / maxSpeed;
-    const now = audioCtx.currentTime;
 
-    // Pitch calculation (higher speed = higher pitch)
-    const baseFreq = 80; // idle growl
-    const maxFreq = 750; // High-rev scream
-    const targetFreq = baseFreq + (speedRatio * (maxFreq - baseFreq));
+    if (soundMode === 'dynamic') {
+        // Mute real sound
+        if (carSoundGain) carSoundGain.gain.setTargetAtTime(0, now, 0.1);
 
-    // 1. Primary Layers
-    primaryOsc1.frequency.setTargetAtTime(targetFreq, now, 0.1);
-    primaryOsc2.frequency.setTargetAtTime(targetFreq, now, 0.1);
+        // --- ORIGINAL DYNAMIC SOUND LOGIC ---
+        // Pitch calculation (higher speed = higher pitch)
+        const baseFreq = 80; // idle growl
+        const maxFreq = 750; // High-rev scream
+        const targetFreq = baseFreq + (speedRatio * (maxFreq - baseFreq));
 
-    // 2. FM Modulator (adds the "gritty" mechanical texture)
-    modulator.frequency.setTargetAtTime(targetFreq * 0.5, now, 0.1);
-    const targetModDepth = 30 + speedRatio * 100;
-    modGain.gain.setTargetAtTime(targetModDepth, now, 0.1);
+        // 1. Primary Layers
+        primaryOsc1.frequency.setTargetAtTime(targetFreq, now, 0.1);
+        primaryOsc2.frequency.setTargetAtTime(targetFreq, now, 0.1);
 
-    // 3. Harmonic Whine (Gearbox/Turbo)
-    whineOsc.frequency.setTargetAtTime(targetFreq * 2.8, now, 0.1);
+        // 2. FM Modulator (adds the "gritty" mechanical texture)
+        modulator.frequency.setTargetAtTime(targetFreq * 0.5, now, 0.1);
+        const targetModDepth = 30 + speedRatio * 100;
+        modGain.gain.setTargetAtTime(targetModDepth, now, 0.1);
 
-    // 4. White Noise (Air resistance & exhaust hiss)
-    const targetNoiseVol = 0.01 + speedRatio * 0.06;
-    noiseGain.gain.setTargetAtTime(targetNoiseVol, now, 0.1);
+        // 3. Harmonic Whine (Gearbox/Turbo)
+        whineOsc.frequency.setTargetAtTime(targetFreq * 2.8, now, 0.1);
 
-    // 5. Dynamic Filtering (Bandpass tracks RPM for resonance)
-    const filterFreq = targetFreq * 2.2;
-    bandpass.frequency.setTargetAtTime(filterFreq, now, 0.1);
+        // 4. White Noise (Air resistance & exhaust hiss)
+        const targetNoiseVol = 0.01 + speedRatio * 0.06;
+        noiseGain.gain.setTargetAtTime(targetNoiseVol, now, 0.1);
 
-    // 6. Master Volume
-    const targetVolume = 0.07 + speedRatio * 0.13;
-    engineGain.gain.setTargetAtTime(targetVolume, now, 0.2);
+        // 5. Dynamic Filtering (Bandpass tracks RPM for resonance)
+        const filterFreq = targetFreq * 2.2;
+        bandpass.frequency.setTargetAtTime(filterFreq, now, 0.1);
+
+        // 6. Master Volume
+        const targetVolume = 0.07 + speedRatio * 0.13;
+        engineGain.gain.setTargetAtTime(targetVolume, now, 0.2);
+    } else {
+        // Mute dynamic sound
+        engineGain.gain.setTargetAtTime(0, now, 0.1);
+
+        // Handle Real MP3 sound
+        if (carSoundBuffer) {
+            if (!carSoundSource) {
+                startCarSoundLoop();
+            }
+            
+            // Adjust playback rate (pitch) based on speed for "realism"
+            // Base speed (60%) to max speed (160%)
+            const playbackRate = 0.6 + (speedRatio * 1.0);
+            if (carSoundSource) {
+                carSoundSource.playbackRate.setTargetAtTime(playbackRate, now, 0.1);
+            }
+            
+            // Volume control
+            const targetVolume = 0.3 + (speedRatio * 0.4);
+            carSoundGain.gain.setTargetAtTime(targetVolume, now, 0.2);
+        }
+    }
 }
 
 export function playFastestLapSound() {
