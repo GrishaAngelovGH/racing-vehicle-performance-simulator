@@ -134,7 +134,8 @@ body {
     overflow-y: auto;
 }
 
-h2 {
+h2,
+h3 {
     margin-top: 0;
     border-bottom: 2px solid var(--header-border);
     padding-bottom: 10px;
@@ -420,14 +421,6 @@ input[type="range"] {
 /* Lap History Styles */
 #history-container {
     margin-top: 20px;
-}
-
-#history-container h3 {
-    font-size: 0.9rem;
-    margin: 0 0 10px 0;
-    color: var(--label-color);
-    border-bottom: 1px solid var(--panel-border);
-    padding-bottom: 5px;
 }
 
 #lapHistory {
