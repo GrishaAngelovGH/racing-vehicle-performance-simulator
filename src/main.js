@@ -458,27 +458,153 @@ document.addEventListener('keydown', (e) => {
         const statsPanel = document.getElementById('stats');
         const circuitInfoPanel = document.getElementById('circuit-info');
         const uiHint = document.getElementById('ui-hint');
+        const floatingMinimap = document.getElementById('floating-minimap-container');
 
         if (uiHideMode === 0) {
+            // Show all panels
             if (controlsPanel) controlsPanel.style.display = 'block';
             if (statsPanel) statsPanel.style.display = 'block';
             if (uiHint) uiHint.style.display = 'none';
+            if (floatingMinimap) floatingMinimap.style.display = 'none';
             // Show circuit-info only if simulation is not running (it might have been hidden by simulation start)
             if (circuitInfoPanel && !simulationRunning) circuitInfoPanel.style.display = 'flex';
         } else if (uiHideMode === 1) {
+            // Show stats only
             if (controlsPanel) controlsPanel.style.display = 'none';
             if (statsPanel) statsPanel.style.display = 'block';
             if (uiHint) uiHint.style.display = 'none';
+            if (floatingMinimap) floatingMinimap.style.display = 'none';
             // Also hide circuit-info in mode 1 for focus
             if (circuitInfoPanel) circuitInfoPanel.style.display = 'none';
         } else {
+            // Hide all panels - show floating minimap with HUD
             if (controlsPanel) controlsPanel.style.display = 'none';
             if (statsPanel) statsPanel.style.display = 'none';
             if (circuitInfoPanel) circuitInfoPanel.style.display = 'none';
             if (uiHint) uiHint.style.display = 'block';
+            if (floatingMinimap) floatingMinimap.style.display = 'flex';
         }
     }
 });
+
+// --- Real-time Minimap ---
+function drawRealtimeMinimap(canvasId, width, height) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || !trackCurve) return;
+
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width = width;
+    const h = canvas.height = height;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, w, h);
+
+    // Get track points with high sampling
+    const drawPoints = trackCurve.getPoints(100);
+
+    // Calculate bounds
+    let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+    drawPoints.forEach(p => {
+        minX = Math.min(minX, p.x);
+        maxX = Math.max(maxX, p.x);
+        minZ = Math.min(minZ, p.z);
+        maxZ = Math.max(maxZ, p.z);
+    });
+
+    const rangeX = maxX - minX;
+    const rangeZ = maxZ - minZ;
+    const padding = 15;
+    const scale = Math.min((w - padding * 2) / rangeX, (h - padding * 2) / rangeZ);
+
+    const offsetX = (w - rangeX * scale) / 2 - minX * scale;
+    const offsetZ = (h - rangeZ * scale) / 2 - minZ * scale;
+
+    // Helper to transform world coordinates to canvas
+    const worldToCanvas = (x, z) => ({
+        x: x * scale + offsetX,
+        y: z * scale + offsetZ
+    });
+
+    // Draw track path
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(225, 6, 0, 0.6)';
+    ctx.lineWidth = 3;
+    ctx.lineJoin = 'round';
+
+    drawPoints.forEach((p, i) => {
+        const pos = worldToCanvas(p.x, p.z);
+        if (i === 0) ctx.moveTo(pos.x, pos.y);
+        else ctx.lineTo(pos.x, pos.y);
+    });
+
+    ctx.closePath();
+    ctx.stroke();
+
+    // Draw start/finish line
+    const startPos = worldToCanvas(drawPoints[0].x, drawPoints[0].z);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.beginPath();
+    ctx.arc(startPos.x, startPos.y, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw car position if simulation is running or car exists
+    if (car && progress !== undefined) {
+        const carWorldPos = trackCurve.getPointAt(progress % 1);
+        const carPos = worldToCanvas(carWorldPos.x, carWorldPos.z);
+
+        // Car indicator with glow
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#00ff88';
+        ctx.fillStyle = '#00ff88';
+        ctx.beginPath();
+        ctx.arc(carPos.x, carPos.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Direction indicator
+        const tangent = trackCurve.getTangentAt(progress % 1);
+        const angle = Math.atan2(tangent.x, tangent.z);
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#00ff88';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(carPos.x, carPos.y);
+        ctx.lineTo(
+            carPos.x + Math.sin(angle) * 10,
+            carPos.y + Math.cos(angle) * 10
+        );
+        ctx.stroke();
+    }
+}
+
+function updateFloatingMinimapHUD() {
+    const floatingContainer = document.getElementById('floating-minimap-container');
+    if (!floatingContainer || floatingContainer.style.display === 'none') return;
+
+    const lapEl = document.getElementById('minimap-lap');
+    const laptimeEl = document.getElementById('minimap-laptime');
+    const speedEl = document.getElementById('minimap-speed');
+
+    if (lapEl) {
+        if (simulationRunning) {
+            lapEl.textContent = `Lap ${currentLap}/${totalLaps}`;
+        } else {
+            lapEl.textContent = 'Ready';
+        }
+    }
+
+    if (laptimeEl) {
+        if (simulationRunning && lapStartTime > 0) {
+            const lapElapsed = (performance.now() - lapStartTime) / 1000;
+            laptimeEl.textContent = formatTime(lapElapsed);
+        } else {
+            laptimeEl.textContent = '--:--.---';
+        }
+    }
+
+    if (speedEl) {
+        speedEl.textContent = `${Math.round(currentSpeed)} km/h`;
+    }
+}
 
 // Initial load
 loadCircuit('classic');
@@ -608,6 +734,16 @@ engine.start(() => {
 
     // Animation loop for camera and simulation updates
     camera.update(progress, currentSpeed, simulationRunning);
+
+    // Draw real-time minimaps
+    if (uiHideMode === 0 || uiHideMode === 1) {
+        // Draw in stats panel when panels are visible
+        drawRealtimeMinimap('minimap-panel-canvas', 260, 160);
+    } else if (uiHideMode === 2) {
+        // Draw floating minimap when all panels are hidden
+        drawRealtimeMinimap('realtime-minimap', 180, 140);
+        updateFloatingMinimapHUD();
+    }
 });
 
 // Hide splash screen when ready

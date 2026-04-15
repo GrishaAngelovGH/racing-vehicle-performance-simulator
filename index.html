@@ -115,6 +115,14 @@
                 <h3>Lap History</h3>
                 <ul id="lapHistory"></ul>
             </div>
+
+            <!-- Real-time Minimap Section (shown when panels are visible) -->
+            <div id="minimap-panel-section">
+                <h3>Live Minimap</h3>
+                <div class="minimap-panel-container">
+                    <canvas id="minimap-panel-canvas" width="260" height="180"></canvas>
+                </div>
+            </div>
         </div>
 
         <!-- Circuit Info Panel -->
@@ -146,6 +154,16 @@
                 <button id="generateTrackBtn">GENERATE CIRCUIT</button>
             </div>
         </div>
+    </div>
+
+    <!-- Floating Minimap Elements (shown when all panels are hidden) -->
+    <div id="floating-minimap-container" style="display: none;">
+        <div id="minimap-hud" class="minimap-hud">
+            <div id="minimap-lap" class="minimap-lap">Lap -/-</div>
+            <div id="minimap-laptime" class="minimap-laptime">--:--.---</div>
+            <div id="minimap-speed" class="minimap-speed-value">0 km/h</div>
+        </div>
+        <canvas id="realtime-minimap" class="realtime-minimap"></canvas>
     </div>
 
     <div id="ui-hint" class="ui-hint-display">PRESS [H] TO TOGGLE UI</div>
