@@ -32,6 +32,8 @@ let currentLap = 1;
 let maxSpeed = 200; // Max speed in km/h
 let acceleration = 50; // Acceleration rating (10-100)
 let grip = 0.8;
+let brakePower = 6;
+let downforce = 1.0;
 let tireHealth = 1.0;
 let lapStartTime = 0;
 let lapTimes = [];
@@ -332,7 +334,7 @@ if (gripInput) {
     });
 }
 
-// Launch Button Handler
+// Brake Input Handler
 const brakePowerInput = document.getElementById('brakePower');
 const brakePowerValue = document.getElementById('brakePowerValue');
 if (brakePowerInput) {
@@ -340,6 +342,17 @@ if (brakePowerInput) {
         const value = parseInt(e.target.value);
         brakePower = value;
         if (brakePowerValue) brakePowerValue.textContent = value;
+    });
+}
+
+// Aero Downforce Input Handler
+const downforceInput = document.getElementById('downforce');
+const downforceValue = document.getElementById('downforceValue');
+if (downforceInput) {
+    downforceInput.addEventListener('input', (e) => {
+        const value = parseFloat(e.target.value);
+        downforce = value;
+        if (downforceValue) downforceValue.textContent = value.toFixed(1);
     });
 }
 
@@ -494,16 +507,20 @@ engine.start(() => {
         // --- Cornering Grip Logic ---
         const compoundBonus = TIRE_GRIP_BONUS;
         const wearPenalty = (1.0 - tireHealth) * 0.45; // Max 0.45 grip loss at 0% health
+        const downforceGripBonus = (downforce - 1.0) * 0.4;
 
-        const baseGrip = grip + compoundBonus - wearPenalty;
+        const baseGrip = grip + compoundBonus - wearPenalty + downforceGripBonus; // Include downforce grip bonus
         const effectiveGrip = Math.min(1.4, Math.max(0.1, baseGrip));
+
+        // Aero drag penalty from downforce (higher downforce = lower top speed)
+        const aeroDragFactor = (downforce - 1.0) * 0.15;
+        const effectiveMaxSpeed = maxSpeed * (1.0 - aeroDragFactor);
 
         // Target speed calculation - slower in corners, faster on straights
         const speedPenalty = curvature * (1.2 - effectiveGrip);
-        let targetSpeed = maxSpeed * (1.0 - Math.min(0.8, speedPenalty));
+        let targetSpeed = effectiveMaxSpeed * (1.0 - Math.min(0.8, speedPenalty));
 
-        targetSpeed = Math.max(maxSpeed * 0.15, targetSpeed); // Minimum 15% of max speed
-
+        targetSpeed = Math.max(effectiveMaxSpeed * 0.2, targetSpeed); // Minimum 20% of effective max speed
         // Acceleration/deceleration logic
         const accelKmhPerSec = (acceleration / 100) * 200;
         const accelRate = accelKmhPerSec * dt;
