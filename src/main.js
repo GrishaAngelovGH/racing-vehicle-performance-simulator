@@ -190,7 +190,13 @@ function loadCircuit(id) {
     // 5. Update Circuit Info Display
     updateCircuitDisplay(config);
     const circuitInfoPanel = document.getElementById('circuit-info');
-    if (circuitInfoPanel) circuitInfoPanel.style.display = 'flex';
+    if (circuitInfoPanel) {
+        if (uiHideMode === 0) {
+            circuitInfoPanel.style.display = 'flex';
+        } else {
+            circuitInfoPanel.style.display = 'none';
+        }
+    }
 
     // Reset simulation state
     progress = 0;
@@ -363,16 +369,26 @@ document.addEventListener('keydown', (e) => {
 
         const controlsPanel = document.getElementById('controls');
         const statsPanel = document.getElementById('stats');
+        const circuitInfoPanel = document.getElementById('circuit-info');
+        const uiHint = document.getElementById('ui-hint');
 
         if (uiHideMode === 0) {
             if (controlsPanel) controlsPanel.style.display = 'block';
             if (statsPanel) statsPanel.style.display = 'block';
+            if (uiHint) uiHint.style.display = 'none';
+            // Show circuit-info only if simulation is not running (it might have been hidden by simulation start)
+            if (circuitInfoPanel && !simulationRunning) circuitInfoPanel.style.display = 'flex';
         } else if (uiHideMode === 1) {
             if (controlsPanel) controlsPanel.style.display = 'none';
             if (statsPanel) statsPanel.style.display = 'block';
+            if (uiHint) uiHint.style.display = 'none';
+            // Also hide circuit-info in mode 1 for focus
+            if (circuitInfoPanel) circuitInfoPanel.style.display = 'none';
         } else {
             if (controlsPanel) controlsPanel.style.display = 'none';
             if (statsPanel) statsPanel.style.display = 'none';
+            if (circuitInfoPanel) circuitInfoPanel.style.display = 'none';
+            if (uiHint) uiHint.style.display = 'block';
         }
     }
 });

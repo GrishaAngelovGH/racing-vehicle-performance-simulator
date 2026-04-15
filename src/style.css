@@ -452,3 +452,25 @@ input[type="range"] {
     color: #ff00ff !important;
     font-weight: bold;
 }
+
+/* UI Hint Display */
+.ui-hint-display {
+    position: fixed;
+    top: 20px;
+    right: 30px;
+    background-color: var(--panel-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--panel-border);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    pointer-events: none;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    z-index: 2000;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    font-weight: bold;
+    color: var(--text-color);
+    display: none; /* Hidden by default */
+}
