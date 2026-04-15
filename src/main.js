@@ -30,6 +30,7 @@ let lastFrameTime = performance.now();
 let totalLaps = 5;
 let currentLap = 1;
 let maxSpeed = 200; // Max speed in km/h
+let acceleration = 50; // Acceleration rating (10-100)
 let lapStartTime = 0;
 let lapTimes = [];
 let bestLap = Infinity;
@@ -304,6 +305,17 @@ if (maxSpeedInput) {
     });
 }
 
+// Acceleration Input Handler
+const accelerationInput = document.getElementById('acceleration');
+const accelerationValue = document.getElementById('accelerationValue');
+if (accelerationInput) {
+    accelerationInput.addEventListener('input', (e) => {
+        const value = parseInt(e.target.value);
+        acceleration = value;
+        if (accelerationValue) accelerationValue.textContent = value;
+    });
+}
+
 // Launch Button Handler
 const launchBtn = document.getElementById('launchBtn');
 if (launchBtn) {
@@ -459,14 +471,24 @@ engine.start(() => {
         targetSpeed = Math.max(maxSpeed * 0.2, targetSpeed); // Minimum 20% of max speed
 
         // Acceleration/deceleration logic
-        const accelKmhPerSec = 100; // Acceleration rate
+        const accelKmhPerSec = (acceleration / 100) * 200; // Dynamic acceleration rate based on parameter
         const brakePower = 2.0; // Braking is faster than accelerating
         const accelRate = accelKmhPerSec * dt;
 
+        let estimatedAccel = 0; // Used for chassis pitch/visual effects
         if (currentSpeed < targetSpeed) {
             currentSpeed = Math.min(currentSpeed + accelRate, targetSpeed);
+            estimatedAccel = accelKmhPerSec;
         } else {
             currentSpeed = Math.max(currentSpeed - accelRate * brakePower, targetSpeed);
+            estimatedAccel = -accelKmhPerSec * brakePower;
+        }
+
+        // Apply visual effects (Chassis Pitch: Dive under braking, Squat under acceleration)
+        if (car && car.body) {
+            const pitchFactor = 0.0004;
+            const targetPitch = THREE.MathUtils.clamp(-estimatedAccel * pitchFactor, -0.05, 0.05); // Max ~3 degrees
+            car.body.rotation.x = THREE.MathUtils.lerp(car.body.rotation.x, targetPitch, 0.1);
         }
 
         currentSpeed = Math.max(maxSpeed * 0.1, Math.min(currentSpeed, maxSpeed));
