@@ -18,6 +18,13 @@ engine.scene.add(car.group);
 const circuitGroup = new THREE.Group();
 engine.scene.add(circuitGroup);
 
+// Create a separate group for decorations (trees and buildings)
+const decorationsGroup = new THREE.Group();
+engine.scene.add(decorationsGroup);
+
+// Decoration toggle state
+let showDecorations = true;
+
 const camera = new Camera(engine.camera, car, engine.scene);
 
 // --- UI State & Simulation Variables ---
@@ -187,8 +194,13 @@ function loadCircuit(id) {
     if (ground) ground.material.color.set(config.groundColor);
 
     // 2. Rebuild Circuit
-    const result = createCircuit(circuitGroup, config);
+    const result = createCircuit(circuitGroup, config, decorationsGroup);
     trackCurve = result.circuitCurve;
+
+    // Apply decorations toggle state
+    if (decorationsGroup) {
+        decorationsGroup.visible = showDecorations;
+    }
 
     // 3. Reset Car Position
     const startPos = trackCurve.getPointAt(0);
@@ -401,6 +413,23 @@ if (launchBtn) {
 // --- Sound Mode Selection ---
 const dynamicSoundBtn = document.getElementById('dynamicSoundBtn');
 const realSoundBtn = document.getElementById('realSoundBtn');
+
+// --- Decorations Toggle ---
+const toggleDecorBtn = document.getElementById('toggleDecorBtn');
+if (toggleDecorBtn) {
+    toggleDecorBtn.addEventListener('click', () => {
+        showDecorations = !showDecorations;
+        if (decorationsGroup) {
+            decorationsGroup.visible = showDecorations;
+        }
+        // Update button visual state
+        if (showDecorations) {
+            toggleDecorBtn.classList.add('active');
+        } else {
+            toggleDecorBtn.classList.remove('active');
+        }
+    });
+}
 
 function updateSoundUI(enabled) {
     const soundValue = document.getElementById('soundStatus');

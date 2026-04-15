@@ -240,8 +240,9 @@ function createStartFinish(circuitGroup, circuitCurve, config, circuitWidth) {
     circuitGroup.add(gantryGroup);
 }
 
-export function createCircuit(circuitGroup, config) {
+export function createCircuit(circuitGroup, config, decorationsGroup = null) {
     circuitGroup.clear();
+    if (decorationsGroup) decorationsGroup.clear();
 
     const points = config.points;
     const circuitCurve = new THREE.CatmullRomCurve3(points, true, 'centripetal');
@@ -330,13 +331,14 @@ export function createCircuit(circuitGroup, config) {
     const curbs = new THREE.Mesh(curbGeo, curbMat);
     circuitGroup.add(curbs);
 
-    populateDecorations(circuitGroup, circuitCurve, config, circuitWidth);
+    populateDecorations(circuitGroup, circuitCurve, config, circuitWidth, decorationsGroup);
     createStartFinish(circuitGroup, circuitCurve, config, circuitWidth);
 
     return { circuitCurve };
 }
 
-function populateDecorations(circuitGroup, circuitCurve, config, trackWidth) {
+function populateDecorations(circuitGroup, circuitCurve, config, trackWidth, decorationsGroup = null) {
+    const targetGroup = decorationsGroup || circuitGroup;
     const isCity = config.name.toLowerCase().includes('city');
     const count = isCity ? 180 : 150;
     const offsetDistance = isCity ? 15 : 20;
@@ -386,10 +388,10 @@ function populateDecorations(circuitGroup, circuitCurve, config, trackWidth) {
                 if (!tooClose) {
                     if (shouldPlaceTree) {
                         const tree = new Tree(finalPos);
-                        circuitGroup.add(tree.group);
+                        targetGroup.add(tree.group);
                     } else {
                         const building = new Building(finalPos);
-                        circuitGroup.add(building.group);
+                        targetGroup.add(building.group);
                     }
                     placed = true;
                 }

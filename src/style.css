@@ -310,6 +310,14 @@ select {
     padding: 4px;
 }
 
+/* Decorations toggle button - border only, no red background */
+#toggleDecorBtn.active {
+    background: #eee;
+    color: #333;
+    border: 2px solid var(--header-border);
+    box-shadow: 0 0 8px rgba(225, 6, 0, 0.4);
+}
+
 input[type="range"] {
     width: 100%;
     cursor: pointer;
