@@ -8,6 +8,19 @@ let carSoundSource = null;
 let carSoundGain = null;
 let soundMode = 'dynamic'; // 'dynamic' or 'real'
 
+// Radio sound buffer
+let radioSoundBuffer = null;
+let ttsEnabled = false;
+
+export function isTTSEnabled() {
+    return ttsEnabled;
+}
+
+export function toggleTTS() {
+    ttsEnabled = !ttsEnabled;
+    return ttsEnabled;
+}
+
 export function isAudioInitialized() {
     return audioInitialized;
 }
@@ -46,6 +59,16 @@ async function loadCarSound() {
         console.log("Car sound MP3 loaded");
     } catch (e) {
         console.error("Error loading car sound:", e);
+    }
+}
+
+async function loadRadioSound() {
+    try {
+        const response = await fetch('/src/assets/audio/radio-sound.mp3');
+        const arrayBuffer = await response.arrayBuffer();
+        radioSoundBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+    } catch (e) {
+        console.error("Error loading radio sound:", e);
     }
 }
 
@@ -135,8 +158,9 @@ export function initAudio() {
     modulator.start();
     noiseNode.start();
 
-    // Load external MP3
+    // Load external MP3s
     loadCarSound();
+    loadRadioSound();
 
     audioInitialized = true;
 
@@ -247,4 +271,81 @@ export function playFastestLapSound() {
 
     playNote(880, now, 0.4); // A5
     playNote(1320, now + 0.1, 0.5); // E6
+}
+
+function playRadioBeep() {
+    if (!audioCtx) return;
+    if (radioSoundBuffer) {
+        const source = audioCtx.createBufferSource();
+        source.buffer = radioSoundBuffer;
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(1.8, audioCtx.currentTime);
+        source.connect(gain);
+        gain.connect(audioCtx.destination);
+        source.start();
+    } else {
+        // Fallback synthesized radio click
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1200, now);
+        g.gain.setValueAtTime(1.2, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        osc.connect(g);
+        g.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.15);
+    }
+}
+
+let cachedVoices = [];
+
+function loadVoices() {
+    cachedVoices = window.speechSynthesis.getVoices();
+}
+
+if (typeof window !== 'undefined' && window.speechSynthesis) {
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    loadVoices();
+}
+
+export function playRadioAndSpeak(text) {
+    if (!ttsEnabled) return;
+
+    // Resume context if suspended
+    if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+
+    if (audioCtx) {
+        playRadioBeep();
+    }
+
+    // Delay TTS slightly so the radio beep plays first
+    const delay = radioSoundBuffer ? 800 : 200;
+    setTimeout(() => {
+        if (!ttsEnabled || !window.speechSynthesis) return;
+
+        // Cancel any ongoing speech
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US';
+        utterance.rate = 1.05;
+        utterance.pitch = 0.95;
+        utterance.volume = 0.5;
+
+        const voices = cachedVoices.length ? cachedVoices : window.speechSynthesis.getVoices();
+        const preferredVoice = voices.find(v =>
+            v.lang.startsWith('en') &&
+            ['Male', 'David', 'Daniel', 'Tom', 'Fred', 'Alex', 'James', 'Ryan', 'Paul', 'John', 'Mark', 'Chris', 'Andrew'].some(p => v.name.includes(p))
+        ) || voices.find(v => v.lang.startsWith('en'));
+
+        if (preferredVoice) {
+            utterance.voice = preferredVoice;
+        }
+
+        window.speechSynthesis.speak(utterance);
+    }, delay);
 }

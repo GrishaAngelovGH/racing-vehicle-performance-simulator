@@ -6,7 +6,7 @@ import { CircuitDesigner } from './core/CircuitDesigner.js';
 import { Vehicle } from './core/Vehicle.js';
 import { Camera } from './core/Camera.js';
 import { Weather } from './core/Weather.js';
-import { initAudio, updateEngineSound, toggleSound, enableSound, isAudioInitialized, playFastestLapSound, setSoundMode, getAudioContext } from './core/Audio.js';
+import { initAudio, updateEngineSound, toggleSound, enableSound, isAudioInitialized, playFastestLapSound, setSoundMode, getAudioContext, toggleTTS, isTTSEnabled, playRadioAndSpeak } from './core/Audio.js';
 import { initReportFeature, showReportButton, hideReportButton, generateReport } from './core/Report.js';
 
 const engine = new Engine();
@@ -73,7 +73,10 @@ function updateLapDisplay() {
 }
 
 function recordLap(time) {
+    const previousBest = bestLap;
     lapTimes.push(time);
+    const lapNumber = lapTimes.length;
+    const isLastLap = lapNumber === totalLaps;
 
     const li = document.createElement('li');
     li.innerHTML = `<span class="lap-num">Lap ${lapTimes.length}:</span> <span>${formatTime(time)}</span>`;
@@ -98,6 +101,12 @@ function recordLap(time) {
         lapHistoryEl.appendChild(li);
         lapHistoryEl.scrollTop = lapHistoryEl.scrollHeight;
     }
+
+    // Race engineer voice summary
+    if (isTTSEnabled()) {
+        const summary = generateLapSummary(time, lapNumber, previousBest, isLastLap);
+        playRadioAndSpeak(summary);
+    }
 }
 
 function clearLapHistory() {
@@ -116,6 +125,50 @@ function formatTime(seconds) {
     const secs = Math.floor(seconds % 60);
     const ms = Math.floor((seconds % 1) * 1000);
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+}
+
+function formatTimeForTTS(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    const ms = Math.floor((seconds % 1) * 1000);
+    let text = '';
+    if (mins > 0) text += `${mins} minute${mins !== 1 ? 's' : ''} `;
+    text += `${secs} point ${ms.toString().padStart(3, '0')} seconds`;
+    return text.trim();
+}
+
+function generateLapSummary(time, lapNumber, previousBest, isLastLap) {
+    const ttsTime = formatTimeForTTS(time);
+    let text = `Lap ${lapNumber} complete. Time, ${ttsTime}. `;
+
+    if (isLastLap) {
+        text += `That was the final lap. `;
+    }
+
+    if (lapNumber === 1) {
+        text += `Good start, keep pushing.`;
+    } else if (time < previousBest && previousBest !== Infinity) {
+        text += `That is a new fastest lap. Well done.`;
+    } else if (previousBest !== Infinity) {
+        const diff = time - previousBest;
+        const diffMs = Math.round(diff * 1000);
+        if (diffMs < 500) {
+            text += `You are within half a second of your best. Nice consistency.`;
+        } else if (diffMs < 2000) {
+            text += `You are ${formatTimeForTTS(diff)} off your best pace. Keep pushing.`;
+        } else {
+            text += `You are ${formatTimeForTTS(diff)} off your best pace. We need to find some time.`;
+        }
+    }
+
+    const wornTireHealth = Math.max(0, Math.round((tireHealth - getTireWearRate()) * 100));
+    if (wornTireHealth < 30) {
+        text += ` Tire wear is critical at ${wornTireHealth} percent. Box this lap if you can.`;
+    } else if (wornTireHealth < 60) {
+        text += ` Tire wear is now at ${wornTireHealth} percent.`;
+    }
+
+    return text;
 }
 
 function drawMinimap(config, canvas) {
@@ -457,6 +510,22 @@ if (toggleRainBtn) {
         // Show/hide rain hint
         if (rainHint) {
             rainHint.style.display = isRaining ? 'block' : 'none';
+        }
+    });
+}
+
+// --- Radio Engineer Toggle ---
+const toggleRadioEngineerBtn = document.getElementById('toggleRadioEngineerBtn');
+if (toggleRadioEngineerBtn) {
+    toggleRadioEngineerBtn.addEventListener('click', () => {
+        const enabled = toggleTTS();
+        if (enabled) {
+            toggleRadioEngineerBtn.classList.add('active');
+            if (!isAudioInitialized()) {
+                initAudio();
+            }
+        } else {
+            toggleRadioEngineerBtn.classList.remove('active');
         }
     });
 }
