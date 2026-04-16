@@ -265,9 +265,9 @@ function loadCircuit(id) {
     const startTangent = trackCurve.getTangentAt(0).normalize();
 
     car.group.position.copy(startPos);
-    car.group.position.y = 0.5;
+    car.group.position.y = 0.61;
     const lookAtPos = new THREE.Vector3().copy(startPos).add(startTangent);
-    car.group.lookAt(lookAtPos.x, 0.5, lookAtPos.z);
+    car.group.lookAt(lookAtPos.x, 0.61, lookAtPos.z);
 
     // 4. Reset Camera to Start
     camera.resetCameraForCircuit(trackCurve);
@@ -875,16 +875,16 @@ engine.start(() => {
                     const threshold = 0.4 + (((numLights - 1) - i) / (numLights - 1)) * 0.5;
 
                     // Hysteresis to prevent flickering
-                    const isAlreadyOn = light.mesh.material.emissiveIntensity > 0.5;
+                    const isAlreadyOn = light.mesh.material.emissiveIntensity > 0.2;
                     const margin = 0.03;
                     const activeThreshold = isAlreadyOn ? threshold - margin : threshold;
 
                     if (rpmRatio > 0.98) {
                         // Flash all lights at the very limit
                         const isFlashOn = Math.sin(performance.now() * 0.025) > 0;
-                        light.mesh.material.emissiveIntensity = isFlashOn ? 6 : 0;
+                        light.mesh.material.emissiveIntensity = isFlashOn ? 2 : 0;
                     } else if (rpmRatio > activeThreshold) {
-                        light.mesh.material.emissiveIntensity = 5;
+                        light.mesh.material.emissiveIntensity = 1.5;
                     } else {
                         light.mesh.material.emissiveIntensity = 0;
                     }
@@ -948,11 +948,11 @@ engine.start(() => {
 
         const position = trackCurve.getPointAt(progress);
         car.group.position.copy(position);
-        car.group.position.y = 0.5;
+        car.group.position.y = 0.61;
 
         const lookAheadU = (progress + 0.01) % 1;
         const lookAtPos = trackCurve.getPointAt(lookAheadU);
-        car.group.lookAt(lookAtPos.x, 0.5, lookAtPos.z);
+        car.group.lookAt(lookAtPos.x, 0.61, lookAtPos.z);
     }
 
     // Update engine sound

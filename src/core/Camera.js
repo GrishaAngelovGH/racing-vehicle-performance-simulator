@@ -17,8 +17,8 @@ export class Camera {
         // Onboard camera offset (Airbox)
         this.onboardOffset = new THREE.Vector3(0, 1.4, 0.8);
 
-        // Cockpit camera offset (Driver Eye)
-        this.cockpitOffset = new THREE.Vector3(0, 0.78, 0.1);
+        // Cockpit camera offset (Driver Eye) - slightly raised and forward for better road visibility
+        this.cockpitOffset = new THREE.Vector3(0, 0.85, 0.35);
 
         // Bird's Eye camera state
         this.birdseyeDistance = 100;
@@ -102,14 +102,26 @@ export class Camera {
         // Reset camera UP to default to prevent "leaked" orientation from Bird's Eye mode
         this.camera.up.set(0, 1, 0);
 
-        // Manage cockpit visibility: Hide helmet, visor and airbox parts in Cockpit mode (2)
+        // Manage cockpit visibility: Hide helmet, visor, airbox and cockpit blocking parts in Cockpit mode (2)
         if (this.car.body) {
-            const hiddenParts = ['driver_helmet', 'driver_visor', 'airbox', 'airbox_intake', 'shark_fin'];
+            const hiddenParts = ['driver_helmet', 'driver_visor', 'airbox', 'shark_fin',
+                'cockpit_rim', 'cockpit_flange', 'engine_cover', 'intake_ring'];
             this.car.body.children.forEach(child => {
                 if (hiddenParts.includes(child.name)) {
                     child.visible = this.camMode !== 2;
                 }
             });
+        }
+
+        // Adjust steering wheel position based on camera mode
+        if (this.car.steeringWheel) {
+            if (this.camMode === 2) {
+                // Original position for cockpit view
+                this.car.steeringWheel.position.set(0, 0.72, 0.70);
+            } else {
+                // Further lower/forward position for external views
+                this.car.steeringWheel.position.set(0, 0.58, 0.52);
+            }
         }
 
         const carPosition = this.car.group.position;
@@ -126,10 +138,10 @@ export class Camera {
             this.camera.lookAt(lookTarget);
         } else if (this.camMode === 1 || this.camMode === 2) { // Onboard (1) or Cockpit (2) camera
             const offset = this.camMode === 1 ? this.onboardOffset : this.cockpitOffset;
-            
+
             // For Cockpit mode, follow the car body's rotation (pitch/roll) for a stable view
             const baseQuaternion = this.camMode === 2 ? this.car.body.getWorldQuaternion(new THREE.Quaternion()) : carQuaternion;
-            
+
             const camPos = new THREE.Vector3().copy(offset).applyQuaternion(baseQuaternion).add(carPosition);
             this.camera.position.copy(camPos);
 
@@ -138,11 +150,11 @@ export class Camera {
                 const lookAheadDist = 0.05;
                 const lookAheadU = (progress + lookAheadDist) % 1;
                 const lookTarget = this.currentCircuitCurve.getPointAt(lookAheadU);
-                
-                // Adjust look height: Onboard (Airbox) looks higher, Cockpit looks lower to see wheel
-                const lookHeight = this.camMode === 1 ? 0.5 : 0.1;
+
+                // Adjust look height: Onboard (Airbox) looks higher, Cockpit looks slightly down to see wheel
+                const lookHeight = this.camMode === 1 ? 0.5 : 0.15;
                 lookTarget.y = carPosition.y + lookHeight;
-                
+
                 this.camera.lookAt(lookTarget);
             } else {
                 // Fallback: look ahead in car direction if no track curve exists
