@@ -773,11 +773,19 @@ engine.start(() => {
             estimatedAccel = -accelKmhPerSec * brakePower;
         }
 
-        // Apply visual effects (Chassis Pitch: Dive under braking, Squat under acceleration)
+        // Apply visual effects (Pitch: Dive/Squat, Roll: Lean in corners)
         if (car && car.body) {
+            // 1. Chassis Pitch (Dive/Squat)
             const pitchFactor = 0.0004;
             const targetPitch = THREE.MathUtils.clamp(-estimatedAccel * pitchFactor, -0.05, 0.05); // Max ~3 degrees
             car.body.rotation.x = THREE.MathUtils.lerp(car.body.rotation.x, targetPitch, 0.1);
+
+            // 2. Chassis Roll (Lean)
+            const cross = new THREE.Vector3().crossVectors(tangent, nextTangent);
+            const rollDirection = cross.y > 0 ? 1 : -1;
+            const maxRoll = 0.04; // Max ~2.3 degrees
+            const targetRoll = rollDirection * curvature * (currentSpeed / effectiveMaxSpeed) * maxRoll;
+            car.body.rotation.z = THREE.MathUtils.lerp(car.body.rotation.z, targetRoll, 0.08);
         }
 
         currentSpeed = Math.max(effectiveMaxSpeed * 0.1, Math.min(currentSpeed, effectiveMaxSpeed));
