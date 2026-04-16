@@ -843,7 +843,7 @@ engine.start(() => {
     }
 
     // Update engine sound
-    updateEngineSound(currentSpeed, 200, simulationRunning);
+    updateEngineSound(currentSpeed, maxSpeed, simulationRunning);
 
     // Animation loop for camera and simulation updates
     camera.update(progress, currentSpeed, simulationRunning);
