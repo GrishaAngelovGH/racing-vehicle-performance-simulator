@@ -773,7 +773,7 @@ engine.start(() => {
             estimatedAccel = -accelKmhPerSec * brakePower;
         }
 
-        // Apply visual effects (Pitch: Dive/Squat, Roll: Lean in corners)
+        // Apply visual effects (Pitch: Dive/Squat, Roll: Lean, Steering: Wheel turn)
         if (car && car.body) {
             // 1. Chassis Pitch (Dive/Squat)
             const pitchFactor = 0.0004;
@@ -786,6 +786,12 @@ engine.start(() => {
             const maxRoll = 0.04; // Max ~2.3 degrees
             const targetRoll = rollDirection * curvature * (currentSpeed / effectiveMaxSpeed) * maxRoll;
             car.body.rotation.z = THREE.MathUtils.lerp(car.body.rotation.z, targetRoll, 0.08);
+
+            // 3. Steering Wheel Rotation
+            if (car.steeringWheel) {
+                const wheelRot = rollDirection * curvature * 1.8; // More aggressive wheel turn
+                car.steeringWheel.rotation.z = THREE.MathUtils.lerp(car.steeringWheel.rotation.z, wheelRot, 0.15);
+            }
         }
 
         currentSpeed = Math.max(effectiveMaxSpeed * 0.1, Math.min(currentSpeed, effectiveMaxSpeed));
