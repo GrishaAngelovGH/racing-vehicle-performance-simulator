@@ -140,64 +140,65 @@ export class Vehicle {
         // Steering Wheel
         this.steeringWheel = new THREE.Group();
         
-        // Main Wheel Body
-        const wheelMainGeo = new THREE.BoxGeometry(0.32, 0.22, 0.05);
+        // Main Wheel Body (Slightly narrower core to allow for wider grips)
+        const wheelMainGeo = new THREE.BoxGeometry(0.3, 0.18, 0.05);
         const wheelMain = new THREE.Mesh(wheelMainGeo, carbonMat);
         this.steeringWheel.add(wheelMain);
 
-        // Side Grips (Ergonomic handles)
-        const gripGeo = new THREE.BoxGeometry(0.08, 0.26, 0.07);
+        // Side Grips (Rounded ergonomic handles using CapsuleGeometry)
+        const gripGeo = new THREE.CapsuleGeometry(0.045, 0.16, 4, 16);
         const leftGrip = new THREE.Mesh(gripGeo, mechanicalMat);
-        leftGrip.position.set(-0.16, 0, 0);
+        leftGrip.position.set(-0.19, 0, 0);
         this.steeringWheel.add(leftGrip);
         const rightGrip = leftGrip.clone();
-        rightGrip.position.x = 0.16;
+        rightGrip.position.x = 0.19;
         this.steeringWheel.add(rightGrip);
 
-        // Central LCD Display Screen
-        const screenGeo = new THREE.PlaneGeometry(0.12, 0.08);
+        // Central LCD Display Screen (Smaller and more compact)
+        const screenGeo = new THREE.PlaneGeometry(0.1, 0.07);
         const screenMat = new THREE.MeshStandardMaterial({
             color: 0x000000,
             emissive: 0x00ffff,
-            emissiveIntensity: 2,
+            emissiveIntensity: 1.5,
             metalness: 0.9,
             roughness: 0.1
         });
         const screen = new THREE.Mesh(screenGeo, screenMat);
-        screen.position.set(0, 0.01, -0.04); // Facing the driver
-        screen.rotation.y = Math.PI; // Flip to face the camera
+        screen.position.set(0, 0, -0.041); // Flush with front face
+        screen.rotation.y = Math.PI; // Face the driver
         this.steeringWheel.add(screen);
 
-        // Shift Light Strip (Top LEDs)
+        // Shift Light Strip (Refined layout)
         this.shiftLights = [];
         const ledGeo = new THREE.BoxGeometry(0.02, 0.015, 0.01);
         const colors = [
-            0x0000ff, 0x0000ff, 0x0000ff, // Blue (now at high index)
+            0x0000ff, 0x0000ff, 0x0000ff, // Blue
             0xff0000, 0xff0000, 0xff0000, // Red
-            0x00ff00, 0x00ff00, 0x00ff00  // Green (now at low index)
+            0x00ff00, 0x00ff00, 0x00ff00  // Green
         ];
-        // Note: Because the wheel is flipped, we reverse the color order to keep 
-        // the sequence filling from left-to-right for the driver.
+        
         colors.forEach((color, i) => {
             const led = new THREE.Mesh(ledGeo, new THREE.MeshStandardMaterial({
                 color: color,
                 emissive: color,
                 emissiveIntensity: 0
             }));
-            led.position.set((i - 4) * 0.035, 0.09, -0.04);
+            // Spread across the top
+            led.position.set((i - 4) * 0.032, 0.075, -0.041);
             this.steeringWheel.add(led);
             this.shiftLights.push({ mesh: led, originalColor: color });
         });
 
-        // Functional Buttons (Colored circles/boxes)
-        const btnGeo = new THREE.CylinderGeometry(0.018, 0.018, 0.02, 8);
+        // Functional Buttons & Rotary Switches
+        const btnGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.02, 16);
+        const rotaryGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.02, 16);
         const btnColors = [0xe10600, 0x00ff00, 0xf9d62e, 0x0044ff, 0xffffff];
         
-        // Place buttons in various spots on the driver side
+        // Buttons on the face
         const btnPositions = [
-            { x: -0.1, y: 0.06 }, { x: 0.1, y: 0.06 },   // Top buttons
-            { x: -0.1, y: -0.06 }, { x: 0.1, y: -0.06 }, // Bottom buttons
-            { x: 0, y: -0.07 }                            // Center bottom
+            { x: -0.1, y: 0.05 }, { x: 0.1, y: 0.05 },   // Top row
+            { x: -0.11, y: -0.02 }, { x: 0.11, y: -0.02 }, // Middle row
+            { x: -0.08, y: -0.06 }, { x: 0.08, y: -0.06 }  // Bottom row
         ];
 
         btnPositions.forEach((pos, i) => {
@@ -205,13 +206,13 @@ export class Vehicle {
             const btnMat = new THREE.MeshStandardMaterial({
                 color: btnColor,
                 emissive: btnColor,
-                emissiveIntensity: 0.8, // Slight glow for visibility
+                emissiveIntensity: 0.5,
                 metalness: 0.5,
                 roughness: 0.5
             });
             const btn = new THREE.Mesh(btnGeo, btnMat);
             btn.rotation.x = -Math.PI / 2;
-            btn.position.set(pos.x, pos.y, -0.04);
+            btn.position.set(pos.x, pos.y, -0.041);
             this.steeringWheel.add(btn);
         });
 
