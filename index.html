@@ -42,7 +42,7 @@
                         <button id="importCircuitBtn" title="Import Custom Circuit">📥</button>
                     </div>
                 </div>
-                <input type="file" id="circuitInput" style="display: none;" accept=".json">
+                <input type="file" id="circuitInput" accept=".json">
             </div>
 
             <div class="control-group">
@@ -96,7 +96,7 @@
                     <button id="toggleDecorBtn" class="env-btn active" title="Toggle Trees/Buildings">🌲</button>
                     <button id="toggleRainBtn" class="env-btn" title="Toggle Rain">🌧️</button>
                 </div>
-                <div class="env-hint" id="rainHint" style="display: none;">Rain reduces grip by 40%</div>
+                <div class="env-hint" id="rainHint">Rain reduces grip by 40%</div>
             </div>
 
             <button id="launchBtn">LAUNCH SIMULATION</button>
@@ -134,7 +134,7 @@
             </div>
             <div class="stat-item">
                 <span class="label">Tire Health:</span>
-                <span id="tireHealth" class="value" style="color: #4CAF50;">100%</span>
+                <span id="tireHealth" class="value">100%</span>
             </div>
             <div id="history-container">
                 <h3>Lap History</h3>
@@ -182,7 +182,7 @@
     </div>
 
     <!-- Floating Minimap Elements (shown when all panels are hidden) -->
-    <div id="floating-minimap-container" style="display: none;">
+    <div id="floating-minimap-container">
         <div id="minimap-hud" class="minimap-hud">
             <div id="minimap-lap" class="minimap-lap">Lap -/-</div>
             <div id="minimap-laptime" class="minimap-laptime">--:--.---</div>
@@ -192,6 +192,29 @@
     </div>
 
     <div id="ui-hint" class="ui-hint-display">PRESS [H] TO TOGGLE UI</div>
+
+    <!-- Report Button in controls panel - will be shown after race -->
+    <div id="report-section">
+        <button id="generateReportBtn" class="panel">📊 Generate Race Report</button>
+    </div>
+
+    <!-- Report Modal -->
+    <div id="report-modal">
+        <div class="panel report-modal-inner">
+            <div class="report-modal-header">
+                <h2>🏁 Race Analysis Report</h2>
+                <button id="closeReportBtn">&times;</button>
+            </div>
+
+            <div id="report-content">
+                <!-- Report content will be generated here -->
+            </div>
+
+            <div class="report-modal-footer">
+                <button id="closeReportBtn2">Close</button>
+            </div>
+        </div>
+    </div>
 
     <script type="module" src="/src/main.js"></script>
 </body>

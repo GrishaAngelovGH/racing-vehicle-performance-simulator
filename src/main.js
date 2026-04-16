@@ -7,6 +7,7 @@ import { Vehicle } from './core/Vehicle.js';
 import { Camera } from './core/Camera.js';
 import { Weather } from './core/Weather.js';
 import { initAudio, updateEngineSound, toggleSound, enableSound, isAudioInitialized, playFastestLapSound, setSoundMode, getAudioContext } from './core/Audio.js';
+import { initReportFeature, showReportButton, hideReportButton, generateReport } from './core/Report.js';
 
 const engine = new Engine();
 initEnvironment(engine.scene);
@@ -237,6 +238,7 @@ function loadCircuit(id) {
     clearLapHistory();
     const launchBtn = document.getElementById('launchBtn');
     if (launchBtn) launchBtn.textContent = "LAUNCH SIMULATION";
+    hideReportButton();
     const speedEl = document.getElementById('currentSpeed');
     if (speedEl) speedEl.textContent = "0 km/h";
     const currentTimeEl = document.getElementById('currentTime');
@@ -394,6 +396,7 @@ if (launchBtn) {
             simulationRunning = true;
             currentSpeed = maxSpeed;
             launchBtn.textContent = "RESET SIMULATION";
+            hideReportButton();
             const speedEl = document.getElementById('currentSpeed');
             if (speedEl) speedEl.textContent = `${maxSpeed} km/h`;
             updateLapDisplay();
@@ -797,16 +800,16 @@ engine.start(() => {
             if (car.shiftLights && car.shiftLights.length > 0) {
                 const rpmRatio = currentSpeed / effectiveMaxSpeed;
                 const numLights = car.shiftLights.length;
-                
+
                 car.shiftLights.forEach((light, i) => {
                     // Map indices so high index (Green) turns on first
                     const threshold = 0.4 + (((numLights - 1) - i) / (numLights - 1)) * 0.5;
-                    
+
                     // Hysteresis to prevent flickering
                     const isAlreadyOn = light.mesh.material.emissiveIntensity > 0.5;
                     const margin = 0.03;
                     const activeThreshold = isAlreadyOn ? threshold - margin : threshold;
-                    
+
                     if (rpmRatio > 0.98) {
                         // Flash all lights at the very limit
                         const isFlashOn = Math.sin(performance.now() * 0.025) > 0;
@@ -866,6 +869,7 @@ engine.start(() => {
             if (currentLap > totalLaps) {
                 simulationRunning = false;
                 launchBtn.textContent = "SIMULATION FINISHED - LAUNCH AGAIN";
+                showReportButton();
                 currentSpeed = 0;
                 if (speedEl) speedEl.textContent = "0 km/h";
                 const currentTimeEl = document.getElementById('currentTime');
@@ -911,6 +915,28 @@ window.addEventListener('load', () => {
             splash.style.visibility = 'hidden';
         }
     }, 500); // Small delay to ensure WebGL context is fully rendered
+});
+
+// Initialize report feature
+initReportFeature(() => {
+    const state = {
+        lapTimes,
+        currentCircuitId: document.getElementById('circuitSelect')?.value || 'classic',
+        totalLaps,
+        maxSpeed,
+        acceleration,
+        grip,
+        brakePower,
+        downforce,
+        currentTireCompound,
+        tireHealth,
+        circuitConfigs: CIRCUIT_CONFIGS,
+        trackCurve,
+        tireCompounds: car.tireCompounds,
+        isRaining: weather.isRainEnabled(),
+        formatTime
+    };
+    generateReport(state);
 });
 
 // Request fullscreen on first user interaction (required by browser security)

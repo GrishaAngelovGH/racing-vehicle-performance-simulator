@@ -720,3 +720,244 @@ input[type="range"] {
     display: none;
     /* Hidden by default */
 }
+
+/* --- Report Generation Feature --- */
+
+#report-modal {
+    align-items: flex-start;
+}
+
+#report-content .report-section {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--panel-border);
+}
+
+#report-content .report-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+#report-content h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    color: var(--text-color);
+    font-size: 1.1rem;
+    border-bottom: 1px solid var(--panel-border);
+    padding-bottom: 8px;
+}
+
+.report-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+}
+
+.report-stat {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.report-stat-label {
+    font-size: 0.75rem;
+    color: var(--label-color);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.report-stat-value {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--value-color);
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.performance-bar {
+    width: 100%;
+    height: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 5px;
+}
+
+.performance-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.5s ease;
+}
+
+.performance-fill.excellent {
+    background: #4CAF50;
+}
+
+.performance-fill.good {
+    background: #8BC34A;
+}
+
+.performance-fill.average {
+    background: #FFC107;
+}
+
+.performance-fill.poor {
+    background: #f44336;
+}
+
+.trend-indicator {
+    font-weight: bold;
+    font-size: 0.85rem;
+}
+
+.trend-up {
+    color: #4CAF50;
+}
+
+.trend-down {
+    color: #f44336;
+}
+
+.trend-stable {
+    color: #FFC107;
+}
+
+.recommendation-item {
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    border-left: 4px solid;
+}
+
+.recommendation-item.critical {
+    background: rgba(244, 67, 54, 0.15);
+    border-color: #f44336;
+}
+
+.recommendation-item.warning {
+    background: rgba(255, 193, 7, 0.15);
+    border-color: #FFC107;
+}
+
+.recommendation-item.info {
+    background: rgba(76, 175, 80, 0.15);
+    border-color: #4CAF50;
+}
+
+.recommendation-title {
+    font-weight: bold;
+    margin-bottom: 4px;
+    font-size: 0.95rem;
+}
+
+.recommendation-desc {
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: var(--text-color);
+}
+
+#circuitInput {
+    display: none;
+}
+
+#rainHint {
+    display: none;
+}
+
+#tireHealth {
+    color: #4CAF50;
+}
+
+#floating-minimap-container {
+    display: none;
+}
+
+#report-section {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: none;
+    z-index: 3000;
+}
+
+#generateReportBtn {
+    padding: 15px 25px;
+    background: #4CAF50;
+    color: white;
+    border: 2px solid #4CAF50;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 1rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+#report-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 3000;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(10px);
+    overflow-y: auto;
+}
+
+.report-modal-inner {
+    width: 700px;
+    max-width: 90vw;
+    max-height: 85vh;
+    overflow-y: auto;
+    border: 2px solid #e10600;
+    margin: 40px auto;
+}
+
+.report-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    position: sticky;
+    top: 0;
+    background: var(--panel-bg);
+    padding: 10px 0;
+    z-index: 10;
+}
+
+.report-modal-header h2 {
+    margin: 0;
+    color: #e10600;
+}
+
+#closeReportBtn {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.report-modal-footer {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid var(--panel-border);
+    text-align: center;
+    position: sticky;
+    bottom: 0;
+    background: var(--panel-bg);
+}
+
+#closeReportBtn2 {
+    padding: 10px 20px;
+    background: #444;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
