@@ -140,22 +140,22 @@ export class Vehicle {
         // Steering Wheel
         this.steeringWheel = new THREE.Group();
         
-        // Main Wheel Body (Slightly narrower core to allow for wider grips)
-        const wheelMainGeo = new THREE.BoxGeometry(0.3, 0.18, 0.05);
+        // Main Wheel Body (Smaller)
+        const wheelMainGeo = new THREE.BoxGeometry(0.2, 0.12, 0.035);
         const wheelMain = new THREE.Mesh(wheelMainGeo, carbonMat);
         this.steeringWheel.add(wheelMain);
 
-        // Side Grips (Rounded ergonomic handles using CapsuleGeometry)
-        const gripGeo = new THREE.CapsuleGeometry(0.045, 0.16, 4, 16);
+        // Side Grips (Smaller rounded handles)
+        const gripGeo = new THREE.CapsuleGeometry(0.03, 0.1, 4, 16);
         const leftGrip = new THREE.Mesh(gripGeo, mechanicalMat);
-        leftGrip.position.set(-0.19, 0, 0);
+        leftGrip.position.set(-0.12, 0, 0);
         this.steeringWheel.add(leftGrip);
         const rightGrip = leftGrip.clone();
-        rightGrip.position.x = 0.19;
+        rightGrip.position.x = 0.12;
         this.steeringWheel.add(rightGrip);
 
-        // Central LCD Display Screen (Smaller and more compact)
-        const screenGeo = new THREE.PlaneGeometry(0.1, 0.07);
+        // Central LCD Display Screen (Smaller)
+        const screenGeo = new THREE.PlaneGeometry(0.07, 0.04);
         const screenMat = new THREE.MeshStandardMaterial({
             color: 0x000000,
             emissive: 0x00ffff,
@@ -164,13 +164,13 @@ export class Vehicle {
             roughness: 0.1
         });
         const screen = new THREE.Mesh(screenGeo, screenMat);
-        screen.position.set(0, 0, -0.041); // Flush with front face
+        screen.position.set(0, 0, -0.026); // Flush with front face
         screen.rotation.y = Math.PI; // Face the driver
         this.steeringWheel.add(screen);
 
-        // Shift Light Strip (Refined layout)
+        // Shift Light Strip (Tighter layout)
         this.shiftLights = [];
-        const ledGeo = new THREE.BoxGeometry(0.02, 0.015, 0.01);
+        const ledGeo = new THREE.BoxGeometry(0.012, 0.01, 0.01);
         const colors = [
             0x0000ff, 0x0000ff, 0x0000ff, // Blue
             0xff0000, 0xff0000, 0xff0000, // Red
@@ -183,22 +183,20 @@ export class Vehicle {
                 emissive: color,
                 emissiveIntensity: 0
             }));
-            // Spread across the top
-            led.position.set((i - 4) * 0.032, 0.075, -0.041);
+            led.position.set((i - 4) * 0.02, 0.05, -0.026);
             this.steeringWheel.add(led);
             this.shiftLights.push({ mesh: led, originalColor: color });
         });
 
-        // Functional Buttons & Rotary Switches
-        const btnGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.02, 16);
-        const rotaryGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.02, 16);
+        // Functional Buttons (Smaller)
+        const btnGeo = new THREE.CylinderGeometry(0.01, 0.01, 0.02, 16);
         const btnColors = [0xe10600, 0x00ff00, 0xf9d62e, 0x0044ff, 0xffffff];
         
         // Buttons on the face
         const btnPositions = [
-            { x: -0.1, y: 0.05 }, { x: 0.1, y: 0.05 },   // Top row
-            { x: -0.11, y: -0.02 }, { x: 0.11, y: -0.02 }, // Middle row
-            { x: -0.08, y: -0.06 }, { x: 0.08, y: -0.06 }  // Bottom row
+            { x: -0.06, y: 0.03 }, { x: 0.06, y: 0.03 },   // Top row
+            { x: -0.07, y: -0.01 }, { x: 0.07, y: -0.01 }, // Middle row
+            { x: -0.05, y: -0.04 }, { x: 0.05, y: -0.04 }  // Bottom row
         ];
 
         btnPositions.forEach((pos, i) => {
@@ -212,11 +210,11 @@ export class Vehicle {
             });
             const btn = new THREE.Mesh(btnGeo, btnMat);
             btn.rotation.x = -Math.PI / 2;
-            btn.position.set(pos.x, pos.y, -0.041);
+            btn.position.set(pos.x, pos.y, -0.026);
             this.steeringWheel.add(btn);
         });
 
-        this.steeringWheel.position.set(0, 0.52, 0.65);
+        this.steeringWheel.position.set(0, 0.62, 0.65);
         this.steeringWheel.rotation.x = 0.6; // Tilted toward the driver's face
         this.body.add(this.steeringWheel);
 
