@@ -164,7 +164,7 @@ export class Vehicle {
             roughness: 0.1
         });
         const screen = new THREE.Mesh(screenGeo, screenMat);
-        screen.position.set(0, 0.01, -0.03); // Facing the driver
+        screen.position.set(0, 0.01, -0.04); // Facing the driver
         screen.rotation.y = Math.PI; // Flip to face the camera
         this.steeringWheel.add(screen);
 
@@ -184,7 +184,7 @@ export class Vehicle {
                 emissive: color,
                 emissiveIntensity: 0
             }));
-            led.position.set((i - 4) * 0.035, 0.09, -0.03);
+            led.position.set((i - 4) * 0.035, 0.09, -0.04);
             this.steeringWheel.add(led);
             this.shiftLights.push({ mesh: led, originalColor: color });
         });
@@ -211,7 +211,7 @@ export class Vehicle {
             });
             const btn = new THREE.Mesh(btnGeo, btnMat);
             btn.rotation.x = -Math.PI / 2;
-            btn.position.set(pos.x, pos.y, -0.03);
+            btn.position.set(pos.x, pos.y, -0.04);
             this.steeringWheel.add(btn);
         });
 

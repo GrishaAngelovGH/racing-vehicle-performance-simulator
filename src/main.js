@@ -799,15 +799,19 @@ engine.start(() => {
                 const numLights = car.shiftLights.length;
                 
                 car.shiftLights.forEach((light, i) => {
-                    // Calculate if this specific LED should be on
-                    // Thresholds: Green starts at 0.5, Red at 0.7, Blue at 0.9
-                    const threshold = 0.5 + (i / numLights) * 0.45;
+                    // Map indices so high index (Green) turns on first
+                    const threshold = 0.4 + (((numLights - 1) - i) / (numLights - 1)) * 0.5;
                     
-                    if (rpmRatio > 0.95) {
-                        // Flash all lights at the limit
-                        const isFlashOn = Math.sin(performance.now() * 0.02) > 0;
-                        light.mesh.material.emissiveIntensity = isFlashOn ? 5 : 0;
-                    } else if (rpmRatio > threshold) {
+                    // Hysteresis to prevent flickering
+                    const isAlreadyOn = light.mesh.material.emissiveIntensity > 0.5;
+                    const margin = 0.03;
+                    const activeThreshold = isAlreadyOn ? threshold - margin : threshold;
+                    
+                    if (rpmRatio > 0.98) {
+                        // Flash all lights at the very limit
+                        const isFlashOn = Math.sin(performance.now() * 0.025) > 0;
+                        light.mesh.material.emissiveIntensity = isFlashOn ? 6 : 0;
+                    } else if (rpmRatio > activeThreshold) {
                         light.mesh.material.emissiveIntensity = 5;
                     } else {
                         light.mesh.material.emissiveIntensity = 0;
