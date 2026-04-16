@@ -6,16 +6,19 @@ export class Camera {
         this.car = car;
         this.scene = scene;
 
-        this.camMode = 0; // 0 = chase, 1 = onboard, 2 = Bird's Eye
-        this.camModeLabels = ['Chase', 'Onboard', "Bird's Eye"];
+        this.camMode = 0; // 0 = chase, 1 = onboard, 2 = cockpit, 3 = Bird's Eye
+        this.camModeLabels = ['Chase', 'Onboard', 'Cockpit', "Bird's Eye"];
         this.currentCircuitCurve = null; // Store reference to current circuit curve
 
         // Camera state properties
         this.chaseOffset = new THREE.Vector3(0, 12, -22); // Relative offset for chase cam
         this.targetLookAtOffset = new THREE.Vector3(0, 0.5, 2); // Offset for look-at point relative to car
 
-        // Onboard camera offset
+        // Onboard camera offset (Airbox)
         this.onboardOffset = new THREE.Vector3(0, 1.4, 0.8);
+
+        // Cockpit camera offset (Driver Eye)
+        this.cockpitOffset = new THREE.Vector3(0, 0.78, 0.1);
 
         // Bird's Eye camera state
         this.birdseyeDistance = 100;
@@ -35,8 +38,7 @@ export class Camera {
 
         // Add mouse wheel listener for Bird's Eye zoom, tilt, and rotation
         window.addEventListener('wheel', (e) => {
-            if (this.camMode !== 2) return;
-
+            if (this.camMode !== 3) return;
             if (e.ctrlKey) {
                 e.preventDefault(); // Prevent browser from zooming the page
                 // Change tilt
@@ -62,15 +64,9 @@ export class Camera {
     cycleCamMode() {
         const nextMode = (this.camMode + 1) % this.camModeLabels.length;
 
-        // When entering Bird's Eye, seed rotation/tilt from the current camera position
-        // so it snaps to where the camera already is rather than jumping to angle 0.
-        if (nextMode === 2 && this.car && this.car.group) {
-            // Seed the orbit angle from the car's facing direction so the camera
-            // starts behind the car, matching what the chase cam looked like.
-            // Car's local +Z is forward; we want to start behind it, so we take
-            // the world-space forward vector and compute its world angle.
+        // When entering Bird's Eye (now index 3), seed rotation/tilt from the current camera position
+        if (nextMode === 3 && this.car && this.car.group) {
             const carForward = new THREE.Vector3(0, 0, 1).applyQuaternion(this.car.group.quaternion);
-            // Place camera behind the car: negate forward to get the "behind" direction
             this.birdseyeRotation = Math.atan2(-carForward.x, -carForward.z);
             this.birdseyeTilt = 0.5;   // ~29 degrees, a natural overview angle
             this.birdseyeDistance = 100;
@@ -106,6 +102,16 @@ export class Camera {
         // Reset camera UP to default to prevent "leaked" orientation from Bird's Eye mode
         this.camera.up.set(0, 1, 0);
 
+        // Manage cockpit visibility: Hide helmet, visor and airbox parts in Cockpit mode (2)
+        if (this.car.body) {
+            const hiddenParts = ['driver_helmet', 'driver_visor', 'airbox', 'airbox_intake', 'shark_fin'];
+            this.car.body.children.forEach(child => {
+                if (hiddenParts.includes(child.name)) {
+                    child.visible = this.camMode !== 2;
+                }
+            });
+        }
+
         const carPosition = this.car.group.position;
         const carQuaternion = this.car.group.quaternion;
 
@@ -118,8 +124,13 @@ export class Camera {
 
             const lookTarget = new THREE.Vector3().copy(this.targetLookAtOffset).applyQuaternion(carQuaternion).add(carPosition);
             this.camera.lookAt(lookTarget);
-        } else if (this.camMode === 1) { // Onboard camera
-            const camPos = new THREE.Vector3().copy(this.onboardOffset).applyQuaternion(carQuaternion).add(carPosition);
+        } else if (this.camMode === 1 || this.camMode === 2) { // Onboard (1) or Cockpit (2) camera
+            const offset = this.camMode === 1 ? this.onboardOffset : this.cockpitOffset;
+            
+            // For Cockpit mode, follow the car body's rotation (pitch/roll) for a stable view
+            const baseQuaternion = this.camMode === 2 ? this.car.body.getWorldQuaternion(new THREE.Quaternion()) : carQuaternion;
+            
+            const camPos = new THREE.Vector3().copy(offset).applyQuaternion(baseQuaternion).add(carPosition);
             this.camera.position.copy(camPos);
 
             if (this.currentCircuitCurve) {
@@ -127,7 +138,11 @@ export class Camera {
                 const lookAheadDist = 0.05;
                 const lookAheadU = (progress + lookAheadDist) % 1;
                 const lookTarget = this.currentCircuitCurve.getPointAt(lookAheadU);
-                lookTarget.y = carPosition.y + 0.5;
+                
+                // Adjust look height: Onboard (Airbox) looks higher, Cockpit looks lower to see wheel
+                const lookHeight = this.camMode === 1 ? 0.5 : 0.1;
+                lookTarget.y = carPosition.y + lookHeight;
+                
                 this.camera.lookAt(lookTarget);
             } else {
                 // Fallback: look ahead in car direction if no track curve exists
@@ -135,7 +150,7 @@ export class Camera {
                 const lookAhead = new THREE.Vector3().copy(carPosition).addScaledVector(forwardVector, 20);
                 this.camera.lookAt(lookAhead);
             }
-        } else if (this.camMode === 2) { // Bird's Eye Camera
+        } else if (this.camMode === 3) { // Bird's Eye Camera
             // Orbit purely in world space around the world Y axis.
             // birdseyeTilt controls elevation (0 = top-down, ~1.3 = near-horizon)
             // birdseyeRotation controls horizontal orbit angle in world space

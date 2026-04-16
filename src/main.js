@@ -792,6 +792,28 @@ engine.start(() => {
                 const wheelRot = rollDirection * curvature * 1.8; // More aggressive wheel turn
                 car.steeringWheel.rotation.z = THREE.MathUtils.lerp(car.steeringWheel.rotation.z, wheelRot, 0.15);
             }
+
+            // 4. Dynamic Shift Lights
+            if (car.shiftLights && car.shiftLights.length > 0) {
+                const rpmRatio = currentSpeed / effectiveMaxSpeed;
+                const numLights = car.shiftLights.length;
+                
+                car.shiftLights.forEach((light, i) => {
+                    // Calculate if this specific LED should be on
+                    // Thresholds: Green starts at 0.5, Red at 0.7, Blue at 0.9
+                    const threshold = 0.5 + (i / numLights) * 0.45;
+                    
+                    if (rpmRatio > 0.95) {
+                        // Flash all lights at the limit
+                        const isFlashOn = Math.sin(performance.now() * 0.02) > 0;
+                        light.mesh.material.emissiveIntensity = isFlashOn ? 5 : 0;
+                    } else if (rpmRatio > threshold) {
+                        light.mesh.material.emissiveIntensity = 5;
+                    } else {
+                        light.mesh.material.emissiveIntensity = 0;
+                    }
+                });
+            }
         }
 
         currentSpeed = Math.max(effectiveMaxSpeed * 0.1, Math.min(currentSpeed, effectiveMaxSpeed));

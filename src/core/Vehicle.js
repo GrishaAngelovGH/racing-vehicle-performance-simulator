@@ -96,32 +96,22 @@ export class Vehicle {
         airbox.position.set(0, 0.75, -0.2);
         airbox.scale.set(1.2, 1, 1);
         airbox.castShadow = true;
+        airbox.name = 'airbox';
         this.body.add(airbox);
 
         const intakeGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.1, 8);
         const intake = new THREE.Mesh(intakeGeo, carbonMat);
         intake.rotation.x = Math.PI / 2;
         intake.position.set(0, 0.75, 0.3);
+        intake.name = 'airbox_intake';
         this.body.add(intake);
 
         // Shark Fin
         const finGeo = new THREE.BoxGeometry(0.02, 0.7, 1.2);
         const fin = new THREE.Mesh(finGeo, bodyMat);
         fin.position.set(0, 0.8, -1.0);
+        fin.name = 'shark_fin';
         this.body.add(fin);
-
-        // Halo
-        const haloPath = new THREE.TorusGeometry(0.55, 0.05, 12, 24, Math.PI);
-        const haloRing = new THREE.Mesh(haloPath, carbonMat);
-        haloRing.rotation.x = -Math.PI / 2;
-        haloRing.position.set(0, 0.55, 0.5);
-        this.body.add(haloRing);
-
-        const haloPillarGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.5);
-        const haloPillar = new THREE.Mesh(haloPillarGeo, carbonMat);
-        haloPillar.position.set(0, 0.45, 1.05);
-        haloPillar.rotation.x = 0.3;
-        this.body.add(haloPillar);
 
         // Driver & Helmet
         try {
@@ -129,11 +119,13 @@ export class Vehicle {
             const helmetMat = new THREE.MeshStandardMaterial({ color: 0xffcc00, metalness: 0.6, roughness: 0.2 });
             const helmet = new THREE.Mesh(helmetGeo, helmetMat);
             helmet.position.set(0, 0.45, 0.1);
+            helmet.name = 'driver_helmet';
             this.body.add(helmet);
 
             const visorGeo = new THREE.BoxGeometry(0.3, 0.1, 0.1);
             const visor = new THREE.Mesh(visorGeo, carbonMat);
             visor.position.set(0, 0.52, 0.25);
+            visor.name = 'driver_visor';
             this.body.add(visor);
         } catch (e) {
             // Fallback to sphere if CapsuleGeometry is not available
@@ -141,28 +133,90 @@ export class Vehicle {
             const helmetMat = new THREE.MeshStandardMaterial({ color: 0xffcc00, metalness: 0.6, roughness: 0.2 });
             const helmet = new THREE.Mesh(helmetGeo, helmetMat);
             helmet.position.set(0, 0.45, 0.1);
+            helmet.name = 'driver_helmet';
             this.body.add(helmet);
         }
 
         // Steering Wheel
         this.steeringWheel = new THREE.Group();
-        const wheelMainGeo = new THREE.BoxGeometry(0.4, 0.25, 0.05);
+        
+        // Main Wheel Body
+        const wheelMainGeo = new THREE.BoxGeometry(0.32, 0.22, 0.05);
         const wheelMain = new THREE.Mesh(wheelMainGeo, carbonMat);
         this.steeringWheel.add(wheelMain);
 
-        // LEDs on wheel
-        const ledGeo = new THREE.PlaneGeometry(0.05, 0.02);
-        for (let i = -2; i <= 2; i++) {
+        // Side Grips (Ergonomic handles)
+        const gripGeo = new THREE.BoxGeometry(0.08, 0.26, 0.07);
+        const leftGrip = new THREE.Mesh(gripGeo, mechanicalMat);
+        leftGrip.position.set(-0.16, 0, 0);
+        this.steeringWheel.add(leftGrip);
+        const rightGrip = leftGrip.clone();
+        rightGrip.position.x = 0.16;
+        this.steeringWheel.add(rightGrip);
+
+        // Central LCD Display Screen
+        const screenGeo = new THREE.PlaneGeometry(0.12, 0.08);
+        const screenMat = new THREE.MeshStandardMaterial({
+            color: 0x000000,
+            emissive: 0x00ffff,
+            emissiveIntensity: 2,
+            metalness: 0.9,
+            roughness: 0.1
+        });
+        const screen = new THREE.Mesh(screenGeo, screenMat);
+        screen.position.set(0, 0.01, -0.03); // Facing the driver
+        screen.rotation.y = Math.PI; // Flip to face the camera
+        this.steeringWheel.add(screen);
+
+        // Shift Light Strip (Top LEDs)
+        this.shiftLights = [];
+        const ledGeo = new THREE.BoxGeometry(0.02, 0.015, 0.01);
+        const colors = [
+            0x0000ff, 0x0000ff, 0x0000ff, // Blue (now at high index)
+            0xff0000, 0xff0000, 0xff0000, // Red
+            0x00ff00, 0x00ff00, 0x00ff00  // Green (now at low index)
+        ];
+        // Note: Because the wheel is flipped, we reverse the color order to keep 
+        // the sequence filling from left-to-right for the driver.
+        colors.forEach((color, i) => {
             const led = new THREE.Mesh(ledGeo, new THREE.MeshStandardMaterial({
-                color: i === 0 ? 0x00ff00 : 0xff0000,
-                emissive: i === 0 ? 0x00ff00 : 0xff0000,
-                emissiveIntensity: 2
+                color: color,
+                emissive: color,
+                emissiveIntensity: 0
             }));
-            led.position.set(i * 0.07, 0.08, 0.03);
+            led.position.set((i - 4) * 0.035, 0.09, -0.03);
             this.steeringWheel.add(led);
-        }
-        this.steeringWheel.position.set(0, 0.4, 0.65);
-        this.steeringWheel.rotation.x = -0.4;
+            this.shiftLights.push({ mesh: led, originalColor: color });
+        });
+
+        // Functional Buttons (Colored circles/boxes)
+        const btnGeo = new THREE.CylinderGeometry(0.018, 0.018, 0.02, 8);
+        const btnColors = [0xe10600, 0x00ff00, 0xf9d62e, 0x0044ff, 0xffffff];
+        
+        // Place buttons in various spots on the driver side
+        const btnPositions = [
+            { x: -0.1, y: 0.06 }, { x: 0.1, y: 0.06 },   // Top buttons
+            { x: -0.1, y: -0.06 }, { x: 0.1, y: -0.06 }, // Bottom buttons
+            { x: 0, y: -0.07 }                            // Center bottom
+        ];
+
+        btnPositions.forEach((pos, i) => {
+            const btnColor = btnColors[i % btnColors.length];
+            const btnMat = new THREE.MeshStandardMaterial({
+                color: btnColor,
+                emissive: btnColor,
+                emissiveIntensity: 0.8, // Slight glow for visibility
+                metalness: 0.5,
+                roughness: 0.5
+            });
+            const btn = new THREE.Mesh(btnGeo, btnMat);
+            btn.rotation.x = -Math.PI / 2;
+            btn.position.set(pos.x, pos.y, -0.03);
+            this.steeringWheel.add(btn);
+        });
+
+        this.steeringWheel.position.set(0, 0.52, 0.65);
+        this.steeringWheel.rotation.x = 0.6; // Tilted toward the driver's face
         this.body.add(this.steeringWheel);
 
         // 4. SIDEPODS & BARGEBOARDS
