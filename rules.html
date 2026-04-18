@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>How to Play - Racing Vehicle Performance Simulator</title>
+        <link rel="icon"
+            href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏎️</text></svg>">
+        <link rel="stylesheet" href="src/style.css">
+    </head>
+
+    <body class="rules-body">
+        <div class="rules-header">
+            <h1>🏎️ Racing Simulator Guide</h1>
+            <p>Master the track with this complete guide to mechanics, controls, and features</p>
+        </div>
+
+        <div class="carousel-container">
+            <div class="carousel">
+                <!-- Slide 1: Getting Started -->
+                <div class="slide">
+                    <span class="slide-icon">🚀</span>
+                    <h2>Getting Started</h2>
+                    <div class="slide-content">
+                        <p>Welcome to the <strong>Racing Vehicle Performance Simulator</strong> — a high-performance
+                            racing sim built with Three.js.</p>
+                        <ul>
+                            <li>Race on 3 built-in circuits or design your own</li>
+                            <li>Fine-tune vehicle performance parameters</li>
+                            <li>Monitor real-time telemetry and lap times</li>
+                            <li>Analyze performance with detailed reports</li>
+                            <li>Experience dynamic weather and environment</li>
+                        </ul>
+                        <p>Click <span class="control-tag">LAUNCH SIMULATION</span> to begin, or customize your setup
+                            first.</p>
+                    </div>
+                </div>
+
+                <!-- Slide 2: Vehicle Setup -->
+                <div class="slide">
+                    <span class="slide-icon">⚙️</span>
+                    <h2>Vehicle Setup</h2>
+                    <div class="slide-content">
+                        <p>Configure your race car's performance:</p>
+                        <div class="feature-grid">
+                            <div class="feature-item">
+                                <strong>Max Speed</strong>
+                                <span>100-350 km/h</span>
+                                <em>Sets the top velocity reachable on long straights.</em>
+                            </div>
+                            <div class="feature-item">
+                                <strong>Acceleration</strong>
+                                <span>10-100 rating</span>
+                                <em>Determines how quickly the engine pushes the car forward.</em>
+                            </div>
+                            <div class="feature-item">
+                                <strong>Cornering Grip</strong>
+                                <span>0.1-1.0 scale</span>
+                                <em>Traction available to maintain high speed through turns.</em>
+                            </div>
+                            <div class="feature-item">
+                                <strong>Braking Power</strong>
+                                <span>2x-15x mult.</span>
+                                <em>Efficiency of the brakes when slowing for tight hairpins.</em>
+                            </div>
+                            <div class="feature-item">
+                                <strong>Aero Downforce</strong>
+                                <span>1.0-2.0 range</span>
+                                <em>Uses airflow to "stick" the car to the track at speed.</em>
+                            </div>
+                            <div class="feature-item">
+                                <strong>Grip vs Drag</strong>
+                                <span>Trade-off</span>
+                                <em>Balancing cornering agility against straight-line pace.</em>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3: Tire Compounds -->
+                <div class="slide">
+                    <span class="slide-icon">🏁</span>
+                    <h2>Tire Compounds</h2>
+                    <div class="slide-content">
+                        <p>Choose the right compound for your race strategy:</p>
+                        <ul>
+                            <li><span class="compound-soft"><strong>Soft (Red)</strong></span> — +0.18 grip, 10%
+                                wear/lap. Max grip, fastest but wears quickly.</li>
+                            <li><span class="compound-medium"><strong>Medium (Yellow)</strong></span> — +0.08 grip, 4%
+                                wear/lap. Balanced performance.</li>
+                            <li><span class="compound-hard"><strong>Hard (White)</strong></span> — -0.04 grip, 1.5%
+                                wear/lap. Lower grip but durable.</li>
+                        </ul>
+                        <p>Tire health affects grip — monitor the tire health indicator!</p>
+                    </div>
+                </div>
+
+                <!-- Slide 4: Circuits -->
+                <div class="slide">
+                    <span class="slide-icon">🗺️</span>
+                    <h2>Circuits</h2>
+                    <div class="slide-content">
+                        <p>Race on the built-in designed tracks or create your own:</p>
+                        <ul>
+                            <li><strong>High-Speed Classic</strong> — Wide sweeping arcs, large outer loop, tight
+                                infield twists.</li>
+                            <li><strong>Forest Sprint</strong> — Woodland course with hairpins and flowing curves.</li>
+                            <li><strong>City Street</strong> — Technical circuit with sharp 90° turns and urban canyons.
+                            </li>
+                            <li><strong>Custom Circuit</strong> — Design your own with the Circuit Designer tool.</li>
+                        </ul>
+                        <p>Use <span class="control-tag">DRAW NEW CIRCUIT</span> to create layouts. Export/share as JSON
+                            files!</p>
+                    </div>
+                </div>
+
+                <!-- Slide 5: Camera Modes -->
+                <div class="slide">
+                    <span class="slide-icon">📹</span>
+                    <h2>Camera Modes</h2>
+                    <div class="slide-content">
+                        <p>Four camera perspectives:</p>
+                        <div class="feature-grid">
+                            <div class="feature-item">
+                                <strong>Chase Cam</strong>
+                                <span>Default</span>
+                                <em>Follows car from behind.</em>
+                            </div>
+                            <div class="feature-item">
+                                <strong>Onboard</strong>
+                                <span>Immersive</span>
+                                <em>Above driver's helmet.</em>
+                            </div>
+                            <div class="feature-item">
+                                <strong>Cockpit</strong>
+                                <span>Technical</span>
+                                <em>Driver's eye view.</em>
+                            </div>
+                            <div class="feature-item">
+                                <strong>Bird's Eye</strong>
+                                <span>Orbital</span>
+                                <em>Orbital with zoom/tilt.</em>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 6: Simulation Controls -->
+                <div class="slide">
+                    <span class="slide-icon">🎮</span>
+                    <h2>Simulation Controls</h2>
+                    <div class="slide-content">
+                        <p>Keyboard shortcuts:</p>
+                        <ul>
+                            <li><span class="control-tag">SPACE</span> — Launch/reset simulation</li>
+                            <li><span class="control-tag">C</span> — Cycle camera modes</li>
+                            <li><span class="control-tag">S</span> — Toggle engine sound</li>
+                            <li><span class="control-tag">H</span> — Toggle UI (3 modes)</li>
+                        </ul>
+                        <p><strong>UI Modes:</strong></p>
+                        <ul>
+                            <li><strong>Mode 0:</strong> All panels visible</li>
+                            <li><strong>Mode 1:</strong> Stats only (immersive)</li>
+                            <li><strong>Mode 2:</strong> Hidden + floating HUD</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Slide 7: Environment & Weather -->
+                <div class="slide">
+                    <span class="slide-icon">🌧️</span>
+                    <h2>Environment & Weather</h2>
+                    <div class="slide-content">
+                        <p>Environmental features affecting racing:</p>
+                        <ul>
+                            <li><strong>Rain 🌧️</strong> — Reduces grip by 40%, adds rain audio.</li>
+                            <li><strong>Decorations 🌲</strong> — Toggle trees/buildings.</li>
+                            <li><strong>Radio 📻</strong> — AI engineer voice with lap summaries.</li>
+                        </ul>
+                        <p><strong>Sound Modes:</strong></p>
+                        <ul>
+                            <li><strong>Dynamic:</strong> Synthesized RPM-responsive engine</li>
+                            <li><strong>Real:</strong> Authentic engine audio loop</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Slide 8: Live Stats Panel -->
+                <div class="slide">
+                    <span class="slide-icon">📊</span>
+                    <h2>Live Stats Panel</h2>
+                    <div class="slide-content">
+                        <p>Real-time telemetry:</p>
+                        <div class="feature-grid">
+                            <div class="feature-item">
+                                <strong>Current Lap</strong>
+                                <span>Live</span>
+                                <em>Progress counter.</em>
+                            </div>
+                            <div class="feature-item">
+                                <strong>Lap Time</strong>
+                                <span>Live</span>
+                                <em>Current timer.</em>
+                            </div>
+                            <div class="feature-item">
+                                <strong>Best Lap</strong>
+                                <span>Record</span>
+                                <em>Session fastest.</em>
+                            </div>
+                            <div class="feature-item">
+                                <strong>Speed</strong>
+                                <span>KM/H</span>
+                                <em>Live speed tracking.</em>
+                            </div>
+                            <div class="feature-item">
+                                <strong>Camera</strong>
+                                <span>Status</span>
+                                <em>Current view mode.</em>
+                            </div>
+                            <div class="feature-item">
+                                <strong>Tire Health</strong>
+                                <span>% Status</span>
+                                <em>Remaining tire life.</em>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 9: Circuit Designer -->
+                <div class="slide">
+                    <span class="slide-icon">✏️</span>
+                    <h2>Circuit Designer</h2>
+                    <div class="slide-content">
+                        <p>Create custom racing circuits:</p>
+                        <ul>
+                            <li>Click <span class="control-tag">DRAW NEW CIRCUIT</span> to open designer</li>
+                            <li>Drag on canvas to draw track path</li>
+                            <li>System smooths curves, connects ends automatically</li>
+                        </ul>
+                        <p><strong>Actions:</strong></p>
+                        <ul>
+                            <li><span class="control-tag">CLEAR CANVAS</span> — Start fresh</li>
+                            <li><span class="control-tag">GENERATE</span> — Create 3D track</li>
+                            <li><span class="control-tag">📤 Export</span> — Save as JSON</li>
+                            <li><span class="control-tag">📥 Import</span> — Load saved circuit</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Slide 10: Race Reports -->
+                <div class="slide">
+                    <span class="slide-icon">📈</span>
+                    <h2>Race Reports & Analysis</h2>
+                    <div class="slide-content">
+                        <p>After racing, generate comprehensive analysis:</p>
+                        <ul>
+                            <li><strong>Consistency:</strong> Variance, pace trends</li>
+                            <li><strong>Settings Review:</strong> Speed, grip, aero analysis</li>
+                            <li><strong>Circuit Stats:</strong> Length, corners, sections</li>
+                            <li><strong>Recommendations:</strong> AI setup suggestions</li>
+                        </ul>
+                        <p>Click <span class="control-tag">Generate Race Report</span> for insights and recommendations.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Slide 11: Physics & Simulation -->
+                <div class="slide">
+                    <span class="slide-icon">🔬</span>
+                    <h2>Physics & Simulation</h2>
+                    <div class="slide-content">
+                        <p>Realistic racing physics:</p>
+                        <ul>
+                            <li><strong>Grip Model:</strong> Base + compound - wear + downforce</li>
+                            <li><strong>Rain:</strong> 40% grip reduction</li>
+                            <li><strong>Aero Drag:</strong> Downforce vs speed trade-off</li>
+                            <li><strong>Dynamic Speed:</strong> Auto-slows for corners</li>
+                            <li><strong>Visuals:</strong> Pitch, roll, steering respond to physics</li>
+                            <li><strong>Shift Lights:</strong> RPM indicators near max speed</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Slide 12: Quick Tips -->
+                <div class="slide">
+                    <span class="slide-icon">💡</span>
+                    <h2>Pro Tips</h2>
+                    <div class="slide-content">
+                        <p>Strategies for fastest lap times:</p>
+                        <ul>
+                            <li><strong>Match Setup:</strong> High downforce for technical, low for speed tracks</li>
+                            <li><strong>Tire Strategy:</strong> Soft for qualifying, hard for long races</li>
+                            <li><strong>Watch Health:</strong> Below 30% impacts lap times</li>
+                            <li><strong>Cockpit Cam:</strong> Most immersive for precision</li>
+                            <li><strong>Radio Engineer:</strong> Real-time pace/tire feedback</li>
+                            <li><strong>Practice Dry First:</strong> Master track before rain</li>
+                            <li><strong>Read Report:</strong> Post-race analysis helps improve</li>
+                        </ul>
+                        <p><strong>Good luck, and may your lap times be legendary! 🏆</strong></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="rules-footer">
+            <a href="index.html" class="back-button">
+                ← Back to Simulator
+            </a>
+        </div>
+
+        <script>
+            const carousel = document.querySelector('.carousel');
+            let isScrolling = false;
+
+            carousel.addEventListener('wheel', (evt) => {
+                if (evt.deltaY !== 0) {
+                    evt.preventDefault();
+
+                    if (isScrolling) return;
+
+                    const slideWidth = 550 + 40; // Slide width (550px) + gap (2.5rem/40px)
+                    const direction = Math.sign(evt.deltaY);
+
+                    isScrolling = true;
+                    carousel.scrollBy({
+                        left: direction * slideWidth,
+                        behavior: 'smooth'
+                    });
+                    // Prevents rapid-fire scrolling through multiple cards
+                    setTimeout(() => {
+                        isScrolling = false;
+                    }, 400);
+                }
+            }, { passive: false });
+        </script>
+    </body>
+
+</html>
