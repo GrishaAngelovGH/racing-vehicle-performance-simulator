@@ -137,6 +137,27 @@ function formatTimeForTTS(seconds) {
     return text.trim();
 }
 
+function resetOnParamChange() {
+    if (simulationRunning) {
+        simulationRunning = false;
+        progress = 0;
+        currentLap = 1;
+        tireHealth = 1.0;
+        clearLapHistory();
+        lapStartTime = 0;
+        updateLapDisplay();
+        const launchBtn = document.getElementById('launchBtn');
+        if (launchBtn) launchBtn.textContent = "LAUNCH SIMULATION";
+        const currentTimeEl = document.getElementById('currentTime');
+        if (currentTimeEl) currentTimeEl.textContent = '--:--.---';
+        const speedEl = document.getElementById('currentSpeed');
+        if (speedEl) speedEl.textContent = "0 km/h";
+        hideReportButton();
+        // Reset car to start position
+        loadCircuit(document.getElementById('circuitSelect').value);
+    }
+}
+
 function generateLapSummary(time, lapNumber, previousBest, isLastLap) {
     const ttsTime = formatTimeForTTS(time);
     let text = `Lap ${lapNumber} complete. Time, ${ttsTime}. `;
@@ -381,12 +402,7 @@ if (maxSpeedInput) {
         const value = parseInt(e.target.value);
         maxSpeed = value;
         if (maxSpeedValue) maxSpeedValue.textContent = value;
-        // Update live speed display if simulation is running
-        if (simulationRunning) {
-            currentSpeed = value;
-            const speedEl = document.getElementById('currentSpeed');
-            if (speedEl) speedEl.textContent = `${value} km/h`;
-        }
+        resetOnParamChange();
     });
 }
 
@@ -398,6 +414,7 @@ if (accelerationInput) {
         const value = parseInt(e.target.value);
         acceleration = value;
         if (accelerationValue) accelerationValue.textContent = value;
+        resetOnParamChange();
     });
 }
 
@@ -409,6 +426,7 @@ if (gripInput) {
         const value = parseFloat(e.target.value);
         grip = value;
         if (gripValue) gripValue.textContent = value.toFixed(1);
+        resetOnParamChange();
     });
 }
 
@@ -420,6 +438,7 @@ if (brakePowerInput) {
         const value = parseInt(e.target.value);
         brakePower = value;
         if (brakePowerValue) brakePowerValue.textContent = value;
+        resetOnParamChange();
     });
 }
 
@@ -431,6 +450,7 @@ if (downforceInput) {
         const value = parseFloat(e.target.value);
         downforce = value;
         if (downforceValue) downforceValue.textContent = value.toFixed(1);
+        resetOnParamChange();
     });
 }
 
@@ -511,6 +531,8 @@ if (toggleRainBtn) {
         if (rainHint) {
             rainHint.style.display = isRaining ? 'block' : 'none';
         }
+        // Reset simulation to maintain valid performance measurements (rain affects grip)
+        resetOnParamChange();
     });
 }
 
@@ -602,6 +624,9 @@ function updateCompoundUI(compound) {
 
     // Update car visuals
     car.setCompound(compound);
+
+    // Reset simulation if running to maintain valid performance measurements
+    resetOnParamChange();
 }
 
 if (softTyreBtn && mediumTyreBtn && hardTyreBtn) {
