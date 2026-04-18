@@ -108,6 +108,51 @@ function makeChequeredTexture(cols, rows, tileSize = 32) {
     return tex;
 }
 
+function makeAsphaltTexture() {
+    const size = 512;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    // Base color
+    ctx.fillStyle = '#2b2b2b';
+    ctx.fillRect(0, 0, size, size);
+
+    const imgData = ctx.getImageData(0, 0, size, size);
+    const data = imgData.data;
+
+    for (let i = 0; i < data.length; i += 4) {
+        // Reduced noise amplitude for smoother look at speed
+        const noise = (Math.random() - 0.5) * 12; 
+        
+        let val = 45 + noise;
+        
+        // Much rarer and subtler light pebbles
+        if (Math.random() > 0.995) {
+            val += Math.random() * 15;
+        }
+        // Much rarer and subtler dark spots/cracks
+        if (Math.random() > 0.995) {
+            val -= Math.random() * 10;
+        }
+        
+        data[i] = val;     // R
+        data[i+1] = val;   // G
+        data[i+2] = val;   // B
+        data[i+3] = 255;   // A
+    }
+    
+    ctx.putImageData(imgData, 0, 0);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.anisotropy = 16;
+    
+    return tex;
+}
+
 function makeGantrySignTexture(circuitName) {
     const cw = 1024, ch = 192;
     const canvas = document.createElement('canvas');
@@ -256,6 +301,8 @@ export function createCircuit(circuitGroup, config, decorationsGroup = null) {
     const uvs = [];
 
     const up = new THREE.Vector3(0, 1, 0);
+    const trackLength = circuitCurve.getLength();
+    const repeatV = trackLength / circuitWidth;
 
     for (let i = 0; i <= segments; i++) {
         const t = i / segments;
@@ -269,8 +316,8 @@ export function createCircuit(circuitGroup, config, decorationsGroup = null) {
         const pRight = new THREE.Vector3().copy(pos).addScaledVector(side, -circuitWidth / 2);
         vertices.push(pRight.x, 0.1, pRight.z);
 
-        uvs.push(0, t * 20);
-        uvs.push(1, t * 20);
+        uvs.push(0, t * repeatV);
+        uvs.push(1, t * repeatV);
 
         if (i < segments) {
             const a = i * 2;
@@ -288,8 +335,13 @@ export function createCircuit(circuitGroup, config, decorationsGroup = null) {
     circuitGeo.setIndex(indices);
     circuitGeo.computeVertexNormals();
 
+    const asphaltTex = makeAsphaltTexture();
+
     const circuitMat = new THREE.MeshStandardMaterial({
-        color: 0x333333,
+        map: asphaltTex,
+        color: 0xbbbbbb,
+        roughness: 0.8,
+        metalness: 0.1,
         side: THREE.DoubleSide
     });
     const circuitMesh = new THREE.Mesh(circuitGeo, circuitMat);
