@@ -764,6 +764,7 @@ function updateFloatingMinimapHUD() {
     const lapEl = document.getElementById('minimap-lap');
     const laptimeEl = document.getElementById('minimap-laptime');
     const speedEl = document.getElementById('minimap-speed');
+    const cameraEl = document.getElementById('minimap-camera');
 
     if (lapEl) {
         if (simulationRunning) {
@@ -784,6 +785,10 @@ function updateFloatingMinimapHUD() {
 
     if (speedEl) {
         speedEl.textContent = `${Math.round(currentSpeed)} km/h`;
+    }
+
+    if (cameraEl) {
+        cameraEl.textContent = camera.camModeLabels[camera.camMode];
     }
 }
 

@@ -698,6 +698,17 @@ input[type="range"] {
     text-shadow: 0 0 10px var(--value-shadow);
 }
 
+.minimap-camera {
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--accent-color);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding-top: 4px;
+    border-top: 1px solid var(--panel-border);
+}
+
 /* UI Hint Display */
 .ui-hint-display {
     position: fixed;
