@@ -30,7 +30,7 @@ let showDecorations = true;
 const camera = new Camera(engine.camera, car, engine.scene);
 
 // Initialize Weather system
-const weather = new Weather(engine.scene);
+const weather = new Weather(engine.scene, camera);
 
 // --- UI State & Simulation Variables ---
 let uiHideMode = 0; // 0 = controls & stats shown, 1 = controls hidden & stats shown, 2 = both hidden
@@ -992,7 +992,7 @@ engine.start(() => {
     camera.update(progress, currentSpeed, simulationRunning);
 
     // Update weather effects
-    weather.update(dt, engine.camera);
+    weather.update(dt, engine.camera, camera.camMode, currentSpeed);
 
     // Draw real-time minimaps
     if (uiHideMode === 0 || uiHideMode === 1) {
