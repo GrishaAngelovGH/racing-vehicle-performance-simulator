@@ -37,21 +37,23 @@ Higher downforce improves cornering stability but reduces top speed on straights
 
 | Compound | Grip Bonus | Wear Rate | Best For |
 |----------|-----------|-----------|----------|
-| **Soft** | +0.2 | 0.05/lap | Short races, qualifying |
-| **Medium** | +0.1 | 0.03/lap | Balanced performance |
-| **Hard** | 0 | 0.01/lap | Long races, endurance |
+| **Soft** | +0.18 | 10%/lap | Short races, qualifying |
+| **Medium** | +0.08 | 4%/lap | Balanced performance |
+| **Hard** | -0.04 | 1.5%/lap | Long races, endurance |
+| **Intermediate** | +0.12 | 8%/lap | Light to moderate rain |
+| **Full Wet** | +0.18 | 5%/lap | Heavy rain, standing water |
 
-As tyres wear, grip decreases and lap times increase. Choosing the right compound for race length is critical for optimal performance.
+As tyres wear, grip decreases and lap times increase. Choosing the right compound for race length and weather conditions is critical for optimal performance.
 
 ### Environmental Effects
 
 | Condition | Grip Impact | Strategy |
 |-----------|-------------|----------|
-| **Dry** | 100% baseline | Standard racing line |
-| **Rain** | -40% grip | Earlier braking, slower corners |
+| **Dry** | 100% baseline | Standard racing line on slicks. |
+| **Rain** | -40% grip (Slicks)<br>-15% grip (Inters)<br>-5% grip (Wets) | Switch to Intermediate or Full Wet tires to maintain grip. Slicks are heavily penalized. |
 | **Decorations** | Visual only | No performance impact |
 
-Rain significantly reduces traction, requiring adjusted braking points and corner entry speeds to maintain control.
+Rain significantly reduces traction. When rain starts, dry tires (Soft, Medium, Hard) become unavailable and you must switch to Intermediate or Full Wet tires. Note that using rain tires in dry conditions will severely penalize your grip!
 
 ## The project is using the following technologies:
 

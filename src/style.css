@@ -340,6 +340,24 @@ select {
     text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
 }
 
+.compound-btn.intermediate.active {
+    background: #00cc00;
+    color: white;
+}
+
+.compound-btn.wet.active {
+    background: #0066ff;
+    color: white;
+}
+
+#currentCompound.compound-intermediate {
+    color: #00cc00;
+}
+
+#currentCompound.compound-wet {
+    color: #0066ff;
+}
+
 .env-btn {
     font-size: 1.2rem;
     padding: 4px;

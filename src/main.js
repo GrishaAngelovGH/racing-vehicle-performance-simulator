@@ -514,6 +514,9 @@ if (toggleDecorBtn) {
 // --- Rain Toggle ---
 const toggleRainBtn = document.getElementById('toggleRainBtn');
 const rainHint = document.getElementById('rainHint');
+const intermediateTyreBtn = document.getElementById('intermediateTyreBtn');
+const wetTyreBtn = document.getElementById('wetTyreBtn');
+
 if (toggleRainBtn) {
     toggleRainBtn.addEventListener('click', () => {
         // Initialize audio if needed
@@ -524,8 +527,28 @@ if (toggleRainBtn) {
         // Update button visual state
         if (isRaining) {
             toggleRainBtn.classList.add('active');
+            if (intermediateTyreBtn) intermediateTyreBtn.style.display = 'block';
+            if (wetTyreBtn) wetTyreBtn.style.display = 'block';
+            if (softTyreBtn) softTyreBtn.style.display = 'none';
+            if (mediumTyreBtn) mediumTyreBtn.style.display = 'none';
+            if (hardTyreBtn) hardTyreBtn.style.display = 'none';
+            
+            // Switch to inters if currently on dry tires when rain starts
+            if (['soft', 'medium', 'hard'].includes(currentTireCompound)) {
+                updateCompoundUI('intermediate');
+            }
         } else {
             toggleRainBtn.classList.remove('active');
+            if (intermediateTyreBtn) intermediateTyreBtn.style.display = 'none';
+            if (wetTyreBtn) wetTyreBtn.style.display = 'none';
+            if (softTyreBtn) softTyreBtn.style.display = 'block';
+            if (mediumTyreBtn) mediumTyreBtn.style.display = 'block';
+            if (hardTyreBtn) hardTyreBtn.style.display = 'block';
+            
+            // Revert to medium if a wet tire was selected when it stops raining
+            if (currentTireCompound === 'intermediate' || currentTireCompound === 'wet') {
+                updateCompoundUI('medium');
+            }
         }
         // Show/hide rain hint
         if (rainHint) {
@@ -601,10 +624,14 @@ function updateCompoundUI(compound) {
     softTyreBtn?.classList.remove('active');
     mediumTyreBtn?.classList.remove('active');
     hardTyreBtn?.classList.remove('active');
+    intermediateTyreBtn?.classList.remove('active');
+    wetTyreBtn?.classList.remove('active');
 
     if (compound === 'soft') softTyreBtn?.classList.add('active');
     if (compound === 'medium') mediumTyreBtn?.classList.add('active');
     if (compound === 'hard') hardTyreBtn?.classList.add('active');
+    if (compound === 'intermediate') intermediateTyreBtn?.classList.add('active');
+    if (compound === 'wet') wetTyreBtn?.classList.add('active');
 
     // Update stats display
     const compoundData = car.tireCompounds[compound];
@@ -633,6 +660,8 @@ if (softTyreBtn && mediumTyreBtn && hardTyreBtn) {
     softTyreBtn.addEventListener('click', () => updateCompoundUI('soft'));
     mediumTyreBtn.addEventListener('click', () => updateCompoundUI('medium'));
     hardTyreBtn.addEventListener('click', () => updateCompoundUI('hard'));
+    if (intermediateTyreBtn) intermediateTyreBtn.addEventListener('click', () => updateCompoundUI('intermediate'));
+    if (wetTyreBtn) wetTyreBtn.addEventListener('click', () => updateCompoundUI('wet'));
 }
 
 // Keyboard controls for panel toggle
@@ -848,7 +877,23 @@ engine.start(() => {
         const compoundBonus = getTireGripBonus();
         const wearPenalty = (1.0 - tireHealth) * 0.45; // Max 0.45 grip loss at 0% health
         const downforceGripBonus = (downforce - 1.0) * 0.4;
-        const rainGripFactor = weather.isRainEnabled() ? 0.6 : 1.0; // 40% grip reduction in rain
+        
+        let rainGripFactor = 1.0;
+        if (weather.isRainEnabled()) {
+            if (currentTireCompound === 'wet') {
+                rainGripFactor = 0.95; 
+            } else if (currentTireCompound === 'intermediate') {
+                rainGripFactor = 0.85; 
+            } else {
+                rainGripFactor = 0.6; // 40% grip reduction in rain for slicks
+            }
+        } else {
+            if (currentTireCompound === 'wet') {
+                rainGripFactor = 0.4; // Terrible in dry
+            } else if (currentTireCompound === 'intermediate') {
+                rainGripFactor = 0.6; // Bad in dry
+            }
+        }
 
         const baseGrip = (grip + compoundBonus - wearPenalty + downforceGripBonus) * rainGripFactor;
         const effectiveGrip = Math.min(1.4, Math.max(0.1, baseGrip));
