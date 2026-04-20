@@ -328,16 +328,26 @@ export class Weather {
             this.scene.fog.color = new THREE.Color(0x333344);
             this.scene.fog.far = 150;
 
+            const sun = this.scene.getObjectByName('sun');
+            if (sun) sun.intensity = 0.4;
+            const ambient = this.scene.getObjectByName('ambientLight');
+            if (ambient) ambient.intensity = 0.4;
+
             if (audioCtx && !this.rainAudio) {
                 this.initAudio(audioCtx);
             }
             if (this.rainGain) {
-                this.rainGain.gain.setTargetAtTime(0.3, this.audioCtx.currentTime, 1);
+                this.rainGain.gain.setTargetAtTime(0.1, this.audioCtx.currentTime, 1);
             }
         } else {
             this.scene.background = this.originalBackground;
             this.scene.fog.color = this.originalFog;
             this.scene.fog.far = 1000;
+
+            const sun = this.scene.getObjectByName('sun');
+            if (sun) sun.intensity = 1.0;
+            const ambient = this.scene.getObjectByName('ambientLight');
+            if (ambient) ambient.intensity = 0.5;
 
             if (this.rainGain) {
                 this.rainGain.gain.setTargetAtTime(0, this.audioCtx.currentTime, 1);

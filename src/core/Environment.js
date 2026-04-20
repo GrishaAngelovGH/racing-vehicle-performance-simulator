@@ -7,9 +7,11 @@ export function initEnvironment(scene) {
 
     // Lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    ambientLight.name = 'ambientLight';
     scene.add(ambientLight);
 
     const sun = new THREE.DirectionalLight(0xffffff, 1);
+    sun.name = 'sun';
     sun.position.set(100, 200, 100);
     sun.castShadow = true;
     sun.shadow.camera.left = -150;

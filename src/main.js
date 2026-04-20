@@ -524,6 +524,9 @@ if (toggleRainBtn) {
             initAudio();
         }
         const isRaining = weather.toggle(getAudioContext());
+        if (typeof car !== 'undefined' && car.setRainMode) {
+            car.setRainMode(isRaining);
+        }
         // Update button visual state
         if (isRaining) {
             toggleRainBtn.classList.add('active');

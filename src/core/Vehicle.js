@@ -645,4 +645,22 @@ export class Vehicle {
             ], 0.012, materials.chrome, 5, 5));
         });
     }
+
+    setRainMode(isRaining) {
+        if (this.rainLight && this.rainLight.material) {
+            this.rainLight.material.emissiveIntensity = isRaining ? 2.0 : 0.0;
+        }
+        if (this.steeringWheel) {
+            this.steeringWheel.children.forEach(child => {
+                if (child.material && child.material.emissive) {
+                    const hex = child.material.emissive.getHex();
+                    if (hex === 0x00ffff) {
+                        child.material.emissiveIntensity = isRaining ? 0.4 : 1.5;
+                    } else if (child.material.emissiveIntensity === 0.5 || child.material.emissiveIntensity === 0.15) {
+                        child.material.emissiveIntensity = isRaining ? 0.15 : 0.5;
+                    }
+                }
+            });
+        }
+    }
 }
