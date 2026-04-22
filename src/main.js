@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Engine } from './core/Engine.js';
 import { initEnvironment } from './core/Environment.js';
-import { CIRCUIT_CONFIGS, createCircuit } from './core/Circuit.js';
+import { CIRCUIT_CONFIGS, createCircuit, analyzeCircuitGeometry, getIdealSetup } from './core/Circuit.js';
 import { CircuitDesigner } from './core/CircuitDesigner.js';
 import { Vehicle } from './core/Vehicle.js';
 import { Camera } from './core/Camera.js';
@@ -59,6 +59,106 @@ function getTireWearRate() {
 
 function getTireGripBonus() {
     return car.tireCompounds[currentTireCompound].grip;
+}
+
+let lastSetupValues = {
+    maxSpeed: maxSpeed,
+    acceleration: acceleration,
+    grip: grip,
+    brakePower: brakePower,
+    downforce: downforce,
+    tireCompound: currentTireCompound
+};
+
+function playEngineerAnalysis(text) {
+    if (isTTSEnabled()) {
+        playRadioAndSpeak(text);
+    }
+}
+
+function analyzeSetupChange(param, newValue) {
+    const oldValue = lastSetupValues[param];
+    if (oldValue === newValue) return;
+
+    const circuitId = document.getElementById('circuitSelect')?.value || 'classic';
+    const config = CIRCUIT_CONFIGS[circuitId];
+    if (!config.characteristics && id === 'custom') {
+        config.characteristics = analyzeCircuitGeometry(config.points);
+    }
+    const chars = config.characteristics;
+    const targets = getIdealSetup(chars);
+    const isRaining = weather.isRainEnabled();
+
+    let text = "";
+    const margin = 0.1; // Percentage margin for "optimal" range
+    
+    if (param === 'maxSpeed') {
+        const diffToTarget = newValue - targets.maxSpeed;
+        if (Math.abs(diffToTarget) < targets.maxSpeed * 0.05) {
+            text = "Spot on. That top speed is perfectly balanced for this circuit's straights.";
+        } else if (newValue > targets.maxSpeed) {
+            text = "We've got plenty of top speed now, perhaps too much. We might be sacrificing too much elsewhere to reach it.";
+        } else {
+            text = "Good increase, but we're still a bit short on top end for these straights. Keep pushing it up.";
+        }
+        // Special case for decreasing when already too low
+        if (newValue < oldValue && newValue < targets.maxSpeed - 20) {
+            text = "Wait, we're already slow on the straights. Decreasing top speed further will really hurt our lap times.";
+        }
+    } else if (param === 'acceleration') {
+        if (Math.abs(newValue - targets.acceleration) < 5) {
+            text = "That's the sweet spot for acceleration. Great punch out of the corners without spinning the wheels.";
+        } else if (newValue > targets.acceleration) {
+            text = "That's a lot of torque. It might be hard to manage the traction on corner exit.";
+        } else {
+            text = "Better, but we still need more 'get-up-and-go' for this layout.";
+        }
+    } else if (param === 'grip') {
+        if (Math.abs(newValue - targets.grip) < 0.1) {
+            text = "The mechanical grip feels perfect now. The car is balanced and predictable.";
+        } else if (newValue > targets.grip) {
+            text = "We have massive grip now, but be careful of the car feeling too heavy or 'lazy' in quick transitions.";
+        } else {
+            text = "Increased grip is good, but I think we can find even more stability in the high-speed sections.";
+        }
+    } else if (param === 'brakePower') {
+        if (newValue >= targets.brakePower) {
+            text = "Excellent stopping power. That's exactly what we need for these heavy braking zones.";
+        } else {
+            text = "Stronger brakes, but I'd still like more bite for the big stops at the end of the straights.";
+        }
+    } else if (param === 'downforce') {
+        const diff = newValue - targets.downforce;
+        if (Math.abs(diff) < 0.15) {
+            text = "Aero balance is perfect. Just enough downforce for the fast turns without too much drag.";
+        } else if (newValue > targets.downforce) {
+            text = "We've got huge downforce now, great for the sweeps, but the drag will make us a sitting duck on the straights.";
+        } else {
+            if (newValue > oldValue) text = "Better stability, but we can still add more wing for these fast corners.";
+            else text = "Low downforce will help our top speed, but the car will be very nervous in the fast stuff.";
+        }
+    } else if (param === 'tireCompound') {
+        // Compound logic remains relatively similar but can be more specific
+        if (newValue === 'soft') {
+            text = (chars.type === 'technical') ? 
+                "Softs are perfect for this technical layout. Maximum traction, but keep an eye on those temperatures." :
+                "Softs will give us a great qualifying lap here, but they won't last the distance.";
+        } else if (newValue === 'medium') {
+            text = "Mediums are the smart choice here. Good consistency throughout the stint.";
+        } else if (newValue === 'hard') {
+            text = "Switching to Hards. We'll be slow to start, but we can go much longer than the others.";
+        } else if (newValue === 'intermediate') {
+            text = isRaining ? "Good call on the Intermediates. Perfect for this amount of water." : "It's too dry for Intermediates. They'll be destroyed in no time.";
+        } else if (newValue === 'wet') {
+            text = isRaining ? "Full Wets are necessary now. Safety first in these conditions." : "Way too dry for Wets. You'll have zero grip and ruin the tires.";
+        }
+    }
+
+    if (text) {
+        playEngineerAnalysis(text);
+    }
+    
+    lastSetupValues[param] = newValue;
 }
 
 function updateLapDisplay() {
@@ -268,6 +368,11 @@ function loadCircuit(id) {
     const config = CIRCUIT_CONFIGS[id];
     if (!config || (id === 'custom' && config.points.length === 0)) return;
 
+    // Dynamically profile custom circuits based on drawn points
+    if (id === 'custom') {
+        config.characteristics = analyzeCircuitGeometry(config.points);
+    }
+
     // 1. Update Ground Color
     const ground = engine.scene.getObjectByName('ground');
     if (ground) ground.material.color.set(config.groundColor);
@@ -303,6 +408,11 @@ function loadCircuit(id) {
             circuitInfoPanel.style.display = 'none';
         }
     }
+
+    // Race Engineer circuit intro
+    const chars = config.characteristics;
+    const introText = `Circuit loaded: ${config.name}. This is a ${chars.speed} speed, ${chars.type} layout. We'll need to balance the setup for the ${chars.straights} straights and ${chars.braking} braking zones.`;
+    playEngineerAnalysis(introText);
 
     // Reset simulation state
     progress = 0;
@@ -404,6 +514,9 @@ if (maxSpeedInput) {
         if (maxSpeedValue) maxSpeedValue.textContent = value;
         resetOnParamChange();
     });
+    maxSpeedInput.addEventListener('change', (e) => {
+        analyzeSetupChange('maxSpeed', parseInt(e.target.value));
+    });
 }
 
 // Acceleration Input Handler
@@ -415,6 +528,9 @@ if (accelerationInput) {
         acceleration = value;
         if (accelerationValue) accelerationValue.textContent = value;
         resetOnParamChange();
+    });
+    accelerationInput.addEventListener('change', (e) => {
+        analyzeSetupChange('acceleration', parseInt(e.target.value));
     });
 }
 
@@ -428,6 +544,9 @@ if (gripInput) {
         if (gripValue) gripValue.textContent = value.toFixed(1);
         resetOnParamChange();
     });
+    gripInput.addEventListener('change', (e) => {
+        analyzeSetupChange('grip', parseFloat(e.target.value));
+    });
 }
 
 // Brake Input Handler
@@ -440,6 +559,9 @@ if (brakePowerInput) {
         if (brakePowerValue) brakePowerValue.textContent = value;
         resetOnParamChange();
     });
+    brakePowerInput.addEventListener('change', (e) => {
+        analyzeSetupChange('brakePower', parseInt(e.target.value));
+    });
 }
 
 // Aero Downforce Input Handler
@@ -451,6 +573,9 @@ if (downforceInput) {
         downforce = value;
         if (downforceValue) downforceValue.textContent = value.toFixed(1);
         resetOnParamChange();
+    });
+    downforceInput.addEventListener('change', (e) => {
+        analyzeSetupChange('downforce', parseFloat(e.target.value));
     });
 }
 
@@ -572,6 +697,13 @@ if (toggleRadioEngineerBtn) {
             if (!isAudioInitialized()) {
                 initAudio();
             }
+            
+            const circuitId = document.getElementById('circuitSelect')?.value || 'classic';
+            const config = CIRCUIT_CONFIGS[circuitId];
+            const chars = config.characteristics;
+            
+            const introText = `Race engineer online. We're at ${config.name}. This is a ${chars.speed} speed, ${chars.type} layout. I'll analyze your setup changes for the ${chars.straights} straights and ${chars.braking} braking zones.`;
+            playEngineerAnalysis(introText);
         } else {
             toggleRadioEngineerBtn.classList.remove('active');
         }
@@ -657,6 +789,8 @@ function updateCompoundUI(compound) {
 
     // Reset simulation if running to maintain valid performance measurements
     resetOnParamChange();
+    
+    analyzeSetupChange('tireCompound', compound);
 }
 
 if (softTyreBtn && mediumTyreBtn && hardTyreBtn) {

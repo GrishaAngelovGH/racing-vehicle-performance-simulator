@@ -11,7 +11,10 @@ An interactive 3D racing simulation that allows users to configure vehicle param
 * **Dynamic Weather System** - Toggle rain conditions that affect grip and driving dynamics
 * **Environment Decorations** - Toggle trees and buildings for immersive racing environments
 * **Engine Sound Modes** - Switch between Dynamic and Real engine sound profiles
-* **Race Engineer Voice** - Optional audio feedback from a virtual race engineer
+*   **Dynamic Race Engineer Analysis** - Real-time audio feedback that evaluates your car setup against the specific geometry of the current track.
+*   **Circuit Profiling System** - Automatically analyzes custom-drawn tracks to determine their speed, technicality, and braking requirements.
+*   **Setup Optimization Logic** - Move beyond "maxing out" sliders; find the "Sweet Spot" for each circuit to balance top speed vs. cornering drag.
+*   **Race Engineer Voice** - Audio feedback from a virtual race engineer with lap summaries and setup advice.
 * **Live Telemetry Dashboard** - Real-time display of lap times, speed, tire health, and camera mode
 * **Lap History Tracking** - Complete record of all lap times with best lap highlighting
 * **Race Analysis Reports** - Generate detailed post-race performance reports with statistics
@@ -54,6 +57,18 @@ As tyres wear, grip decreases and lap times increase. Choosing the right compoun
 | **Decorations** | Visual only | No performance impact |
 
 Rain significantly reduces traction. When rain starts, dry tires (Soft, Medium, Hard) become unavailable and you must switch to Intermediate or Full Wet tires. Note that using rain tires in dry conditions will severely penalize your grip!
+
+---
+
+### How the Race Engineer Works
+The Race Engineer doesn't just give random advice; it follows a sophisticated technical workflow:
+
+1.  **Circuit Profiling:** When a track is loaded, the system analyzes its geometry (segment lengths and turn angles) to determine its "DNA" (e.g., High-Speed, Technical, or Flowing).
+2.  **Golden Setup Calculation:** Based on the track's profile, the system calculates a hidden "Golden Setup"—the theoretically perfect numerical targets for speed, downforce, and grip.
+3.  **Real-Time Comparison:** As you move the sliders, the system compares your current values to these targets in real-time.
+4.  **Intelligent Feedback:** Instead of simple "higher/lower" hints, the engineer identifies if you are **Under-tuned**, in the **Sweet Spot**, or **Over-tuned** (where a setting starts causing negative trade-offs like excessive drag).
+
+---
 
 ## The project is using the following technologies:
 

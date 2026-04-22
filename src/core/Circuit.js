@@ -37,7 +37,13 @@ export const CIRCUIT_CONFIGS = {
         buildingProb: 0.3,
         groundColor: 0x116611,
         curbColor: 0xffffff,
-        description: 'A flowing open-country circuit with wide sweeping arcs, a large outer loop, and tight infield twists. Smooth, committed driving is rewarded over braking.'
+        description: 'A flowing open-country circuit with wide sweeping arcs, a large outer loop, and tight infield twists. Smooth, committed driving is rewarded over braking.',
+        characteristics: {
+            speed: 'high',
+            type: 'flowing',
+            straights: 'long',
+            braking: 'moderate'
+        }
     },
     forest: {
         name: 'Forest Sprint',
@@ -55,7 +61,13 @@ export const CIRCUIT_CONFIGS = {
         buildingProb: 0.05,
         groundColor: 0x0a4d0a,
         curbColor: 0xe10600,
-        description: 'An organic, high-speed course winding through dense woodlands. Tight hairpins and flowing curves test both grip and precision.'
+        description: 'An organic, high-speed course winding through dense woodlands. Tight hairpins and flowing curves test both grip and precision.',
+        characteristics: {
+            speed: 'medium',
+            type: 'mixed',
+            straights: 'medium',
+            braking: 'heavy'
+        }
     },
     city: {
         name: 'City Street',
@@ -78,7 +90,13 @@ export const CIRCUIT_CONFIGS = {
         buildingProb: 0.9,
         groundColor: 0x222222,
         curbColor: 0xf9d62e,
-        description: 'A technical harbor-style street circuit with sharp 90-degree turns and narrow urban canyons between skyscrapers.'
+        description: 'A technical harbor-style street circuit with sharp 90-degree turns and narrow urban canyons between skyscrapers.',
+        characteristics: {
+            speed: 'low',
+            type: 'technical',
+            straights: 'short',
+            braking: 'very-heavy'
+        }
     },
     custom: {
         name: 'Custom User Circuit',
@@ -87,7 +105,13 @@ export const CIRCUIT_CONFIGS = {
         buildingProb: 0.5,
         groundColor: 0x222222,
         curbColor: 0xffffff,
-        description: 'A circuit designed by you! Featuring your unique layout and balance of scenery.'
+        description: 'A circuit designed by you! Featuring your unique layout and balance of scenery.',
+        characteristics: {
+            speed: 'medium',
+            type: 'variable',
+            straights: 'medium',
+            braking: 'moderate'
+        }
     }
 };
 
@@ -283,6 +307,117 @@ function createStartFinish(circuitGroup, circuitCurve, config, circuitWidth) {
     gantryGroup.add(signBackward);
 
     circuitGroup.add(gantryGroup);
+}
+
+export function getIdealSetup(chars) {
+    const ideal = {
+        maxSpeed: 240,
+        acceleration: 60,
+        grip: 1.0,
+        brakePower: 7,
+        downforce: 1.2
+    };
+
+    // Adjust based on speed
+    if (chars.speed === 'high') {
+        ideal.maxSpeed = 280;
+        ideal.downforce = 0.8;
+    } else if (chars.speed === 'low') {
+        ideal.maxSpeed = 190;
+        ideal.downforce = 1.7;
+    }
+
+    // Adjust based on straights
+    if (chars.straights === 'long') {
+        ideal.maxSpeed += 20;
+        ideal.acceleration -= 5; // Sacrifice some punch for top end
+    } else if (chars.straights === 'short') {
+        ideal.maxSpeed -= 20;
+        ideal.acceleration += 15;
+    }
+
+    // Adjust based on technicality
+    if (chars.type === 'technical') {
+        ideal.grip = 1.3;
+        ideal.acceleration += 10;
+        ideal.downforce += 0.3;
+    } else if (chars.type === 'flowing') {
+        ideal.grip = 0.8;
+        ideal.downforce += 0.2; // High speed corners need aero
+    }
+
+    // Adjust based on braking
+    if (chars.braking === 'very-heavy') {
+        ideal.brakePower = 9;
+    } else if (chars.braking === 'heavy') {
+        ideal.brakePower = 8;
+    } else if (chars.braking === 'moderate') {
+        ideal.brakePower = 6;
+    }
+
+    return ideal;
+}
+
+export function analyzeCircuitGeometry(points) {
+    if (!points || points.length < 3) {
+        return { speed: 'medium', type: 'variable', straights: 'medium', braking: 'moderate' };
+    }
+
+    let totalLength = 0;
+    let totalAngle = 0;
+    let maxStraight = 0;
+    let currentStraight = 0;
+    let sharpTurns = 0;
+
+    for (let i = 0; i < points.length; i++) {
+        const p1 = points[i];
+        const p2 = points[(i + 1) % points.length];
+        const p3 = points[(i + 2) % points.length];
+
+        const v1 = new THREE.Vector3().subVectors(p2, p1);
+        const v2 = new THREE.Vector3().subVectors(p3, p2);
+        
+        const segmentLen = v1.length();
+        totalLength += segmentLen;
+
+        const angle = v1.angleTo(v2); // Radians
+        totalAngle += angle;
+
+        // A "straight" is where the angle change is very small (less than ~5 degrees)
+        if (angle < 0.1) {
+            currentStraight += segmentLen;
+        } else {
+            maxStraight = Math.max(maxStraight, currentStraight);
+            currentStraight = 0;
+            if (angle > 0.8) sharpTurns++; // Roughly > 45 degrees
+        }
+    }
+    maxStraight = Math.max(maxStraight, currentStraight);
+
+    const avgCurvature = totalAngle / totalLength;
+    
+    // Categorize based on calculated metrics
+    const characteristics = {
+        speed: 'medium',
+        type: 'mixed',
+        straights: 'medium',
+        braking: 'moderate'
+    };
+
+    if (maxStraight > 300) characteristics.straights = 'long';
+    else if (maxStraight < 100) characteristics.straights = 'short';
+
+    if (avgCurvature > 0.015) characteristics.type = 'technical';
+    else if (avgCurvature < 0.005) characteristics.type = 'flowing';
+
+    if (sharpTurns > points.length * 0.4) characteristics.braking = 'very-heavy';
+    else if (sharpTurns > points.length * 0.2) characteristics.braking = 'heavy';
+
+    // Speed is a combination of type and straights
+    if (characteristics.straights === 'long' && characteristics.type === 'flowing') characteristics.speed = 'high';
+    else if (characteristics.straights === 'short' || characteristics.type === 'technical') characteristics.speed = 'low';
+
+    return characteristics;
 }
 
 export function createCircuit(circuitGroup, config, decorationsGroup = null) {
