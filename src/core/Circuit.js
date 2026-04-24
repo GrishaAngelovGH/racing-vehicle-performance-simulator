@@ -311,8 +311,8 @@ function createStartFinish(circuitGroup, circuitCurve, config, circuitWidth) {
 
 export function getIdealSetup(chars, totalLaps = 5) {
     const ideal = {
-        maxSpeed: 250,
-        acceleration: 65,
+        maxSpeed: 280,
+        acceleration: 80,
         grip: 1.0,
         brakePower: 7,
         downforce: 1.2
@@ -320,11 +320,11 @@ export function getIdealSetup(chars, totalLaps = 5) {
 
     // Adjust based on speed
     if (chars.speed === 'high') {
-        ideal.maxSpeed = 310; // Increased from 280
-        ideal.grip = 1.1;     // Increased from 0.8
+        ideal.maxSpeed = 320; 
+        ideal.grip = 1.1;     
         ideal.downforce = 0.9;
     } else if (chars.speed === 'low') {
-        ideal.maxSpeed = 200;
+        ideal.maxSpeed = 220;
         ideal.downforce = 1.8;
     }
 

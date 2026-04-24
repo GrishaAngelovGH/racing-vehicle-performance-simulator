@@ -87,32 +87,30 @@ export function analyzeSetupChange(param, newValue, context) {
     if (param === 'maxSpeed') {
         const diffToTarget = newValue - targets.maxSpeed;
         if (Math.abs(diffToTarget) < targets.maxSpeed * 0.08) {
-            text = "Spot on. That top speed is perfectly balanced for this circuit's straights.";
+            text = "Spot on. This is the right top speed for this circuit's straights.";
         } else if (newValue > targets.maxSpeed) {
-            text = "We've got plenty of top speed now, perhaps too much. We might be sacrificing too much elsewhere to reach it.";
+            text = "We've got too much top speed now. It's great for pace, but we'll destroy the tires at these velocities. I'd recommend backing it off.";
         } else {
-            text = "Good increase, but we're still a bit short on top end for these straights. Keep pushing it up.";
-        }
-        if (newValue < oldValue && newValue < targets.maxSpeed - 20) {
-            text = "Wait, we're already slow on the straights. Decreasing top speed further will really hurt our lap times.";
+            text = "We're still way too slow on the straights. We need to increase the max speed to be competitive here.";
         }
     } else if (param === 'acceleration') {
         if (Math.abs(newValue - targets.acceleration) < 5) {
-            text = "That's the sweet spot for acceleration. Great punch out of the corners without spinning the wheels.";
+            text = "That is the perfect configuration for acceleration. Great punch out of the corners.";
         } else if (newValue > targets.acceleration) {
-            text = "That's a lot of torque. It might be hard to manage the traction on corner exit.";
+            text = "This is too much torque for a long stint. We'll eat the rear tires too quickly. We should dial the acceleration back.";
         } else {
-            text = "Better, but we still need more 'get-up-and-go' for this layout.";
+            text = "The car is feeling sluggish. We need more acceleration to get out of these turns effectively.";
         }
     } else if (param === 'grip') {
         if (Math.abs(newValue - targets.grip) < 0.1) {
-            text = "The mechanical grip feels perfect now. The car is balanced and predictable.";
+            text = "The mechanical grip is perfect. This is exactly how the car should be balanced.";
         } else if (newValue > targets.grip) {
-            text = "We have massive grip now, but be careful of the car feeling too heavy or 'lazy' in quick transitions.";
+            text = "We have massive grip, perhaps more than we need. It's going to hurt our tire life if we stay this aggressive.";
         } else {
-            text = "Increased grip is good, but I think we can find even more stability in the high-speed sections.";
+            text = "We're still sliding too much in the corners. We need to increase the mechanical grip for better stability.";
         }
-    } else if (param === 'brakePower') {
+    }
+ else if (param === 'brakePower') {
         const diff = newValue - targets.brakePower;
         const currentGrip = lastSetupValues.grip;
         

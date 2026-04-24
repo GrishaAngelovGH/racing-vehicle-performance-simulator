@@ -1109,15 +1109,21 @@ engine.start(() => {
 
         // Convert speed from km/h to meters/sec
         const metersPerSec = currentSpeed * 0.277778;
+        const dProgress = (metersPerSec * dt) / trackLength;
+
+        // Apply performance-based tire wear
+        // Higher speed and higher acceleration increase wear rate
+        const speedWearFactor = Math.max(0.4, currentSpeed / 220); 
+        const accelWearFactor = Math.max(1.0, acceleration / 70);
+        session.tireHealth = Math.max(0, session.tireHealth - (dProgress * getTireWearRate() * speedWearFactor * accelWearFactor));
 
         const previousProgress = progress;
-        progress += (metersPerSec * dt) / trackLength;
+        progress += dProgress;
 
         // Check if lap completed
         if (progress >= 1) {
             const lapTime = (now - lapStartTime) / 1000;
-            // Reduce tire health for the lap just completed
-            session.tireHealth = Math.max(0, session.tireHealth - getTireWearRate());
+            // Tire health is now updated in real-time above
             recordLap(lapTime);
             progress -= 1;
             lapStartTime = now;
