@@ -1098,10 +1098,12 @@ engine.start(() => {
     if (simulationRunning && trackCurve) {
         // Calculate track curvature at current position
         const tangent = trackCurve.getTangentAt(progress);
-        const lookAhead = (progress + 0.02) % 1;
+        const lookAhead = (progress + 0.01) % 1; // Slightly closer lookahead for better responsiveness
         const nextTangent = trackCurve.getTangentAt(lookAhead);
         const angle = tangent.angleTo(nextTangent);
-        const curvature = Math.min(1.0, angle * 15.0); // Normalized curvature [0, 1]
+        
+        // Quadratic response: small angles = almost 0 penalty, sharp angles = high penalty
+        const curvature = Math.pow(Math.min(1.0, angle * 10.0), 2); 
 
         // --- Cornering Grip Logic ---
         const compoundBonus = getTireGripBonus();
@@ -1126,14 +1128,15 @@ engine.start(() => {
         }
 
         const baseGrip = (grip + compoundBonus - wearPenalty + downforceGripBonus) * rainGripFactor;
-        const effectiveGrip = Math.min(1.4, Math.max(0.1, baseGrip));
+        const effectiveGrip = Math.min(1.6, Math.max(0.1, baseGrip));
 
         // Aero drag penalty from downforce (higher downforce = lower top speed)
         const aeroDragFactor = (downforce - 1.0) * 0.15;
         const effectiveMaxSpeed = maxSpeed * (1.0 - aeroDragFactor);
 
         // Target speed calculation - slower in corners, faster on straights
-        const speedPenalty = curvature * (1.8 - effectiveGrip);
+        // Using the quadratic curvature makes straights "cleaner"
+        const speedPenalty = curvature * (1.5 - effectiveGrip);
         let targetSpeed = effectiveMaxSpeed * (1.0 - Math.min(0.8, speedPenalty));
 
         targetSpeed = Math.max(effectiveMaxSpeed * 0.2, targetSpeed); // Minimum 20% of effective max speed
