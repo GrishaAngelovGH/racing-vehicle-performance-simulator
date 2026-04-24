@@ -1228,6 +1228,7 @@ engine.start(() => {
                 // Keep solid yellow when requested
                 boxBtn.style.background = '#ffeb3b';
                 boxBtn.style.color = '#000';
+                boxBtn.style.borderWidth = '2px';
                 boxBtn.style.boxShadow = '0 0 15px rgba(255, 235, 59, 0.5)';
             } else if (tireHealth < 0.3) {
                 // Pulse red when critical health but not yet requested
@@ -1242,11 +1243,12 @@ engine.start(() => {
                     warningPlayed = true;
                 }
             } else {
-                // Standard state
-                boxBtn.style.background = '';
+                // Standard state: added subtle glow and background for better visibility
+                boxBtn.style.background = 'rgba(255, 235, 59, 0.05)';
                 boxBtn.style.color = '#ffeb3b';
                 boxBtn.style.borderColor = '#ffeb3b';
-                boxBtn.style.boxShadow = '';
+                boxBtn.style.borderWidth = '2px';
+                boxBtn.style.boxShadow = '0 0 10px rgba(255, 235, 59, 0.2)';
             }
         }
 
@@ -1266,13 +1268,12 @@ engine.start(() => {
         // Check if lap completed
         if (progress >= 1) {
             const lapTime = (now - lapStartTime) / 1000;
+            // Reduce tire health for the lap just completed
+            tireHealth = Math.max(0, tireHealth - getTireWearRate());
             recordLap(lapTime);
             progress -= 1;
             lapStartTime = now;
             currentLap++;
-
-            // Reduce tire health
-            tireHealth = Math.max(0, tireHealth - getTireWearRate());
             warningPlayed = false; // Reset warning for next lap
 
             updateLapDisplay();
