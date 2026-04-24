@@ -91,7 +91,7 @@ function analyzeSetupChange(param, newValue) {
         config.characteristics = analyzeCircuitGeometry(config.points);
     }
     const chars = config.characteristics;
-    const targets = getIdealSetup(chars);
+    const targets = getIdealSetup(chars, totalLaps);
     const isRaining = weather.isRainEnabled();
 
     let text = "";
@@ -99,7 +99,7 @@ function analyzeSetupChange(param, newValue) {
     
     if (param === 'maxSpeed') {
         const diffToTarget = newValue - targets.maxSpeed;
-        if (Math.abs(diffToTarget) < targets.maxSpeed * 0.05) {
+        if (Math.abs(diffToTarget) < targets.maxSpeed * 0.08) {
             text = "Spot on. That top speed is perfectly balanced for this circuit's straights.";
         } else if (newValue > targets.maxSpeed) {
             text = "We've got plenty of top speed now, perhaps too much. We might be sacrificing too much elsewhere to reach it.";

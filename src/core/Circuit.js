@@ -309,10 +309,10 @@ function createStartFinish(circuitGroup, circuitCurve, config, circuitWidth) {
     circuitGroup.add(gantryGroup);
 }
 
-export function getIdealSetup(chars) {
+export function getIdealSetup(chars, totalLaps = 5) {
     const ideal = {
-        maxSpeed: 240,
-        acceleration: 60,
+        maxSpeed: 250,
+        acceleration: 65,
         grip: 1.0,
         brakePower: 7,
         downforce: 1.2
@@ -320,46 +320,50 @@ export function getIdealSetup(chars) {
 
     // Adjust based on speed
     if (chars.speed === 'high') {
-        ideal.maxSpeed = 280;
-        ideal.downforce = 0.8;
+        ideal.maxSpeed = 310; // Increased from 280
+        ideal.grip = 1.1;     // Increased from 0.8
+        ideal.downforce = 0.9;
     } else if (chars.speed === 'low') {
-        ideal.maxSpeed = 190;
-        ideal.downforce = 1.7;
+        ideal.maxSpeed = 200;
+        ideal.downforce = 1.8;
     }
 
     // Adjust based on straights
     if (chars.straights === 'long') {
-        ideal.maxSpeed += 20;
-        ideal.acceleration -= 5; // Sacrifice some punch for top end
+        ideal.maxSpeed += 30;
+        ideal.acceleration -= 5; 
     } else if (chars.straights === 'short') {
-        ideal.maxSpeed -= 20;
+        ideal.maxSpeed -= 30;
         ideal.acceleration += 15;
     }
 
     // Adjust based on technicality
     if (chars.type === 'technical') {
-        ideal.grip = 1.3;
+        ideal.grip = 1.4;
         ideal.acceleration += 10;
         ideal.downforce += 0.3;
     } else if (chars.type === 'flowing') {
-        ideal.grip = 0.8;
-        ideal.downforce += 0.2; // High speed corners need aero
+        // Flowing tracks need high lateral grip and aero
+        ideal.grip += 0.2;
+        ideal.downforce += 0.2;
     }
 
     // Adjust based on braking
     if (chars.braking === 'very-heavy') {
-        ideal.brakePower = 9;
+        ideal.brakePower = 10;
     } else if (chars.braking === 'heavy') {
         ideal.brakePower = 8;
     } else if (chars.braking === 'moderate') {
         ideal.brakePower = 6;
     }
 
-    // Strategic Tire Recommendation
-    if (chars.type === 'technical' || chars.speed === 'low') {
-        ideal.idealCompound = 'soft';
-    } else if (chars.speed === 'high' || chars.straights === 'long') {
-        ideal.idealCompound = 'hard';
+    // Strategic Tire Recommendation based on Laps
+    if (totalLaps <= 3) {
+        ideal.idealCompound = 'soft'; 
+    } else if (totalLaps <= 8) {
+        ideal.idealCompound = 'medium'; 
+    } else if (chars.speed === 'high' || totalLaps > 15) {
+        ideal.idealCompound = 'hard'; 
     } else {
         ideal.idealCompound = 'medium';
     }
