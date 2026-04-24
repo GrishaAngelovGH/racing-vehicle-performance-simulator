@@ -933,13 +933,16 @@ engine.start(() => {
 
     if (session.simulationRunning && trackCurve) {
         // Calculate track curvature at current position
+        const trackLength = trackCurve.getLength();
+        const lookAheadDistance = 20; // 20 meters absolute lookahead
+        const lookAheadStep = lookAheadDistance / trackLength;
         const tangent = trackCurve.getTangentAt(progress);
-        const lookAhead = (progress + 0.015) % 1; // Increased lookahead for smoother curvature sampling
+        const lookAhead = (progress + lookAheadStep) % 1; 
         const nextTangent = trackCurve.getTangentAt(lookAhead);
         const angle = tangent.angleTo(nextTangent);
         
-        // Quadratic response: reduced multiplier (10 -> 6) to favor high-speed sweeps
-        const curvature = Math.pow(Math.min(1.0, angle * 6.0), 2); 
+        // Quadratic response: normalized to absolute distance
+        const curvature = Math.pow(Math.min(1.0, angle * 8.0), 2); 
 
         // --- Cornering Grip Logic ---
         const compoundBonus = getTireGripBonus();
@@ -971,9 +974,9 @@ engine.start(() => {
         const effectiveMaxSpeed = maxSpeed * (1.0 - aeroDragFactor);
 
         // Target speed calculation - slower in corners, faster on straights
-        // Using a reciprocal formula ensures that even high grip has a limit, 
-        // and speed always drops in corners (penalty is always > 0)
-        const speedPenalty = curvature * (0.45 / effectiveGrip);
+        // Using a reciprocal formula ensures that even high grip has a limit.
+        // Added a small deadzone (0.01) to allow 100% speed on very gentle sweeps.
+        const speedPenalty = Math.max(0, curvature - 0.01) * (0.45 / effectiveGrip);
         let targetSpeed = effectiveMaxSpeed * (1.0 - Math.min(0.85, speedPenalty));
 
         targetSpeed = Math.max(effectiveMaxSpeed * 0.15, targetSpeed); // Minimum 15% of effective max speed
@@ -1106,7 +1109,6 @@ engine.start(() => {
 
         // Convert speed from km/h to meters/sec
         const metersPerSec = currentSpeed * 0.277778;
-        const trackLength = trackCurve.getLength();
 
         const previousProgress = progress;
         progress += (metersPerSec * dt) / trackLength;
