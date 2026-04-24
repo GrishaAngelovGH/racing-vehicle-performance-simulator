@@ -1098,12 +1098,12 @@ engine.start(() => {
     if (simulationRunning && trackCurve) {
         // Calculate track curvature at current position
         const tangent = trackCurve.getTangentAt(progress);
-        const lookAhead = (progress + 0.01) % 1; // Slightly closer lookahead for better responsiveness
+        const lookAhead = (progress + 0.015) % 1; // Increased lookahead for smoother curvature sampling
         const nextTangent = trackCurve.getTangentAt(lookAhead);
         const angle = tangent.angleTo(nextTangent);
         
-        // Quadratic response: small angles = almost 0 penalty, sharp angles = high penalty
-        const curvature = Math.pow(Math.min(1.0, angle * 10.0), 2); 
+        // Quadratic response: reduced multiplier (10 -> 6) to favor high-speed sweeps
+        const curvature = Math.pow(Math.min(1.0, angle * 6.0), 2); 
 
         // --- Cornering Grip Logic ---
         const compoundBonus = getTireGripBonus();
@@ -1135,11 +1135,11 @@ engine.start(() => {
         const effectiveMaxSpeed = maxSpeed * (1.0 - aeroDragFactor);
 
         // Target speed calculation - slower in corners, faster on straights
-        // Using the quadratic curvature makes straights "cleaner"
-        const speedPenalty = curvature * (1.5 - effectiveGrip);
+        // Using the quadratic curvature makes straights "cleaner", lowered base penalty
+        const speedPenalty = curvature * (1.2 - effectiveGrip);
         let targetSpeed = effectiveMaxSpeed * (1.0 - Math.min(0.8, speedPenalty));
 
-        targetSpeed = Math.max(effectiveMaxSpeed * 0.2, targetSpeed); // Minimum 20% of effective max speed
+        targetSpeed = Math.max(effectiveMaxSpeed * 0.15, targetSpeed); // Minimum 15% of effective max speed
         // Acceleration/deceleration logic
         const accelKmhPerSec = (acceleration / 100) * 200;
         const accelRate = accelKmhPerSec * dt;
@@ -1291,7 +1291,7 @@ engine.start(() => {
         car.group.position.copy(position);
         car.group.position.y = 0.61;
 
-        const lookAheadU = (progress + 0.01) % 1;
+        const lookAheadU = (progress + 0.015) % 1;
         const lookAtPos = trackCurve.getPointAt(lookAheadU);
         car.group.lookAt(lookAtPos.x, 0.61, lookAtPos.z);
     }
