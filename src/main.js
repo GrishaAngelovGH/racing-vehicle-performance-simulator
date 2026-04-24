@@ -327,11 +327,13 @@ function generateLapSummary(time, lapNumber, previousBest, isLastLap) {
         }
     }
 
-    const wornTireHealth = Math.max(0, Math.round((tireHealth - getTireWearRate()) * 100));
-    if (wornTireHealth < 30) {
-        text += ` Tire wear is critical at ${wornTireHealth} percent. Box this lap if you can.`;
-    } else if (wornTireHealth < 60) {
-        text += ` Tire wear is now at ${wornTireHealth} percent.`;
+    const currentTireHealth = Math.max(0, Math.round(tireHealth * 100));
+    const predictedWornHealth = Math.max(0, Math.round((tireHealth - getTireWearRate()) * 100));
+    
+    if (predictedWornHealth < 30 && !isLastLap) {
+        text += ` Tire health is at ${currentTireHealth} percent. We expect it to drop to critical levels by the end of this lap. Box if you can.`;
+    } else if (currentTireHealth < 60 && !isLastLap) {
+        text += ` Tire health is at ${currentTireHealth} percent and dropping.`;
     }
 
     return text;
@@ -674,7 +676,7 @@ if (launchBtn) {
 const boxBtn = document.getElementById('boxBtn');
 if (boxBtn) {
     boxBtn.addEventListener('click', () => {
-        if (!simulationRunning) return;
+        if (!simulationRunning || currentLap >= totalLaps) return;
 
         pitRequested = !pitRequested;
         if (pitRequested) {
@@ -1221,7 +1223,7 @@ engine.start(() => {
         const boxBtn = document.getElementById('boxBtn');
         if (boxBtn) {
             // Only show if simulation is running AND there is a strategic "need"
-            const needsPit = tireHealth < 0.6 || pitRequested;
+            const needsPit = (tireHealth < 0.6 && currentLap < totalLaps) || pitRequested;
             boxBtn.style.display = (simulationRunning && needsPit) ? 'block' : 'none';
 
             if (pitRequested) {
@@ -1230,7 +1232,7 @@ engine.start(() => {
                 boxBtn.style.color = '#000';
                 boxBtn.style.borderWidth = '2px';
                 boxBtn.style.boxShadow = '0 0 15px rgba(255, 235, 59, 0.5)';
-            } else if (tireHealth < 0.3) {
+            } else if (tireHealth < 0.3 && currentLap < totalLaps) {
                 // Pulse red when critical health but not yet requested
                 const pulse = (Math.sin(Date.now() * 0.01) + 1) / 2;
                 boxBtn.style.borderColor = `rgb(255, ${Math.round(235 * (1 - pulse))}, ${Math.round(59 * (1 - pulse))})`;
