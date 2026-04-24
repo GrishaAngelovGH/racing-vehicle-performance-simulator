@@ -9,6 +9,7 @@ import { Weather } from './core/Weather.js';
 import { initAudio, updateEngineSound, toggleSound, enableSound, isAudioInitialized, playFastestLapSound, setSoundMode, getAudioContext, toggleTTS, isTTSEnabled, playRadioAndSpeak } from './core/Audio.js';
 import { initReportFeature, showReportButton, hideReportButton, generateReport } from './core/Report.js';
 import { playEngineerAnalysis, analyzeSetupChange, generateLapSummary, formatTimeForTTS } from './core/RaceEngineer.js';
+import { RaceSession } from './core/RaceSession.js';
 
 const engine = new Engine();
 initEnvironment(engine.scene);
@@ -33,38 +34,33 @@ const camera = new Camera(engine.camera, car, engine.scene);
 // Initialize Weather system
 const weather = new Weather(engine.scene, camera);
 
-// --- UI State & Simulation Variables ---
-let uiHideMode = 0; // 0 = controls & stats shown, 1 = controls hidden & stats shown, 2 = both hidden
-let simulationRunning = false;
-let currentSpeed = 0;
-let progress = 0; // 0 to 1 representing progress along the track curve
-let trackCurve = null;
+// --- Race Session State ---
+const session = new RaceSession();
+let lapStartTime = 0;
 let lastFrameTime = performance.now();
-let totalLaps = 5;
-let currentLap = 1;
-let maxSpeed = 200; // Max speed in km/h
-let acceleration = 50; // Acceleration rating (10-100)
+let progress = 0;
+let currentSpeed = 0;
+let trackCurve = null;
+let warningPlayed = false;
+
+// Configuration variables (controlled by sliders)
+let maxSpeed = 200;
+let acceleration = 50;
 let grip = 0.8;
 let brakePower = 6;
 let downforce = 1.0;
-let tireHealth = 1.0;
-let lapStartTime = 0;
-let lapTimes = [];
-let bestLap = Infinity;
-let currentTireCompound = 'medium'; // soft, medium, hard
-let pitRequested = false; // Flag for pit stop on next lap completion
-let warningPlayed = false; // Flag to prevent repetitive engineer warnings per lap
+let uiHideMode = 0;
 
 // Get compound-specific values from the car's tire compound definitions
 function getTireWearRate() {
-    const baseRate = car.tireCompounds[currentTireCompound].wear;
-    const benchmarkLaps = 10; // The base rates in Vehicle.js are tuned for a 10-lap race
-    const scalingFactor = benchmarkLaps / Math.max(1, totalLaps);
+    const baseRate = car.tireCompounds[session.currentTireCompound].wear;
+    const benchmarkLaps = 10;
+    const scalingFactor = benchmarkLaps / Math.max(1, session.totalLaps);
     return baseRate * scalingFactor;
 }
 
 function getTireGripBonus() {
-    return car.tireCompounds[currentTireCompound].grip;
+    return car.tireCompounds[session.currentTireCompound].grip;
 }
 
 let lastSetupValues = {
@@ -73,14 +69,14 @@ let lastSetupValues = {
     grip: grip,
     brakePower: brakePower,
     downforce: downforce,
-    tireCompound: currentTireCompound
+    tireCompound: session.currentTireCompound
 };
 
 function updateLapDisplay() {
     const lapEl = document.getElementById('currentLap');
     if (lapEl) {
-        if (simulationRunning) {
-            lapEl.textContent = `${currentLap} / ${totalLaps}`;
+        if (session.simulationRunning) {
+            lapEl.textContent = `${session.currentLap} / ${session.totalLaps}`;
         } else {
             lapEl.textContent = '-';
         }
@@ -88,17 +84,10 @@ function updateLapDisplay() {
 }
 
 function recordLap(time) {
-    const previousBest = bestLap;
-    
-    // Handle Pit Stop
-    let stopPerformed = false;
-    let adjustedTime = time;
-    if (pitRequested) {
-        adjustedTime += 12; // 12s pit lane penalty
-        tireHealth = 1.0;
-        pitRequested = false;
-        stopPerformed = true;
-        
+    const result = session.recordLap(time);
+    const { lapNumber, stopPerformed, adjustedTime, isLastLap, isNewBest, previousBest } = result;
+
+    if (stopPerformed) {
         const boxBtn = document.getElementById('boxBtn');
         if (boxBtn) {
             boxBtn.style.background = '';
@@ -106,20 +95,14 @@ function recordLap(time) {
         }
     }
 
-    lapTimes.push(adjustedTime);
-    const lapNumber = lapTimes.length;
-    const isLastLap = lapNumber === totalLaps;
-
     const li = document.createElement('li');
     const stopIndicator = stopPerformed ? '<span class="pit-stop-tag">PIT</span> ' : '';
-    li.innerHTML = `<span class="lap-num">Lap ${lapTimes.length}:</span> ${stopIndicator}<span>${formatTime(adjustedTime)}</span>`;
+    li.innerHTML = `<span class="lap-num">Lap ${lapNumber}:</span> ${stopIndicator}<span>${RaceSession.formatTime(adjustedTime)}</span>`;
 
-    if (adjustedTime < bestLap) {
-        bestLap = adjustedTime;
-
+    if (isNewBest) {
         const bestLapEl = document.getElementById('bestLap');
         if (bestLapEl) {
-            bestLapEl.textContent = formatTime(bestLap);
+            bestLapEl.textContent = RaceSession.formatTime(session.bestLap);
         }
         playFastestLapSound();
 
@@ -140,15 +123,14 @@ function recordLap(time) {
         if (stopPerformed) {
             playRadioAndSpeak("Fresh tires fitted. Let's see what we can do on this set.");
         } else {
-            const summary = generateLapSummary(adjustedTime, lapNumber, previousBest, isLastLap, tireHealth, getTireWearRate());
+            const summary = generateLapSummary(adjustedTime, lapNumber, previousBest, isLastLap, session.tireHealth, getTireWearRate());
             playRadioAndSpeak(summary);
         }
     }
 }
 
 function clearLapHistory() {
-    lapTimes = [];
-    bestLap = Infinity;
+    session.reset();
     const bestLapEl = document.getElementById('bestLap');
     if (bestLapEl) {
         bestLapEl.textContent = '--:--.---';
@@ -165,11 +147,10 @@ function formatTime(seconds) {
 }
 
 function resetOnParamChange() {
-    if (simulationRunning) {
-        simulationRunning = false;
+    if (session.simulationRunning) {
+        session.simulationRunning = false;
         progress = 0;
-        currentLap = 1;
-        tireHealth = 1.0;
+        session.reset();
         clearLapHistory();
         lapStartTime = 0;
         updateLapDisplay();
@@ -181,7 +162,7 @@ function resetOnParamChange() {
             boxBtn.style.background = '';
             boxBtn.style.color = '';
         }
-        pitRequested = false;
+        session.pitRequested = false;
         const currentTimeEl = document.getElementById('currentTime');
         if (currentTimeEl) currentTimeEl.textContent = '--:--.---';
         const speedEl = document.getElementById('currentSpeed');
@@ -311,14 +292,14 @@ function loadCircuit(id) {
 
     // Race Engineer circuit intro
     const chars = config.characteristics;
-    const format = totalLaps <= 5 ? "sprint" : (totalLaps <= 15 ? "standard" : "endurance");
-    const introText = `Circuit loaded: ${config.name}. This is a ${chars.speed} speed, ${chars.type} layout. We've adjusted the tire wear for a ${totalLaps} lap ${format}. I'll analyze your setup changes for the ${chars.straights} straights and ${chars.braking} braking zones.`;
+    const format = session.totalLaps <= 5 ? "sprint" : (session.totalLaps <= 15 ? "standard" : "endurance");
+    const introText = `Circuit loaded: ${config.name}. This is a ${chars.speed} speed, ${chars.type} layout. We've adjusted the tire wear for a ${session.totalLaps} lap ${format}. I'll analyze your setup changes for the ${chars.straights} straights and ${chars.braking} braking zones.`;
     playEngineerAnalysis(introText);
 
     // Reset simulation state
     progress = 0;
     currentSpeed = 0;
-    simulationRunning = false;
+    session.simulationRunning = false;
     lapStartTime = 0;
     clearLapHistory();
     const launchBtn = document.getElementById('launchBtn');
@@ -401,7 +382,7 @@ if (circuitInput) {
 const lapsInput = document.getElementById('laps');
 if (lapsInput) {
     lapsInput.addEventListener('change', (e) => {
-        totalLaps = parseInt(e.target.value) || 5;
+        session.totalLaps = parseInt(e.target.value) || 5;
     });
 }
 
@@ -416,7 +397,7 @@ if (maxSpeedInput) {
         resetOnParamChange();
     });
     maxSpeedInput.addEventListener('change', (e) => {
-        analyzeSetupChange('maxSpeed', parseInt(e.target.value), { lastSetupValues, totalLaps, weather, car });
+        analyzeSetupChange('maxSpeed', parseInt(e.target.value), { lastSetupValues, totalLaps: session.totalLaps, weather, car });
     });
 }
 
@@ -431,7 +412,7 @@ if (accelerationInput) {
         resetOnParamChange();
     });
     accelerationInput.addEventListener('change', (e) => {
-        analyzeSetupChange('acceleration', parseInt(e.target.value), { lastSetupValues, totalLaps, weather, car });
+        analyzeSetupChange('acceleration', parseInt(e.target.value), { lastSetupValues, totalLaps: session.totalLaps, weather, car });
     });
 }
 
@@ -446,7 +427,7 @@ if (gripInput) {
         resetOnParamChange();
     });
     gripInput.addEventListener('change', (e) => {
-        analyzeSetupChange('grip', parseFloat(e.target.value), { lastSetupValues, totalLaps, weather, car });
+        analyzeSetupChange('grip', parseFloat(e.target.value), { lastSetupValues, totalLaps: session.totalLaps, weather, car });
     });
 }
 
@@ -461,7 +442,7 @@ if (brakePowerInput) {
         resetOnParamChange();
     });
     brakePowerInput.addEventListener('change', (e) => {
-        analyzeSetupChange('brakePower', parseInt(e.target.value), { lastSetupValues, totalLaps, weather, car });
+        analyzeSetupChange('brakePower', parseInt(e.target.value), { lastSetupValues, totalLaps: session.totalLaps, weather, car });
     });
 }
 
@@ -476,7 +457,7 @@ if (downforceInput) {
         resetOnParamChange();
     });
     downforceInput.addEventListener('change', (e) => {
-        analyzeSetupChange('downforce', parseFloat(e.target.value), { lastSetupValues, totalLaps, weather, car });
+        analyzeSetupChange('downforce', parseFloat(e.target.value), { lastSetupValues, totalLaps: session.totalLaps, weather, car });
     });
 }
 
@@ -484,15 +465,15 @@ if (downforceInput) {
 const launchBtn = document.getElementById('launchBtn');
 if (launchBtn) {
     launchBtn.addEventListener('click', () => {
-        if (!simulationRunning) {
+        if (!session.simulationRunning) {
             // Starting simulation
-            totalLaps = parseInt(lapsInput?.value) || 5;
+            session.totalLaps = parseInt(lapsInput?.value) || 5;
             maxSpeed = parseInt(maxSpeedInput?.value) || 200;
-            tireHealth = 1.0;
-            currentLap = 1;
+            session.tireHealth = 1.0;
+            session.currentLap = 1;
             clearLapHistory();
             lapStartTime = performance.now();
-            simulationRunning = true;
+            session.simulationRunning = true;
             warningPlayed = false;
             currentSpeed = maxSpeed;
             launchBtn.textContent = "RESET SIMULATION";
@@ -505,8 +486,8 @@ if (launchBtn) {
             if (circuitInfoPanel) circuitInfoPanel.style.display = 'none';
         } else {
             // Resetting simulation
-            simulationRunning = false;
-            pitRequested = false;
+            session.simulationRunning = false;
+            session.pitRequested = false;
             warningPlayed = false;
             const boxBtn = document.getElementById('boxBtn');
             if (boxBtn) {
@@ -514,7 +495,7 @@ if (launchBtn) {
                 boxBtn.style.background = '';
                 boxBtn.style.color = '';
             }
-            currentLap = 1;
+            session.currentLap = 1;
             lapStartTime = 0;
             updateLapDisplay();
             launchBtn.textContent = "LAUNCH SIMULATION";
@@ -529,10 +510,10 @@ if (launchBtn) {
 const boxBtn = document.getElementById('boxBtn');
 if (boxBtn) {
     boxBtn.addEventListener('click', () => {
-        if (!simulationRunning || currentLap >= totalLaps) return;
+        if (!session.simulationRunning || session.currentLap >= session.totalLaps) return;
 
-        pitRequested = !pitRequested;
-        if (pitRequested) {
+        session.pitRequested = !session.pitRequested;
+        if (session.pitRequested) {
             boxBtn.style.background = '#ffeb3b';
             boxBtn.style.color = '#000';
             playEngineerAnalysis("Copy that. Box, box, box.");
@@ -591,7 +572,7 @@ if (toggleRainBtn) {
             if (hardTyreBtn) hardTyreBtn.style.display = 'none';
             
             // Switch to inters if currently on dry tires when rain starts
-            if (['soft', 'medium', 'hard'].includes(currentTireCompound)) {
+            if (['soft', 'medium', 'hard'].includes(session.currentTireCompound)) {
                 updateCompoundUI('intermediate');
             }
         } else {
@@ -603,7 +584,7 @@ if (toggleRainBtn) {
             if (hardTyreBtn) hardTyreBtn.style.display = 'block';
             
             // Revert to medium if a wet tire was selected when it stops raining
-            if (currentTireCompound === 'intermediate' || currentTireCompound === 'wet') {
+            if (session.currentTireCompound === 'intermediate' || session.currentTireCompound === 'wet') {
                 updateCompoundUI('medium');
             }
         }
@@ -631,8 +612,8 @@ if (toggleRadioEngineerBtn) {
             const config = CIRCUIT_CONFIGS[circuitId];
             // Race Engineer circuit intro
             const chars = config.characteristics;
-            const format = totalLaps <= 5 ? "sprint" : (totalLaps <= 15 ? "standard" : "endurance");
-            const introText = `Race engineer online. We're at ${config.name}. This is a ${chars.speed} speed, ${chars.type} layout. We've adjusted the tire wear for a ${totalLaps} lap ${format}. I'll analyze your setup changes for the ${chars.straights} straights and ${chars.braking} braking zones.`;
+            const format = session.totalLaps <= 5 ? "sprint" : (session.totalLaps <= 15 ? "standard" : "endurance");
+            const introText = `Race engineer online. We're at ${config.name}. This is a ${chars.speed} speed, ${chars.type} layout. We've adjusted the tire wear for a ${session.totalLaps} lap ${format}. I'll analyze your setup changes for the ${chars.straights} straights and ${chars.braking} braking zones.`;
             playEngineerAnalysis(introText);
         } else {
             toggleRadioEngineerBtn.classList.remove('active');
@@ -683,13 +664,13 @@ const compoundWearEl = document.getElementById('compoundWear');
 const currentCompoundEl = document.getElementById('currentCompound');
 
 function updateCompoundUI(compound) {
-    if (simulationRunning && currentTireCompound !== compound) {
+    if (session.simulationRunning && session.currentTireCompound !== compound) {
         // Request pit stop for next lap instead of resetting
-        currentTireCompound = compound; // Pre-select for next set
-        if (!pitRequested) {
+        session.currentTireCompound = compound; // Pre-select for next set
+        if (!session.pitRequested) {
             const boxBtn = document.getElementById('boxBtn');
             if (boxBtn) {
-                pitRequested = true;
+                session.pitRequested = true;
                 boxBtn.style.background = '#ffeb3b';
                 boxBtn.style.color = '#000';
             }
@@ -698,7 +679,7 @@ function updateCompoundUI(compound) {
         return;
     }
 
-    currentTireCompound = compound;
+    session.currentTireCompound = compound;
 
     // Update button states
     softTyreBtn?.classList.remove('active');
@@ -734,11 +715,11 @@ function updateCompoundUI(compound) {
     car.setCompound(compound);
 
     // Reset simulation if running (this branch only hit if simulation NOT running or same compound)
-    if (!simulationRunning) {
+    if (!session.simulationRunning) {
         resetOnParamChange();
     }
     
-    analyzeSetupChange('tireCompound', compound, { lastSetupValues, totalLaps, weather, car });
+    analyzeSetupChange('tireCompound', compound, { lastSetupValues, totalLaps: session.totalLaps, weather, car });
 }
 
 if (softTyreBtn && mediumTyreBtn && hardTyreBtn) {
@@ -787,7 +768,7 @@ document.addEventListener('keydown', (e) => {
             if (uiHint) uiHint.style.display = 'none';
             if (floatingMinimap) floatingMinimap.style.display = 'none';
             // Show circuit-info only if simulation is not running (it might have been hidden by simulation start)
-            if (circuitInfoPanel && !simulationRunning) circuitInfoPanel.style.display = 'flex';
+            if (circuitInfoPanel && !session.simulationRunning) circuitInfoPanel.style.display = 'flex';
         } else if (uiHideMode === 1) {
             // Show stats only
             if (controlsPanel) controlsPanel.style.display = 'none';
@@ -906,17 +887,17 @@ function updateFloatingMinimapHUD() {
     const cameraEl = document.getElementById('minimap-camera');
 
     if (lapEl) {
-        if (simulationRunning) {
-            lapEl.textContent = `Lap ${currentLap}/${totalLaps}`;
+        if (session.simulationRunning) {
+            lapEl.textContent = `Lap ${session.currentLap}/${session.totalLaps}`;
         } else {
             lapEl.textContent = 'Ready';
         }
     }
 
     if (laptimeEl) {
-        if (simulationRunning && lapStartTime > 0) {
+        if (session.simulationRunning && lapStartTime > 0) {
             const lapElapsed = (performance.now() - lapStartTime) / 1000;
-            laptimeEl.textContent = formatTime(lapElapsed);
+            laptimeEl.textContent = RaceSession.formatTime(lapElapsed);
         } else {
             laptimeEl.textContent = '--:--.---';
         }
@@ -950,7 +931,7 @@ engine.start(() => {
     const dt = (now - lastFrameTime) / 1000;
     lastFrameTime = now;
 
-    if (simulationRunning && trackCurve) {
+    if (session.simulationRunning && trackCurve) {
         // Calculate track curvature at current position
         const tangent = trackCurve.getTangentAt(progress);
         const lookAhead = (progress + 0.015) % 1; // Increased lookahead for smoother curvature sampling
@@ -962,22 +943,22 @@ engine.start(() => {
 
         // --- Cornering Grip Logic ---
         const compoundBonus = getTireGripBonus();
-        const wearPenalty = (1.0 - tireHealth) * 0.45; // Max 0.45 grip loss at 0% health
+        const wearPenalty = (1.0 - session.tireHealth) * 0.45; // Max 0.45 grip loss at 0% health
         const downforceGripBonus = (downforce - 1.0) * 0.4;
         
         let rainGripFactor = 1.0;
         if (weather.isRainEnabled()) {
-            if (currentTireCompound === 'wet') {
+            if (session.currentTireCompound === 'wet') {
                 rainGripFactor = 0.95; 
-            } else if (currentTireCompound === 'intermediate') {
+            } else if (session.currentTireCompound === 'intermediate') {
                 rainGripFactor = 0.85; 
             } else {
                 rainGripFactor = 0.6; // 40% grip reduction in rain for slicks
             }
         } else {
-            if (currentTireCompound === 'wet') {
+            if (session.currentTireCompound === 'wet') {
                 rainGripFactor = 0.4; // Terrible in dry
-            } else if (currentTireCompound === 'intermediate') {
+            } else if (session.currentTireCompound === 'intermediate') {
                 rainGripFactor = 0.6; // Bad in dry
             }
         }
@@ -1066,10 +1047,10 @@ engine.start(() => {
         // Update tire health display
         const tireHealthEl = document.getElementById('tireHealth');
         if (tireHealthEl) {
-            tireHealthEl.textContent = `${Math.max(0, Math.round(tireHealth * 100))}%`;
+            tireHealthEl.textContent = `${Math.max(0, Math.round(session.tireHealth * 100))}%`;
             // Color interpolation: Red (0%) to Green (100%)
-            const r = Math.round(255 * (1 - tireHealth));
-            const g = Math.round(200 * tireHealth);
+            const r = Math.round(255 * (1 - session.tireHealth));
+            const g = Math.round(200 * session.tireHealth);
             tireHealthEl.style.color = `rgb(${r}, ${g}, 0)`;
         }
 
@@ -1077,16 +1058,16 @@ engine.start(() => {
         const boxBtn = document.getElementById('boxBtn');
         if (boxBtn) {
             // Only show if simulation is running AND there is a strategic "need"
-            const needsPit = (tireHealth < 0.6 && currentLap < totalLaps) || pitRequested;
-            boxBtn.style.display = (simulationRunning && needsPit) ? 'block' : 'none';
+            const needsPit = (session.tireHealth < 0.6 && session.currentLap < session.totalLaps) || session.pitRequested;
+            boxBtn.style.display = (session.simulationRunning && needsPit) ? 'block' : 'none';
 
-            if (pitRequested) {
+            if (session.pitRequested) {
                 // Keep solid yellow when requested
                 boxBtn.style.background = '#ffeb3b';
                 boxBtn.style.color = '#000';
                 boxBtn.style.borderWidth = '2px';
                 boxBtn.style.boxShadow = '0 0 15px rgba(255, 235, 59, 0.5)';
-            } else if (tireHealth < 0.3 && currentLap < totalLaps) {
+            } else if (session.tireHealth < 0.3 && session.currentLap < session.totalLaps) {
                 // Pulse red when critical health but not yet requested
                 const pulse = (Math.sin(Date.now() * 0.01) + 1) / 2;
                 boxBtn.style.borderColor = `rgb(255, ${Math.round(235 * (1 - pulse))}, ${Math.round(59 * (1 - pulse))})`;
@@ -1110,7 +1091,7 @@ engine.start(() => {
 
         // Update lap time display
         const lapElapsed = (now - lapStartTime) / 1000;
-        const timeText = formatTime(lapElapsed);
+        const timeText = RaceSession.formatTime(lapElapsed);
         const currentTimeEl = document.getElementById('currentTime');
         if (currentTimeEl) currentTimeEl.textContent = timeText;
 
@@ -1125,16 +1106,16 @@ engine.start(() => {
         if (progress >= 1) {
             const lapTime = (now - lapStartTime) / 1000;
             // Reduce tire health for the lap just completed
-            tireHealth = Math.max(0, tireHealth - getTireWearRate());
+            session.tireHealth = Math.max(0, session.tireHealth - getTireWearRate());
             recordLap(lapTime);
             progress -= 1;
             lapStartTime = now;
-            currentLap++;
+            session.currentLap++;
             warningPlayed = false; // Reset warning for next lap
 
             updateLapDisplay();
-            if (currentLap > totalLaps) {
-                simulationRunning = false;
+            if (session.currentLap > session.totalLaps) {
+                session.simulationRunning = false;
                 launchBtn.textContent = "SIMULATION FINISHED - LAUNCH AGAIN";
                 showReportButton();
                 currentSpeed = 0;
@@ -1154,10 +1135,10 @@ engine.start(() => {
     }
 
     // Update engine sound
-    updateEngineSound(currentSpeed, maxSpeed, simulationRunning);
+    updateEngineSound(currentSpeed, maxSpeed, session.simulationRunning);
 
     // Animation loop for camera and simulation updates
-    camera.update(progress, currentSpeed, simulationRunning);
+    camera.update(progress, currentSpeed, session.simulationRunning);
 
     // Update weather effects
     weather.update(dt, engine.camera, camera.camMode, currentSpeed);
@@ -1187,21 +1168,21 @@ window.addEventListener('load', () => {
 // Initialize report feature
 initReportFeature(() => {
     const state = {
-        lapTimes,
+        lapTimes: session.lapTimes,
         currentCircuitId: document.getElementById('circuitSelect')?.value || 'classic',
-        totalLaps,
+        totalLaps: session.totalLaps,
         maxSpeed,
         acceleration,
         grip,
         brakePower,
         downforce,
-        currentTireCompound,
-        tireHealth,
+        currentTireCompound: session.currentTireCompound,
+        tireHealth: session.tireHealth,
         circuitConfigs: CIRCUIT_CONFIGS,
         trackCurve,
         tireCompounds: car.tireCompounds,
         isRaining: weather.isRainEnabled(),
-        formatTime
+        formatTime: RaceSession.formatTime
     };
     generateReport(state);
 });
