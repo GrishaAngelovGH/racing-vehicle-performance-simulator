@@ -113,10 +113,28 @@ export function analyzeSetupChange(param, newValue, context) {
             text = "Increased grip is good, but I think we can find even more stability in the high-speed sections.";
         }
     } else if (param === 'brakePower') {
-        if (newValue >= targets.brakePower) {
+        const diff = newValue - targets.brakePower;
+        const currentGrip = lastSetupValues.grip;
+        
+        // Grip-based threshold: if braking force (18 * newValue) > grip capability (110 * grip)
+        const isGripLimited = (newValue * 18) > (currentGrip * 110);
+
+        if (Math.abs(diff) <= 1) {
             text = "Excellent stopping power. That's exactly what we need for these heavy braking zones.";
+        } else if (diff > 0) {
+            if (isGripLimited) {
+                text = "That's massive braking power, but I'm worried the tires can't handle it. We'll likely just lock up or slide.";
+            } else if (diff > 3) {
+                text = "These brakes are extremely strong. It might be overkill, but you'll certainly stop in time.";
+            } else {
+                text = "Stronger brakes. This should give you more confidence into the deep braking zones.";
+            }
         } else {
-            text = "Stronger brakes, but I'd still like more bite for the big stops at the end of the straights.";
+            if (newValue < targets.brakePower - 2) {
+                text = "The brakes feel a bit weak for this layout. We're going to have to start braking very early.";
+            } else {
+                text = "Reduced braking force. The car will be smoother, but watch your stopping distances.";
+            }
         }
     } else if (param === 'downforce') {
         const diff = newValue - targets.downforce;

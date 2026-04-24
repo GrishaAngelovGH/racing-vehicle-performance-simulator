@@ -981,13 +981,22 @@ engine.start(() => {
         const accelKmhPerSec = (acceleration / 100) * 200;
         const accelRate = accelKmhPerSec * dt;
 
+        // Braking logic: decoupled from engine acceleration and limited by tire grip
+        const baseBrakingForce = 18; // km/h/s per 1x of brakePower
+        const gripLimitConstant = 110; // Max km/h/s of deceleration per 1.0 of effectiveGrip
+        
+        const potentialDecelKmhPerSec = baseBrakingForce * brakePower;
+        const maxDecelKmhPerSec = effectiveGrip * gripLimitConstant;
+        const actualDecelKmhPerSec = Math.min(potentialDecelKmhPerSec, maxDecelKmhPerSec);
+        const decelRate = actualDecelKmhPerSec * dt;
+
         let estimatedAccel = 0;
         if (currentSpeed < targetSpeed) {
             currentSpeed = Math.min(currentSpeed + accelRate, targetSpeed);
             estimatedAccel = accelKmhPerSec;
         } else {
-            currentSpeed = Math.max(currentSpeed - accelRate * brakePower, targetSpeed);
-            estimatedAccel = -accelKmhPerSec * brakePower;
+            currentSpeed = Math.max(currentSpeed - decelRate, targetSpeed);
+            estimatedAccel = -actualDecelKmhPerSec;
         }
 
         // Apply visual effects (Pitch: Dive/Squat, Roll: Lean, Steering: Wheel turn)

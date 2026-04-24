@@ -113,11 +113,14 @@ function generateRecommendations(lapAnalysis, settingsAnalysis, circuitCharacter
         }
     }
 
-    if (analysis.brakeRating > 0.9 && analysis.gripRating < 0.5) {
+    const potentialDecel = settings.brakePower * 18;
+    const maxGripDecel = settings.grip * 110;
+
+    if (potentialDecel > maxGripDecel) {
         recommendations.push({
-            type: 'info',
-            title: '⚡ Strong Brakes but Low Grip',
-            desc: `Your braking power (${settings.brakePower}x) exceeds your grip (${settings.grip}). The car can't utilize full braking force. <b>Recommendation:</b> Either increase grip or reduce brake power and reallocate to acceleration.`
+            type: 'warning',
+            title: '⚡ Braking Power Exceeds Tire Grip',
+            desc: `Your braking power (${settings.brakePower}x) is higher than what your tires can handle (${settings.grip} grip). The simulation is capping your braking force. <b>Recommendation:</b> Either increase grip or reduce brake power to save on setup weight.`
         });
     }
 
