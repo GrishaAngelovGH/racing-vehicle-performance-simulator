@@ -1133,7 +1133,7 @@ engine.start(() => {
         const effectiveMaxSpeed = maxSpeed * (1.0 - aeroDragFactor);
 
         // Target speed calculation - slower in corners, faster on straights
-        const speedPenalty = curvature * (1.2 - effectiveGrip);
+        const speedPenalty = curvature * (1.8 - effectiveGrip);
         let targetSpeed = effectiveMaxSpeed * (1.0 - Math.min(0.8, speedPenalty));
 
         targetSpeed = Math.max(effectiveMaxSpeed * 0.2, targetSpeed); // Minimum 20% of effective max speed

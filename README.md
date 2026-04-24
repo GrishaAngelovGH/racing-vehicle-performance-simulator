@@ -31,7 +31,7 @@ An interactive 3D racing simulation that allows users to configure vehicle param
 |-----------|--------|-------|
 | **Max Speed** | Top velocity the vehicle can achieve on straight sections | 100-350 km/h |
 | **Acceleration** | Rate at which the vehicle gains speed | 10-100 |
-| **Cornering Grip** | Traction level determining how fast corners can be taken | 0.1-1.0 |
+| **Cornering Grip** | Traction level determining how fast corners can be taken | 0.1-1.5 |
 | **Braking Strength** | Deceleration multiplier for braking zones | 2x-15x |
 | **Aero Downforce** | Trade-off between increased grip and increased drag | 1.0-2.0 |
 
