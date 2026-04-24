@@ -14,6 +14,7 @@ An interactive 3D racing simulation that allows users to configure vehicle param
 *   **Dynamic Race Engineer Analysis** - Real-time audio feedback that evaluates your car setup against the specific geometry of the current track.
 *   **Circuit Profiling System** - Automatically analyzes custom-drawn tracks to determine their speed, technicality, and braking requirements.
 *   **Setup Optimization Logic** - Move beyond "maxing out" sliders; find the "Sweet Spot" for each circuit to balance top speed vs. cornering drag.
+*   **Pit Stop (Box) System** - Request a mid-race pit stop to reset tire health for a 12-second lap time penalty (3s tire change + 9s pit lane travel).
 *   **Race Engineer Voice** - Audio feedback from a virtual race engineer with lap summaries and setup advice.
 * **Live Telemetry Dashboard** - Real-time display of lap times, speed, tire health, and camera mode
 * **Lap History Tracking** - Complete record of all lap times with best lap highlighting
@@ -38,13 +39,15 @@ Higher downforce improves cornering stability but reduces top speed on straights
 
 ### Tyre Compounds
 
-| Compound | Grip Bonus | Wear Rate | Best For |
+| Compound | Grip Bonus | Wear Rate (Base) | Best For |
 |----------|-----------|-----------|----------|
-| **Soft** | +0.18 | 10%/lap | Short races, qualifying |
-| **Medium** | +0.08 | 4%/lap | Balanced performance |
-| **Hard** | -0.04 | 1.5%/lap | Long races, endurance |
-| **Intermediate** | +0.12 | 8%/lap | Light to moderate rain |
-| **Full Wet** | +0.18 | 5%/lap | Heavy rain, standing water |
+| **Soft** | +0.18 | 15% / 10 laps | Short races, qualifying |
+| **Medium** | +0.08 | 8% / 10 laps | Balanced performance |
+| **Hard** | -0.04 | 4% / 10 laps | Long races, endurance |
+| **Intermediate** | +0.12 | 10% / 10 laps | Light to moderate rain |
+| **Full Wet** | +0.18 | 7% / 10 laps | Heavy rain, standing water |
+
+**Adaptive Scaling:** Tire wear is automatically scaled based on your session's total laps. A 5-lap sprint will have double the wear rate of a 10-lap race, ensuring tire strategy is a critical factor regardless of session length.
 
 As tyres wear, grip decreases and lap times increase. Choosing the right compound for race length and weather conditions is critical for optimal performance.
 

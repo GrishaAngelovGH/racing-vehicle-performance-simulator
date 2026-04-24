@@ -51,10 +51,15 @@ let lapStartTime = 0;
 let lapTimes = [];
 let bestLap = Infinity;
 let currentTireCompound = 'medium'; // soft, medium, hard
+let pitRequested = false; // Flag for pit stop on next lap completion
+let warningPlayed = false; // Flag to prevent repetitive engineer warnings per lap
 
 // Get compound-specific values from the car's tire compound definitions
 function getTireWearRate() {
-    return car.tireCompounds[currentTireCompound].wear;
+    const baseRate = car.tireCompounds[currentTireCompound].wear;
+    const benchmarkLaps = 10; // The base rates in Vehicle.js are tuned for a 10-lap race
+    const scalingFactor = benchmarkLaps / Math.max(1, totalLaps);
+    return baseRate * scalingFactor;
 }
 
 function getTireGripBonus() {
@@ -138,15 +143,26 @@ function analyzeSetupChange(param, newValue) {
             else text = "Low downforce will help our top speed, but the car will be very nervous in the fast stuff.";
         }
     } else if (param === 'tireCompound') {
-        // Compound logic remains relatively similar but can be more specific
+        const ideal = targets.idealCompound;
+        
         if (newValue === 'soft') {
-            text = (chars.type === 'technical') ? 
-                "Softs are perfect for this technical layout. Maximum traction, but keep an eye on those temperatures." :
-                "Softs will give us a great qualifying lap here, but they won't last the distance.";
+            if (ideal === 'soft') {
+                text = "Perfect choice. Softs will give us the maximum bite needed for these tight corners.";
+            } else {
+                text = "Softs fitted. They'll be fast, but I'm worried about high-speed degradation on this layout.";
+            }
         } else if (newValue === 'medium') {
-            text = "Mediums are the smart choice here. Good consistency throughout the stint.";
+            if (ideal === 'medium') {
+                text = "Mediums are the smart choice here. Good consistency throughout the stint.";
+            } else {
+                text = "Switching to Mediums. A safe bet, but we might be leaving some time on the table compared to the optimal strategy.";
+            }
         } else if (newValue === 'hard') {
-            text = "Switching to Hards. We'll be slow to start, but we can go much longer than the others.";
+            if (ideal === 'hard') {
+                text = "Smart move. Hards are the way to go for these long high-speed runs. They'll stay consistent.";
+            } else {
+                text = "Hard tires? We'll struggle for grip in the slower sections. It's a bold strategy.";
+            }
         } else if (newValue === 'intermediate') {
             text = isRaining ? "Good call on the Intermediates. Perfect for this amount of water." : "It's too dry for Intermediates. They'll be destroyed in no time.";
         } else if (newValue === 'wet') {
@@ -174,15 +190,33 @@ function updateLapDisplay() {
 
 function recordLap(time) {
     const previousBest = bestLap;
-    lapTimes.push(time);
+    
+    // Handle Pit Stop
+    let stopPerformed = false;
+    let adjustedTime = time;
+    if (pitRequested) {
+        adjustedTime += 12; // 12s pit lane penalty
+        tireHealth = 1.0;
+        pitRequested = false;
+        stopPerformed = true;
+        
+        const boxBtn = document.getElementById('boxBtn');
+        if (boxBtn) {
+            boxBtn.style.background = '';
+            boxBtn.style.color = '';
+        }
+    }
+
+    lapTimes.push(adjustedTime);
     const lapNumber = lapTimes.length;
     const isLastLap = lapNumber === totalLaps;
 
     const li = document.createElement('li');
-    li.innerHTML = `<span class="lap-num">Lap ${lapTimes.length}:</span> <span>${formatTime(time)}</span>`;
+    const stopIndicator = stopPerformed ? '<span class="pit-stop-tag">PIT</span> ' : '';
+    li.innerHTML = `<span class="lap-num">Lap ${lapTimes.length}:</span> ${stopIndicator}<span>${formatTime(adjustedTime)}</span>`;
 
-    if (time < bestLap) {
-        bestLap = time;
+    if (adjustedTime < bestLap) {
+        bestLap = adjustedTime;
 
         const bestLapEl = document.getElementById('bestLap');
         if (bestLapEl) {
@@ -204,8 +238,12 @@ function recordLap(time) {
 
     // Race engineer voice summary
     if (isTTSEnabled()) {
-        const summary = generateLapSummary(time, lapNumber, previousBest, isLastLap);
-        playRadioAndSpeak(summary);
+        if (stopPerformed) {
+            playRadioAndSpeak("Fresh tires fitted. Let's see what we can do on this set.");
+        } else {
+            const summary = generateLapSummary(adjustedTime, lapNumber, previousBest, isLastLap);
+            playRadioAndSpeak(summary);
+        }
     }
 }
 
@@ -248,6 +286,13 @@ function resetOnParamChange() {
         updateLapDisplay();
         const launchBtn = document.getElementById('launchBtn');
         if (launchBtn) launchBtn.textContent = "LAUNCH SIMULATION";
+        const boxBtn = document.getElementById('boxBtn');
+        if (boxBtn) {
+            boxBtn.style.display = 'none';
+            boxBtn.style.background = '';
+            boxBtn.style.color = '';
+        }
+        pitRequested = false;
         const currentTimeEl = document.getElementById('currentTime');
         if (currentTimeEl) currentTimeEl.textContent = '--:--.---';
         const speedEl = document.getElementById('currentSpeed');
@@ -411,7 +456,8 @@ function loadCircuit(id) {
 
     // Race Engineer circuit intro
     const chars = config.characteristics;
-    const introText = `Circuit loaded: ${config.name}. This is a ${chars.speed} speed, ${chars.type} layout. We'll need to balance the setup for the ${chars.straights} straights and ${chars.braking} braking zones.`;
+    const format = totalLaps <= 5 ? "sprint" : (totalLaps <= 15 ? "standard" : "endurance");
+    const introText = `Circuit loaded: ${config.name}. This is a ${chars.speed} speed, ${chars.type} layout. We've adjusted the tire wear for a ${totalLaps} lap ${format}. I'll analyze your setup changes for the ${chars.straights} straights and ${chars.braking} braking zones.`;
     playEngineerAnalysis(introText);
 
     // Reset simulation state
@@ -592,6 +638,7 @@ if (launchBtn) {
             clearLapHistory();
             lapStartTime = performance.now();
             simulationRunning = true;
+            warningPlayed = false;
             currentSpeed = maxSpeed;
             launchBtn.textContent = "RESET SIMULATION";
             hideReportButton();
@@ -604,6 +651,14 @@ if (launchBtn) {
         } else {
             // Resetting simulation
             simulationRunning = false;
+            pitRequested = false;
+            warningPlayed = false;
+            const boxBtn = document.getElementById('boxBtn');
+            if (boxBtn) {
+                boxBtn.style.display = 'none';
+                boxBtn.style.background = '';
+                boxBtn.style.color = '';
+            }
             currentLap = 1;
             lapStartTime = 0;
             updateLapDisplay();
@@ -611,6 +666,25 @@ if (launchBtn) {
             const currentTimeEl = document.getElementById('currentTime');
             if (currentTimeEl) currentTimeEl.textContent = '--:--.---';
             loadCircuit(document.getElementById('circuitSelect').value);
+        }
+    });
+}
+
+// --- Box (Pit Stop) Button Handler ---
+const boxBtn = document.getElementById('boxBtn');
+if (boxBtn) {
+    boxBtn.addEventListener('click', () => {
+        if (!simulationRunning) return;
+
+        pitRequested = !pitRequested;
+        if (pitRequested) {
+            boxBtn.style.background = '#ffeb3b';
+            boxBtn.style.color = '#000';
+            playEngineerAnalysis("Copy that. Box, box, box.");
+        } else {
+            boxBtn.style.background = '';
+            boxBtn.style.color = '';
+            playEngineerAnalysis("Cancel pit stop. Stay out, stay out.");
         }
     });
 }
@@ -700,9 +774,10 @@ if (toggleRadioEngineerBtn) {
             
             const circuitId = document.getElementById('circuitSelect')?.value || 'classic';
             const config = CIRCUIT_CONFIGS[circuitId];
+            // Race Engineer circuit intro
             const chars = config.characteristics;
-            
-            const introText = `Race engineer online. We're at ${config.name}. This is a ${chars.speed} speed, ${chars.type} layout. I'll analyze your setup changes for the ${chars.straights} straights and ${chars.braking} braking zones.`;
+            const format = totalLaps <= 5 ? "sprint" : (totalLaps <= 15 ? "standard" : "endurance");
+            const introText = `Race engineer online. We're at ${config.name}. This is a ${chars.speed} speed, ${chars.type} layout. We've adjusted the tire wear for a ${totalLaps} lap ${format}. I'll analyze your setup changes for the ${chars.straights} straights and ${chars.braking} braking zones.`;
             playEngineerAnalysis(introText);
         } else {
             toggleRadioEngineerBtn.classList.remove('active');
@@ -753,6 +828,21 @@ const compoundWearEl = document.getElementById('compoundWear');
 const currentCompoundEl = document.getElementById('currentCompound');
 
 function updateCompoundUI(compound) {
+    if (simulationRunning && currentTireCompound !== compound) {
+        // Request pit stop for next lap instead of resetting
+        currentTireCompound = compound; // Pre-select for next set
+        if (!pitRequested) {
+            const boxBtn = document.getElementById('boxBtn');
+            if (boxBtn) {
+                pitRequested = true;
+                boxBtn.style.background = '#ffeb3b';
+                boxBtn.style.color = '#000';
+            }
+            playEngineerAnalysis("Copy that, we'll ready the " + car.tireCompounds[compound].name + " tires. Box this lap.");
+        }
+        return;
+    }
+
     currentTireCompound = compound;
 
     // Update button states
@@ -775,7 +865,8 @@ function updateCompoundUI(compound) {
         compoundGripEl.textContent = `Grip: ${sign}${compoundData.grip}`;
     }
     if (compoundWearEl) {
-        compoundWearEl.textContent = `Wear: ${compoundData.wear}/lap`;
+        const wear = getTireWearRate();
+        compoundWearEl.textContent = `Wear: ${Math.round(wear * 100)}%/lap`;
     }
 
     // Update stats panel
@@ -787,8 +878,10 @@ function updateCompoundUI(compound) {
     // Update car visuals
     car.setCompound(compound);
 
-    // Reset simulation if running to maintain valid performance measurements
-    resetOnParamChange();
+    // Reset simulation if running (this branch only hit if simulation NOT running or same compound)
+    if (!simulationRunning) {
+        resetOnParamChange();
+    }
     
     analyzeSetupChange('tireCompound', compound);
 }
@@ -1121,6 +1214,39 @@ engine.start(() => {
             tireHealthEl.style.color = `rgb(${r}, ${g}, 0)`;
         }
 
+        // --- Box Button Pulse/Alert Logic ---
+        const boxBtn = document.getElementById('boxBtn');
+        if (boxBtn) {
+            // Only show if simulation is running AND there is a strategic "need"
+            const needsPit = tireHealth < 0.6 || pitRequested;
+            boxBtn.style.display = (simulationRunning && needsPit) ? 'block' : 'none';
+
+            if (pitRequested) {
+                // Keep solid yellow when requested
+                boxBtn.style.background = '#ffeb3b';
+                boxBtn.style.color = '#000';
+                boxBtn.style.boxShadow = '0 0 15px rgba(255, 235, 59, 0.5)';
+            } else if (tireHealth < 0.3) {
+                // Pulse red when critical health but not yet requested
+                const pulse = (Math.sin(Date.now() * 0.01) + 1) / 2;
+                boxBtn.style.borderColor = `rgb(255, ${Math.round(235 * (1 - pulse))}, ${Math.round(59 * (1 - pulse))})`;
+                boxBtn.style.boxShadow = `0 0 ${10 + pulse * 10}px rgba(255, 0, 0, ${0.3 + pulse * 0.5})`;
+                boxBtn.style.color = pulse > 0.5 ? '#fff' : '#ffeb3b';
+
+                // One-time engineer warning per lap
+                if (!warningPlayed && isTTSEnabled()) {
+                    playEngineerAnalysis("Tire wear is critical. Box, box!");
+                    warningPlayed = true;
+                }
+            } else {
+                // Standard state
+                boxBtn.style.background = '';
+                boxBtn.style.color = '#ffeb3b';
+                boxBtn.style.borderColor = '#ffeb3b';
+                boxBtn.style.boxShadow = '';
+            }
+        }
+
         // Update lap time display
         const lapElapsed = (now - lapStartTime) / 1000;
         const timeText = formatTime(lapElapsed);
@@ -1144,9 +1270,9 @@ engine.start(() => {
 
             // Reduce tire health
             tireHealth = Math.max(0, tireHealth - getTireWearRate());
+            warningPlayed = false; // Reset warning for next lap
 
             updateLapDisplay();
-
             if (currentLap > totalLaps) {
                 simulationRunning = false;
                 launchBtn.textContent = "SIMULATION FINISHED - LAUNCH AGAIN";

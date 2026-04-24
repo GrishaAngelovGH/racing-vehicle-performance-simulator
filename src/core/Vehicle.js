@@ -68,11 +68,11 @@ export class Vehicle {
         this.wheelGroups = [];
 
         this.tireCompounds = {
-            soft: { name: 'Soft', color: 0xe10600, grip: 0.18, wear: 0.10 },
-            medium: { name: 'Medium', color: 0xf9d62e, grip: 0.08, wear: 0.04 },
-            hard: { name: 'Hard', color: 0xffffff, grip: -0.04, wear: 0.015 },
-            intermediate: { name: 'Intermediate', color: 0x00cc00, grip: 0.12, wear: 0.08 },
-            wet: { name: 'Full Wet', color: 0x0066ff, grip: 0.18, wear: 0.05 },
+            soft: { name: 'Soft', color: 0xe10600, grip: 0.18, wear: 0.15 },
+            medium: { name: 'Medium', color: 0xf9d62e, grip: 0.08, wear: 0.08 },
+            hard: { name: 'Hard', color: 0xffffff, grip: -0.04, wear: 0.04 },
+            intermediate: { name: 'Intermediate', color: 0x00cc00, grip: 0.12, wear: 0.10 },
+            wet: { name: 'Full Wet', color: 0x0066ff, grip: 0.18, wear: 0.07 },
         };
         this.currentCompound = 'medium';
         this.init();

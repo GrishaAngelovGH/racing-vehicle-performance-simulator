@@ -355,6 +355,15 @@ export function getIdealSetup(chars) {
         ideal.brakePower = 6;
     }
 
+    // Strategic Tire Recommendation
+    if (chars.type === 'technical' || chars.speed === 'low') {
+        ideal.idealCompound = 'soft';
+    } else if (chars.speed === 'high' || chars.straights === 'long') {
+        ideal.idealCompound = 'hard';
+    } else {
+        ideal.idealCompound = 'medium';
+    }
+
     return ideal;
 }
 
