@@ -357,7 +357,7 @@ export class Vehicle {
             podPts.push(new THREE.Vector2(0, podStations[0].z));                        // Flat front
 
             const podMesh = new THREE.Mesh(new THREE.LatheGeometry(podPts, 48), materials.body);
-            // Non-uniform scaling to make them wider than they are tall (F1 style)
+            // Non-uniform scaling to make them wider than they are tall
             podMesh.scale.set(1.2, 1, 0.7); 
             podMesh.rotation.x = Math.PI / 2;
             // Move significantly closer to the center to merge with the fuselage
@@ -420,23 +420,71 @@ export class Vehicle {
     }
 
     createFrontWing(materials) {
-        /* ── 10. FRONT WING ─────────────────────────────────────────────── */
-        // Front Wing (Old simple box-based design)
-        const fwMain = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.05, 0.8), materials.carbon);
-        fwMain.position.set(0, -0.12, 3.2);
-        this.body.add(fwMain);
+        /* ── 10. FRONT WING — Multi-element aero design ─────────────────── */
+        // wing(span, chord, camber, thickness, mat) extrudes along X axis,
+        // chord runs along Z, height along Y — identical to the rear wing usage.
 
-        const fwUpper = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.04, 0.4), materials.carbon);
-        fwUpper.position.set(0, 0.0, 3.1);
-        this.body.add(fwUpper);
+        const fwZ  = 4.10;   // leading edge Z (forward, under nose tip)
+        const fwY  = -0.18;  // lower — near ground level
+        const span = 3.00;   // full wing span (X)
+        const hspan = span / 2; // half-span for positioning
 
-        const fwPlateGeo = new THREE.BoxGeometry(0.05, 0.4, 1.0);
-        const leftFwPlate = new THREE.Mesh(fwPlateGeo, materials.body);
-        leftFwPlate.position.set(-1.6, 0.05, 3.2);
-        this.body.add(leftFwPlate);
-        const rightFwPlate = leftFwPlate.clone();
-        rightFwPlate.position.x = 1.6;
-        this.body.add(rightFwPlate);
+        // ── CENTRE NEUTRAL SECTION ────────────────────────────────────────
+        // Flat-ish main plane across the central 1.4 m
+        const centreSpan = 1.40;
+        const cMain = wing(centreSpan, 0.65, 0.008, 0.028, materials.carbon);
+        cMain.position.set(-centreSpan / 2, fwY - 0.10, fwZ - 0.65);
+        this.body.add(cMain);
+
+        // ── FULL-WIDTH MAIN PLANE ─────────────────────────────────────────
+        const w0 = wing(span, 0.45, 0.030, 0.034, materials.carbon);
+        w0.position.set(-hspan, fwY - 0.10, fwZ - 0.70);
+        this.body.add(w0);
+
+        // ── FLAP 1 — higher angle, sits just above & aft of main plane ───
+        const w1 = wing(span, 0.48, 0.055, 0.024, materials.carbon);
+        w1.position.set(-hspan, fwY + 0.04, fwZ - 0.28);
+        this.body.add(w1);
+
+        // ── FLAP 2 — steepest angle, topmost element ─────────────────────
+        const w2 = wing(span, 0.34, 0.072, 0.018, materials.carbon);
+        w2.position.set(-hspan, fwY + 0.14, fwZ - 0.10);
+        this.body.add(w2);
+
+        // ── ENDPLATES ─────────────────────────────────────────────────────
+        [-1, 1].forEach(side => {
+            const epX = side * hspan;
+            const epH = 0.38;
+            const epD = 0.88;
+
+            // Primary endplate slab — thin, tall, runs chord-wise
+            const ep = new THREE.Mesh(
+                new THREE.BoxGeometry(0.012, epH, epD),
+                materials.carbonG
+            );
+            ep.position.set(epX, fwY - 0.10 + epH / 2 - 0.12, fwZ - 0.44);
+            this.body.add(ep);
+
+            // Lower rounded edge strip
+            const epEdge = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.008, 0.008, epD, 12),
+                materials.carbon
+            );
+            epEdge.rotation.x = Math.PI / 2;
+            epEdge.position.set(epX, fwY - 0.10 - 0.12 + 0.008, fwZ - 0.44);
+            this.body.add(epEdge);
+
+
+            // ── FOOTPLATE — flat skid along the bottom of the endplate ───
+            const fp = new THREE.Mesh(
+                new THREE.BoxGeometry(0.14, 0.012, epD + 0.06),
+                materials.carbon
+            );
+            fp.position.set(epX, fwY - 0.10 - epH / 2 + 0.12 - 0.006, fwZ - 0.44);
+            this.body.add(fp);
+        });
+
+
     }
 
     createRearWing(materials) {
@@ -470,7 +518,7 @@ export class Vehicle {
 
     createRainLight(materials) {
         /* ── 12. RAIN LIGHT ─────────────────────────────────────────────── */
-        // Modern F1 rain light: rectangular housing with a high-intensity LED panel
+        // Rectangular housing with a high-intensity LED panel
         const lightGroup = new THREE.Group();
         
         // Housing / Bezel
