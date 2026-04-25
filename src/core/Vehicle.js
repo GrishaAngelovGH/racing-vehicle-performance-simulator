@@ -86,8 +86,8 @@ export class Vehicle {
 
         /* ── MATERIALS ─────────────────────────────────────────────────── */
         const materials = {
-            body: new THREE.MeshStandardMaterial({ color: 0xcc0000, metalness: 0.80, roughness: 0.10, side: THREE.DoubleSide }),
-            bodyDark: new THREE.MeshStandardMaterial({ color: 0x880000, metalness: 0.75, roughness: 0.18 }),
+            body: new THREE.MeshStandardMaterial({ color: 0xa50000, metalness: 0.15, roughness: 0.40, side: THREE.DoubleSide }),
+            bodyDark: new THREE.MeshStandardMaterial({ color: 0x660000, metalness: 0.10, roughness: 0.50 }),
             carbon: new THREE.MeshStandardMaterial({ color: 0x656565, metalness: 0.85, roughness: 0.18 }), // Significantly lightened color, slightly reduced roughness
             carbonG: new THREE.MeshStandardMaterial({ color: 0x7a7a7a, metalness: 0.92, roughness: 0.08, side: THREE.DoubleSide }), // Significantly lightened color
             mech: new THREE.MeshStandardMaterial({ color: 0x585858, metalness: 0.96, roughness: 0.12 }),
@@ -350,37 +350,40 @@ export class Vehicle {
                 { z: -1.55, rw: 0.10, rh: 0.10, yc: 0.14 },
                 { z: -1.95, rw: 0.08, rh: 0.08, yc: 0.12 },
             ];
-            for (let i = 0; i < podStations.length - 1; i++) {
-                const a = podStations[i], b = podStations[i + 1];
-                const segLen = Math.abs(a.z - b.z);
-                const midZ = (a.z + b.z) / 2;
-                const seg = new THREE.Mesh(
-                    new THREE.CylinderGeometry(1, 1, segLen, 40, 1), materials.body
-                );
-                seg.scale.set(b.rw + a.rw, 1, (a.rh + b.rh) / 2 * 1.8);
-                seg.rotation.x = Math.PI / 2;
-                seg.position.set(side * (0.38 + (a.rw + b.rw) / 4), (a.yc + b.yc) / 2, midZ);
-                seg.castShadow = true;
-                this.body.add(seg);
-            }
+            // Main sidepod — Smooth LatheGeometry for continuous surface
+            const podPts = podStations.map(s => new THREE.Vector2(s.rw * 2.2, s.z)).reverse();
+            // Cap ends at the exact same Z to create flat faces instead of points
+            podPts.unshift(new THREE.Vector2(0, podStations[podStations.length - 1].z)); // Flat rear
+            podPts.push(new THREE.Vector2(0, podStations[0].z));                        // Flat front
+
+            const podMesh = new THREE.Mesh(new THREE.LatheGeometry(podPts, 48), materials.body);
+            // Non-uniform scaling to make them wider than they are tall (F1 style)
+            podMesh.scale.set(1.2, 1, 0.7); 
+            podMesh.rotation.x = Math.PI / 2;
+            // Move significantly closer to the center to merge with the fuselage
+            podMesh.position.set(side * 0.45, 0.18, 0); 
+            podMesh.castShadow = true;
+            this.body.add(podMesh);
 
             // Undercut recessed dark region — more subtle
             const undercutSeg = new THREE.Mesh(
                 new THREE.CylinderGeometry(1, 1, 1.80, 36, 1), materials.bodyDark
             );
-            undercutSeg.scale.set(0.38, 1, 0.16);
+            undercutSeg.scale.set(0.42, 1, 0.16);
             undercutSeg.rotation.x = Math.PI / 2;
-            undercutSeg.position.set(side * 0.55, -0.12, -0.15);
+            undercutSeg.position.set(side * 0.45, -0.12, -0.15);
             this.body.add(undercutSeg);
 
-            // Inlet ring — more compact
-            const inletRing = new THREE.Mesh(
-                new THREE.TorusGeometry(0.140, 0.020, 14, 40), materials.carbon
+            // Inlet "Mouth" — Darker red interior to simulate depth without a physical ring
+            const inletMouth = new THREE.Mesh(
+                new THREE.CircleGeometry(0.18, 32),
+                new THREE.MeshStandardMaterial({ color: 0x440000, roughness: 0.9, metalness: 0.1 })
             );
-            inletRing.scale.set(1.1, 1, 1);
-            inletRing.rotation.z = Math.PI / 2;
-            inletRing.position.set(side * 0.45, 0.28, 0.78);
-            this.body.add(inletRing);
+            inletMouth.scale.set(1.2, 1, 1);
+            inletMouth.rotation.y = Math.PI; // Face forward
+            // Flush with the front face of the sidepod (0.78)
+            inletMouth.position.set(side * 0.45, 0.18, 0.782); 
+            this.body.add(inletMouth);
 
             // Louvers
             for (let i = 0; i < 6; i++) {
