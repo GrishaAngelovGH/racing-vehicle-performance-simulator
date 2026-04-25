@@ -571,7 +571,7 @@ export class Vehicle {
         lightGroup.add(this.rainLightSource);
 
         // Positioned closer to the car for a tighter glow
-        lightGroup.position.set(0, 0.40, -2.38);
+        lightGroup.position.set(0, 0.40, -2.12);
         this.body.add(lightGroup);
     }
 
