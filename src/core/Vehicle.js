@@ -295,29 +295,14 @@ export class Vehicle {
 
     createDriverHelmet(materials) {
         /* ── 6. DRIVER HELMET ───────────────────────────────────────────── */
-        try {
-            const hMat = new THREE.MeshStandardMaterial({ color: 0xffcc00, metalness: 0.65, roughness: 0.10 });
-            const helmet = new THREE.Mesh(new THREE.CapsuleGeometry(0.13, 0.11, 8, 28), hMat); // Reduced radius and height
-            helmet.position.set(0, 0.64, 0.15);
-            helmet.name = 'driver_helmet';
-            this.body.add(helmet);
-
-            // Visor
-            const visorMat = new THREE.MeshStandardMaterial({
-                color: 0x110e00, metalness: 0.98, roughness: 0.03, transparent: true, opacity: 0.80,
-            });
-            const visor = new THREE.Mesh(new THREE.SphereGeometry(0.115, 20, 14, 0, Math.PI, 0.2, 0.7), visorMat); // Reduced radius
-            visor.rotation.x = -0.4;
-            visor.position.set(0, 0.66, 0.26);
-            visor.name = 'driver_visor';
-            this.body.add(visor);
-        } catch {
-            const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.14, 24, 18), // Reduced radius in fallback
-                new THREE.MeshStandardMaterial({ color: 0xffcc00, metalness: 0.6, roughness: 0.2 }));
-            helmet.position.set(0, 0.72, 0.18);
-            helmet.name = 'driver_helmet';
-            this.body.add(helmet);
-        }
+        const helmet = new THREE.Mesh(
+            new THREE.CapsuleGeometry(0.13, 0.12, 8, 24),
+            materials.yellow
+        );
+        helmet.position.set(0, 0.65, 0.15);
+        helmet.name = 'driver_helmet';
+        helmet.castShadow = false;
+        this.body.add(helmet);
     }
 
     createAirboxAndIntake(materials) {
