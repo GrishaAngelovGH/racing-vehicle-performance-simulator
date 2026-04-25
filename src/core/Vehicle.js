@@ -500,6 +500,39 @@ export class Vehicle {
         const w2 = wing(wSpan, 0.34, 0.072, 0.018, materials.accent2);
         w2.position.set(-hwSpan, fwY + 0.14, fwZ - 0.10);
         this.body.add(w2);
+
+        // ── ENDPLATES ─────────────────────────────────────────────────────
+        [-1, 1].forEach(side => {
+            const epX = side * hspan;
+            const epH = 0.38;
+            const epD = 0.88;
+
+            // Primary endplate slab — thin, tall, runs chord-wise
+            const ep = new THREE.Mesh(
+                new THREE.BoxGeometry(0.012, epH, epD),
+                materials.accent1 // Accent1 on endplates
+            );
+            ep.position.set(epX, fwY - 0.10 + epH / 2 - 0.12, fwZ - 0.44);
+            this.body.add(ep);
+
+            // Lower rounded edge strip
+            const epEdge = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.008, 0.008, epD, 12),
+                materials.carbon
+            );
+            epEdge.rotation.x = Math.PI / 2;
+            epEdge.position.set(epX, fwY - 0.10 - 0.12 + 0.008, fwZ - 0.44);
+            this.body.add(epEdge);
+
+
+            // ── FOOTPLATE — flat skid along the bottom of the endplate ───
+            const fp = new THREE.Mesh(
+                new THREE.BoxGeometry(0.14, 0.012, epD + 0.06),
+                materials.carbon
+            );
+            fp.position.set(epX, fwY - 0.10 - epH / 2 + 0.12 - 0.006, fwZ - 0.44);
+            this.body.add(fp);
+        });
     }
 
     createRearWing(materials) {
