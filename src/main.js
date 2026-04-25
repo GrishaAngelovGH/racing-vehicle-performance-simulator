@@ -383,6 +383,7 @@ const lapsInput = document.getElementById('laps');
 if (lapsInput) {
     lapsInput.addEventListener('change', (e) => {
         session.totalLaps = parseInt(e.target.value) || 5;
+        resetOnParamChange();
     });
 }
 
