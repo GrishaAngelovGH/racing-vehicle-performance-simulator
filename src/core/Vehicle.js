@@ -12,13 +12,6 @@ function tube(pts, r, mat, radSeg = 10, tubSeg = 20) {
     );
 }
 
-/** Rounded-edge flat plank — a very thin cylinder stretched on X/Z */
-function plank(w, h, d, mat, radSeg = 4) {
-    const m = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 1, 64, 1), mat);
-    m.scale.set(w, h, d);
-    return m;
-}
-
 /** Lathe surface from [radius, y] pairs — great for fuselage cross-sections */
 function lathe(pairs, mat, segs = 64) {
     const pts = pairs.map(([r, y]) => new THREE.Vector2(r, y));
@@ -488,11 +481,40 @@ export class Vehicle {
 
     createRainLight(materials) {
         /* ── 12. RAIN LIGHT ─────────────────────────────────────────────── */
-        this.rainLight = new THREE.Mesh(
-            new THREE.PlaneGeometry(0.14, 0.08), materials.red
+        // Modern F1 rain light: rectangular housing with a high-intensity LED panel
+        const lightGroup = new THREE.Group();
+        
+        // Housing / Bezel
+        const housing = new THREE.Mesh(
+            new THREE.BoxGeometry(0.20, 0.16, 0.08),
+            materials.carbon
         );
-        this.rainLight.position.set(0, 0.44, -2.34);
-        this.body.add(this.rainLight);
+        lightGroup.add(housing);
+
+        // The actual light surface (emissive)
+        this.rainLight = new THREE.Mesh(
+            new THREE.BoxGeometry(0.18, 0.14, 0.02),
+            materials.red
+        );
+        // Position on the rear face
+        this.rainLight.position.z = -0.045;
+        lightGroup.add(this.rainLight);
+
+        // SpotLight angled DOWNWARDS to hit the track immediately behind the car
+        this.rainLightSource = new THREE.SpotLight(0xff0000, 0, 6, Math.PI / 2.5, 0.6, 1);
+        this.rainLightSource.position.set(0, 0, -0.04);
+        
+        // Directional target pointing down and back
+        const lightTarget = new THREE.Object3D();
+        lightTarget.position.set(0, -1.2, -1.0); // Tilted down towards the track
+        lightGroup.add(lightTarget);
+        this.rainLightSource.target = lightTarget;
+        
+        lightGroup.add(this.rainLightSource);
+
+        // Positioned closer to the car for a tighter glow
+        lightGroup.position.set(0, 0.40, -2.38);
+        this.body.add(lightGroup);
     }
 
     createSteeringWheel(materials) {
@@ -648,7 +670,12 @@ export class Vehicle {
 
     setRainMode(isRaining) {
         if (this.rainLight && this.rainLight.material) {
-            this.rainLight.material.emissiveIntensity = isRaining ? 2.0 : 0.0;
+            // Further reduced emissive intensity to 5.0
+            this.rainLight.material.emissiveIntensity = isRaining ? 5.0 : 0.0;
+        }
+        if (this.rainLightSource) {
+            // Further reduced PointLight intensity to 5.0
+            this.rainLightSource.intensity = isRaining ? 5.0 : 0.0;
         }
         if (this.steeringWheel) {
             this.steeringWheel.children.forEach(child => {
