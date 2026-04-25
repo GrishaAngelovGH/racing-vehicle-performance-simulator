@@ -473,6 +473,11 @@ export class Vehicle {
         const fwY  = -0.18;  // lower — near ground level
         const span = 3.00;   // full wing span (X)
         const hspan = span / 2; // half-span for positioning
+        
+        // Wing elements should be slightly narrower than the endplate-to-endplate span
+        // to account for beveling and ensure they don't poke through.
+        const wSpan = span - 0.04;
+        const hwSpan = wSpan / 2;
 
         // ── CENTRE NEUTRAL SECTION ────────────────────────────────────────
         // Flat-ish main plane across the central 1.4 m
@@ -482,18 +487,18 @@ export class Vehicle {
         this.body.add(cMain);
 
         // ── FULL-WIDTH MAIN PLANE ─────────────────────────────────────────
-        const w0 = wing(span, 0.45, 0.030, 0.034, materials.carbon);
-        w0.position.set(-hspan, fwY - 0.10, fwZ - 0.70);
+        const w0 = wing(wSpan, 0.45, 0.030, 0.034, materials.carbon);
+        w0.position.set(-hwSpan, fwY - 0.10, fwZ - 0.70);
         this.body.add(w0);
 
         // ── FLAP 1 — higher angle, sits just above & aft of main plane ───
-        const w1 = wing(span, 0.48, 0.055, 0.024, materials.accent2); // Accent2 on flaps
-        w1.position.set(-hspan, fwY + 0.04, fwZ - 0.28);
+        const w1 = wing(wSpan, 0.48, 0.055, 0.024, materials.accent2); // Accent2 on flaps
+        w1.position.set(-hwSpan, fwY + 0.04, fwZ - 0.28);
         this.body.add(w1);
 
         // ── FLAP 2 — steepest angle, topmost element ─────────────────────
-        const w2 = wing(span, 0.34, 0.072, 0.018, materials.accent2);
-        w2.position.set(-hspan, fwY + 0.14, fwZ - 0.10);
+        const w2 = wing(wSpan, 0.34, 0.072, 0.018, materials.accent2);
+        w2.position.set(-hwSpan, fwY + 0.14, fwZ - 0.10);
         this.body.add(w2);
 
         // ── ENDPLATES ─────────────────────────────────────────────────────
@@ -536,12 +541,18 @@ export class Vehicle {
         /* ── 11. REAR WING ──────────────────────────────────────────────── */
         // Compact rear wing - smaller span, sleeker design, no DRS
         const rwSpan = 1.60;
-        const rw = wing(rwSpan, 0.72, 0.048, 0.032, materials.carbonG);
-        rw.position.set(-0.80, 0.74, -2.54);
+        const hrwSpan = rwSpan / 2;
+        
+        // Wing elements should be slightly narrower than the endplate-to-endplate span
+        const wSpan = rwSpan - 0.04;
+        const hwSpan = wSpan / 2;
+
+        const rw = wing(wSpan, 0.72, 0.048, 0.032, materials.carbonG);
+        rw.position.set(-hwSpan, 0.74, -2.54);
         this.body.add(rw);
 
-        const rw1 = wing(rwSpan, 0.42, 0.055, 0.022, materials.accent2); // Accent2 on rear flap
-        rw1.position.set(-0.80, 0.88, -2.58);
+        const rw1 = wing(wSpan, 0.42, 0.055, 0.022, materials.accent2); // Accent2 on rear flap
+        rw1.position.set(-hwSpan, 0.88, -2.58);
         this.body.add(rw1);
 
         // Sleek Y-shaped pillars
@@ -563,7 +574,7 @@ export class Vehicle {
         // Endplates
         [-1, 1].forEach(side => {
             const ep = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.8, 0.8), materials.accent1);
-            ep.position.set(side * 0.80, 0.5, -2.5);
+            ep.position.set(side * hrwSpan, 0.5, -2.5);
             this.body.add(ep);
         });
     }
