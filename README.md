@@ -20,6 +20,7 @@ An interactive 3D racing simulation that allows users to configure vehicle param
 * **Lap History Tracking** - Complete record of all lap times with best lap highlighting
 * **Race Analysis Reports** - Generate detailed post-race performance reports with statistics
 * **Import/Export Circuits** - Share custom circuits via JSON export/import functionality
+* **Car Livery Customization** - Personalize your car with predefined themes or a custom hex color picker
 * **Multiple Camera Modes** - Switch between different camera perspectives during the race
 * **Interactive Minimap** - Real-time track position visualization with HUD display
 
@@ -60,6 +61,20 @@ As tyres wear, grip decreases and lap times increase. Choosing the right compoun
 | **Decorations** | Visual only | No performance impact |
 
 Rain significantly reduces traction. When rain starts, dry tires (Soft, Medium, Hard) become unavailable and you must switch to Intermediate or Full Wet tires. Note that using rain tires in dry conditions will severely penalize your grip!
+
+### Car Livery & Customization
+
+Personalize your racing machine in the **Livery Workshop**. You can choose from predefined themes or create a completely unique look.
+
+| Theme | Colors |
+|-------|--------|
+| **Midnight Blue** | Navy, Yellow, Red |
+| **Scarlet Speed** | Red, White |
+| **Platinum Pulse** | Silver, Teal |
+| **Papaya Punch** | Orange, Blue |
+| **Custom** | Any Hex Color |
+
+Livery settings are persistent and will be remembered across different browser sessions.
 
 ---
 

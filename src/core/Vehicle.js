@@ -85,9 +85,22 @@ export class Vehicle {
         this.group.add(this.body);
 
         /* ── MATERIALS ─────────────────────────────────────────────────── */
+        let livery;
+        try {
+            livery = JSON.parse(localStorage.getItem('car_livery')) || { primary: '#a50000', accent1: '#a50000', accent2: '#a50000' };
+        } catch (e) {
+            livery = { primary: localStorage.getItem('car_livery') || '#a50000', accent1: '#a50000', accent2: '#a50000' };
+        }
+        
+        const primaryColor = new THREE.Color(livery.primary || '#a50000');
+        const accent1Color = new THREE.Color(livery.accent1 || livery.primary || '#a50000');
+        const accent2Color = new THREE.Color(livery.accent2 || livery.primary || '#a50000');
+
         const materials = {
-            body: new THREE.MeshStandardMaterial({ color: 0xa50000, metalness: 0.15, roughness: 0.40, side: THREE.DoubleSide }),
-            bodyDark: new THREE.MeshStandardMaterial({ color: 0x660000, metalness: 0.10, roughness: 0.50 }),
+            body: new THREE.MeshStandardMaterial({ color: primaryColor, metalness: 0.15, roughness: 0.40, side: THREE.DoubleSide }),
+            bodyDark: new THREE.MeshStandardMaterial({ color: primaryColor.clone().multiplyScalar(0.6), metalness: 0.10, roughness: 0.50 }),
+            accent1: new THREE.MeshStandardMaterial({ color: accent1Color, metalness: 0.20, roughness: 0.35 }),
+            accent2: new THREE.MeshStandardMaterial({ color: accent2Color, metalness: 0.20, roughness: 0.35 }),
             carbon: new THREE.MeshStandardMaterial({ color: 0x656565, metalness: 0.85, roughness: 0.18 }), // Significantly lightened color, slightly reduced roughness
             carbonG: new THREE.MeshStandardMaterial({ color: 0x7a7a7a, metalness: 0.92, roughness: 0.08, side: THREE.DoubleSide }), // Significantly lightened color
             mech: new THREE.MeshStandardMaterial({ color: 0x585858, metalness: 0.96, roughness: 0.12 }),
@@ -159,6 +172,20 @@ export class Vehicle {
         floorMesh.position.set(0, -0.30, 0);
         floorMesh.receiveShadow = true;
         this.body.add(floorMesh);
+
+        // Accent edge for the floor
+        const floorEdge = tube([
+            new THREE.Vector3(1.15, -0.28, 0.40),
+            new THREE.Vector3(1.15, -0.28, -0.60),
+            new THREE.Vector3(0.85, -0.28, -2.20),
+        ], 0.02, materials.accent1, 8, 4);
+        this.body.add(floorEdge);
+        const floorEdgeL = tube([
+            new THREE.Vector3(-1.15, -0.28, 0.40),
+            new THREE.Vector3(-1.15, -0.28, -0.60),
+            new THREE.Vector3(-0.85, -0.28, -2.20),
+        ], 0.02, materials.accent1, 8, 4);
+        this.body.add(floorEdgeL);
 
         // Vortex fences (adjusted to match new floor profile)
         [-1, 1].forEach(sx => {
@@ -235,11 +262,22 @@ export class Vehicle {
             new THREE.Vector2(0.075, 1.41),
             new THREE.Vector2(0, 1.43)
         ];
-        const noseMesh = new THREE.Mesh(new THREE.LatheGeometry(nosePoints, 32), materials.body);
+        
+        // Split nose into main and tip for accent color
+        const mainPoints = nosePoints.slice(0, 7);
+        const tipPoints = nosePoints.slice(6);
+        
+        const noseMesh = new THREE.Mesh(new THREE.LatheGeometry(mainPoints, 32), materials.body);
         noseMesh.scale.set(1, 1, 0.75); // Match fuselage height scale
         noseMesh.rotation.x = Math.PI / 2;
         noseMesh.castShadow = true;
         noseGroup.add(noseMesh);
+
+        const tipMesh = new THREE.Mesh(new THREE.LatheGeometry(tipPoints, 32), materials.accent1);
+        tipMesh.scale.set(1, 1, 0.75);
+        tipMesh.rotation.x = Math.PI / 2;
+        tipMesh.castShadow = true;
+        noseGroup.add(tipMesh);
 
         // Tilt the whole group for the downward droop
         noseGroup.rotation.x = 0.06;
@@ -258,7 +296,7 @@ export class Vehicle {
         // Opening rim — smooth oval
         const cockpitRim = new THREE.Mesh(
             new THREE.TorusGeometry(0.270, 0.035, 16, 48, Math.PI),
-            materials.carbonG
+            materials.accent1
         );
         cockpitRim.rotation.x = Math.PI / 2;
         cockpitRim.rotation.z = Math.PI;
@@ -275,7 +313,7 @@ export class Vehicle {
             ], 0.012, materials.carbon, 6, 4);
             this.body.add(mirrorStem);
 
-            const mirrorBody = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.06, 0.04), materials.body);
+            const mirrorBody = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.06, 0.04), materials.accent2);
             mirrorBody.position.set(side * 0.52, 0.72, 0.42);
             this.body.add(mirrorBody);
         });
@@ -319,6 +357,13 @@ export class Vehicle {
         airbox.name = 'airbox';
         this.body.add(airbox);
 
+        // Accent intake ring
+        const intakeRing = tube([
+            new THREE.Vector3(0, 0.58, 0.225),
+            new THREE.Vector3(0, 0.62, 0.18),
+        ], 0.21, materials.accent1, 22, 2);
+        this.body.add(intakeRing);
+
         // Shark fin
         const finSh = new THREE.Shape();
         finSh.moveTo(0, 0);
@@ -331,7 +376,7 @@ export class Vehicle {
             bevelSize: 0.01, // Increased bevel for roundness
             bevelSegments: 3,
         });
-        const fin = new THREE.Mesh(finGeo, materials.body); // Changed to M.body to match car color
+        const fin = new THREE.Mesh(finGeo, materials.accent2); // Use accent2 for shark fin
         fin.rotation.y = Math.PI / 2;
         fin.position.set(0.01, 0.72, -0.38);
         fin.name = 'shark_fin';
@@ -374,10 +419,10 @@ export class Vehicle {
             undercutSeg.position.set(side * 0.45, -0.12, -0.15);
             this.body.add(undercutSeg);
 
-            // Inlet "Mouth" — Darker red interior to simulate depth without a physical ring
+            // Inlet "Mouth" — Darker primary interior to simulate depth
             const inletMouth = new THREE.Mesh(
                 new THREE.CircleGeometry(0.18, 32),
-                new THREE.MeshStandardMaterial({ color: 0x440000, roughness: 0.9, metalness: 0.1 })
+                new THREE.MeshStandardMaterial({ color: materials.body.color.clone().multiplyScalar(0.4), roughness: 0.9, metalness: 0.1 })
             );
             inletMouth.scale.set(1.2, 1, 1);
             inletMouth.rotation.y = Math.PI; // Face forward
@@ -398,7 +443,7 @@ export class Vehicle {
                 new THREE.Vector3(side * 0.55, 0.20, 1.05),
                 new THREE.Vector3(side * 0.60, 0.04, 0.88),
                 new THREE.Vector3(side * 0.58, -0.12, 0.68),
-            ], 0.016, materials.carbonG, 6, 8));
+            ], 0.016, materials.accent1, 6, 8)); // Accent color on bargeboard
         });
     }
 
@@ -442,12 +487,12 @@ export class Vehicle {
         this.body.add(w0);
 
         // ── FLAP 1 — higher angle, sits just above & aft of main plane ───
-        const w1 = wing(span, 0.48, 0.055, 0.024, materials.carbon);
+        const w1 = wing(span, 0.48, 0.055, 0.024, materials.accent2); // Accent2 on flaps
         w1.position.set(-hspan, fwY + 0.04, fwZ - 0.28);
         this.body.add(w1);
 
         // ── FLAP 2 — steepest angle, topmost element ─────────────────────
-        const w2 = wing(span, 0.34, 0.072, 0.018, materials.carbon);
+        const w2 = wing(span, 0.34, 0.072, 0.018, materials.accent2);
         w2.position.set(-hspan, fwY + 0.14, fwZ - 0.10);
         this.body.add(w2);
 
@@ -460,7 +505,7 @@ export class Vehicle {
             // Primary endplate slab — thin, tall, runs chord-wise
             const ep = new THREE.Mesh(
                 new THREE.BoxGeometry(0.012, epH, epD),
-                materials.carbonG
+                materials.accent1 // Accent1 on endplates
             );
             ep.position.set(epX, fwY - 0.10 + epH / 2 - 0.12, fwZ - 0.44);
             this.body.add(ep);
@@ -495,7 +540,7 @@ export class Vehicle {
         rw.position.set(-0.80, 0.74, -2.54);
         this.body.add(rw);
 
-        const rw1 = wing(rwSpan, 0.42, 0.055, 0.022, materials.body);
+        const rw1 = wing(rwSpan, 0.42, 0.055, 0.022, materials.accent2); // Accent2 on rear flap
         rw1.position.set(-0.80, 0.88, -2.58);
         this.body.add(rw1);
 
@@ -514,6 +559,13 @@ export class Vehicle {
         const bw = wing(1.20, 0.24, 0.028, 0.014, materials.carbon);
         bw.position.set(-0.60, 0.06, -2.18);
         this.body.add(bw);
+
+        // Endplates
+        [-1, 1].forEach(side => {
+            const ep = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.8, 0.8), materials.accent1);
+            ep.position.set(side * 0.80, 0.5, -2.5);
+            this.body.add(ep);
+        });
     }
 
     createRainLight(materials) {

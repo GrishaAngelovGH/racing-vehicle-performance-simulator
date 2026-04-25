@@ -160,7 +160,6 @@ body {
     transition: all 0.2s ease;
     cursor: pointer;
     flex-shrink: 0;
-    margin-left: 10px;
 }
 
 .rules-btn:hover {
