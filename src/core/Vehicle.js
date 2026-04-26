@@ -672,10 +672,10 @@ export class Vehicle {
     createWheelsAndSuspension(materials) {
         /* ── 14. WHEELS & SUSPENSION ────────────────────────────────────── */
         const wheelDef = [
-            { x: 1.30, y: 0, z: -1.70, front: false },
-            { x: -1.30, y: 0, z: -1.70, front: false },
-            { x: 1.20, y: -0.04, z: 2.00, front: true },
-            { x: -1.20, y: -0.04, z: 2.00, front: true },
+            { x: 1.50, y: 0, z: -1.70, front: false },
+            { x: -1.50, y: 0, z: -1.70, front: false },
+            { x: 1.20, y: -0.04, z: 2.30, front: true },
+            { x: -1.20, y: -0.04, z: 2.30, front: true },
         ];
 
         wheelDef.forEach(pos => {
