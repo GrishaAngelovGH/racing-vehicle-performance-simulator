@@ -948,6 +948,38 @@ input[type="range"] {
     display: none;
 }
 
+/* Floating Box Button - visible when panels are hidden */
+.floating-box-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 2000;
+    padding: 12px 24px;
+    background: rgba(255, 235, 59, 0.1);
+    color: #ffeb3b;
+    border: 2px solid #ffeb3b;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    cursor: pointer;
+    pointer-events: auto;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.floating-box-btn:hover {
+    background: rgba(255, 235, 59, 0.2);
+    box-shadow: 0 6px 20px rgba(255, 235, 59, 0.3);
+    transform: translateY(-2px);
+}
+
+.floating-box-btn:active {
+    transform: translateY(0);
+}
+
 #report-section {
     position: absolute;
     bottom: 20px;

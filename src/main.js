@@ -571,7 +571,7 @@ if (toggleRainBtn) {
             if (softTyreBtn) softTyreBtn.style.display = 'none';
             if (mediumTyreBtn) mediumTyreBtn.style.display = 'none';
             if (hardTyreBtn) hardTyreBtn.style.display = 'none';
-            
+
             // Switch to inters if currently on dry tires when rain starts
             if (['soft', 'medium', 'hard'].includes(session.currentTireCompound)) {
                 updateCompoundUI('intermediate');
@@ -583,7 +583,7 @@ if (toggleRainBtn) {
             if (softTyreBtn) softTyreBtn.style.display = 'block';
             if (mediumTyreBtn) mediumTyreBtn.style.display = 'block';
             if (hardTyreBtn) hardTyreBtn.style.display = 'block';
-            
+
             // Revert to medium if a wet tire was selected when it stops raining
             if (session.currentTireCompound === 'intermediate' || session.currentTireCompound === 'wet') {
                 updateCompoundUI('medium');
@@ -608,7 +608,7 @@ if (toggleRadioEngineerBtn) {
             if (!isAudioInitialized()) {
                 initAudio();
             }
-            
+
             const circuitId = document.getElementById('circuitSelect')?.value || 'classic';
             const config = CIRCUIT_CONFIGS[circuitId];
             // Race Engineer circuit intro
@@ -719,7 +719,7 @@ function updateCompoundUI(compound) {
     if (!session.simulationRunning) {
         resetOnParamChange();
     }
-    
+
     analyzeSetupChange('tireCompound', compound, { lastSetupValues, totalLaps: session.totalLaps, weather, car });
 }
 
@@ -785,6 +785,25 @@ document.addEventListener('keydown', (e) => {
             if (circuitInfoPanel) circuitInfoPanel.style.display = 'none';
             if (uiHint) uiHint.style.display = 'block';
             if (floatingMinimap) floatingMinimap.style.display = 'flex';
+        }
+    }
+
+    // Box/Pit Stop toggle with 'b' key
+    if (e.key === 'b' || e.key === 'B') {
+        if (session.simulationRunning && session.currentLap < session.totalLaps) {
+            session.pitRequested = !session.pitRequested;
+            const boxBtn = document.getElementById('boxBtn');
+            if (boxBtn) {
+                if (session.pitRequested) {
+                    boxBtn.style.background = '#ffeb3b';
+                    boxBtn.style.color = '#000';
+                    playEngineerAnalysis("Copy that. Box, box, box.");
+                } else {
+                    boxBtn.style.background = '';
+                    boxBtn.style.color = '';
+                    playEngineerAnalysis("Cancel pit stop. Stay out, stay out.");
+                }
+            }
         }
     }
 });
@@ -938,24 +957,24 @@ engine.start(() => {
         const lookAheadDistance = 20; // 20 meters absolute lookahead
         const lookAheadStep = lookAheadDistance / trackLength;
         const tangent = trackCurve.getTangentAt(progress);
-        const lookAhead = (progress + lookAheadStep) % 1; 
+        const lookAhead = (progress + lookAheadStep) % 1;
         const nextTangent = trackCurve.getTangentAt(lookAhead);
         const angle = tangent.angleTo(nextTangent);
-        
+
         // Quadratic response: normalized to absolute distance
-        const curvature = Math.pow(Math.min(1.0, angle * 8.0), 2); 
+        const curvature = Math.pow(Math.min(1.0, angle * 8.0), 2);
 
         // --- Cornering Grip Logic ---
         const compoundBonus = getTireGripBonus();
         const wearPenalty = (1.0 - session.tireHealth) * 0.45; // Max 0.45 grip loss at 0% health
         const downforceGripBonus = (downforce - 1.0) * 0.4;
-        
+
         let rainGripFactor = 1.0;
         if (weather.isRainEnabled()) {
             if (session.currentTireCompound === 'wet') {
-                rainGripFactor = 0.95; 
+                rainGripFactor = 0.95;
             } else if (session.currentTireCompound === 'intermediate') {
-                rainGripFactor = 0.85; 
+                rainGripFactor = 0.85;
             } else {
                 rainGripFactor = 0.6; // 40% grip reduction in rain for slicks
             }
@@ -988,7 +1007,7 @@ engine.start(() => {
         // Braking logic: decoupled from engine acceleration and limited by tire grip
         const baseBrakingForce = 18; // km/h/s per 1x of brakePower
         const gripLimitConstant = 110; // Max km/h/s of deceleration per 1.0 of effectiveGrip
-        
+
         const potentialDecelKmhPerSec = baseBrakingForce * brakePower;
         const maxDecelKmhPerSec = effectiveGrip * gripLimitConstant;
         const actualDecelKmhPerSec = Math.min(potentialDecelKmhPerSec, maxDecelKmhPerSec);
@@ -1114,7 +1133,7 @@ engine.start(() => {
 
         // Apply performance-based tire wear
         // Higher speed and higher acceleration increase wear rate
-        const speedWearFactor = Math.max(0.4, currentSpeed / 220); 
+        const speedWearFactor = Math.max(0.4, currentSpeed / 220);
         const accelWearFactor = Math.max(1.0, acceleration / 70);
         session.tireHealth = Math.max(0, session.tireHealth - (dProgress * getTireWearRate() * speedWearFactor * accelWearFactor));
 
