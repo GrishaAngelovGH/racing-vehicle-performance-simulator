@@ -542,7 +542,7 @@ export class Vehicle {
         });
 
         // Compact beam wing
-        const bw = wing(1.20, 0.24, 0.028, 0.014, materials.carbon);
+        const bw = wing(1.20, 0.24, 0.028, 0.014, materials.accent1);
         bw.position.set(-0.60, 0.06, -2.18);
         this.body.add(bw);
     }
