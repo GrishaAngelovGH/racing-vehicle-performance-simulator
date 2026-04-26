@@ -173,18 +173,20 @@ export class Vehicle {
         floorMesh.receiveShadow = true;
         this.body.add(floorMesh);
 
-        // Accent edge for the floor
+        // Accent edge for the floor — extended further forward
         const floorEdge = tube([
+            new THREE.Vector3(1.25, -0.28, 1.45),
             new THREE.Vector3(1.15, -0.28, 0.40),
             new THREE.Vector3(1.15, -0.28, -0.60),
             new THREE.Vector3(0.85, -0.28, -2.20),
-        ], 0.02, materials.accent1, 8, 4);
+        ], 0.024, materials.accent1, 8, 4);
         this.body.add(floorEdge);
         const floorEdgeL = tube([
+            new THREE.Vector3(-1.25, -0.28, 1.45),
             new THREE.Vector3(-1.15, -0.28, 0.40),
             new THREE.Vector3(-1.15, -0.28, -0.60),
             new THREE.Vector3(-0.85, -0.28, -2.20),
-        ], 0.02, materials.accent1, 8, 4);
+        ], 0.024, materials.accent1, 8, 4);
         this.body.add(floorEdgeL);
 
         // Vortex fences (adjusted to match new floor profile)
@@ -253,9 +255,9 @@ export class Vehicle {
             new THREE.Vector2(0, 1.43)
         ];
         
-        // Split nose into main and tip for accent color
-        const mainPoints = nosePoints.slice(0, 7);
-        const tipPoints = nosePoints.slice(6);
+        // Split nose into main and tip for accent color - larger tip area
+        const mainPoints = nosePoints.slice(0, 5);
+        const tipPoints = nosePoints.slice(4);
         
         const noseMesh = new THREE.Mesh(new THREE.LatheGeometry(mainPoints, 32), materials.body);
         noseMesh.scale.set(1, 1, 0.75); // Match fuselage height scale
