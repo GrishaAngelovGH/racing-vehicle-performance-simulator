@@ -104,7 +104,7 @@ export class Camera {
 
         // Manage cockpit visibility: Hide helmet, visor, airbox and cockpit blocking parts in Cockpit mode (2)
         if (this.car.body) {
-            const hiddenParts = ['driver_helmet', 'driver_visor', 'airbox', 'shark_fin',
+            const hiddenParts = ['driver_helmet', 'driver_visor', 'airbox',
                 'cockpit_rim', 'cockpit_flange', 'engine_cover', 'intake_ring'];
             this.car.body.children.forEach(child => {
                 if (hiddenParts.includes(child.name)) {

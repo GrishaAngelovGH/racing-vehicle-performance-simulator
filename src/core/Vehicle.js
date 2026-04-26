@@ -229,17 +229,7 @@ export class Vehicle {
         fuselage.castShadow = true;
         this.body.add(fuselage);
 
-        // Engine cover — narrower spine on top
-        const coverPts = [
-            new THREE.Vector3(0, 0.48, -0.30),
-            new THREE.Vector3(0, 0.54, -0.75),
-            new THREE.Vector3(0, 0.56, -1.20),
-            new THREE.Vector3(0, 0.52, -1.75),
-            new THREE.Vector3(0, 0.44, -2.10),
-        ];
-        const engineCover = tube(coverPts, 0.085, materials.bodyDark, 22, 20);
-        engineCover.name = 'engine_cover';
-        this.body.add(engineCover);
+        // Fuselage — Already added above
     }
 
     createNoseCone(materials) {
@@ -347,40 +337,25 @@ export class Vehicle {
     createAirboxAndIntake(materials) {
         /* ── 7. AIRBOX / ENGINE INTAKE ──────────────────────────────────── */
         const airPts = [
-            new THREE.Vector3(0, 0.58, 0.22),
-            new THREE.Vector3(0, 0.72, 0.00),
-            new THREE.Vector3(0, 0.78, -0.42),
-            new THREE.Vector3(0, 0.76, -0.90),
-            new THREE.Vector3(0, 0.58, -2.00), // Connected to rear bodywork
+            new THREE.Vector3(0, 0.76, 0.75),  // Intake mouth — slightly taller opening
+            new THREE.Vector3(0, 0.78, 0.45),  // Rises gently to a low plateau
+            new THREE.Vector3(0, 0.78, 0.10),  // Flat top — no hump, sits just above helmet
+            new THREE.Vector3(0, 0.72, -0.50), // Gentle start of descent
+            new THREE.Vector3(0, 0.50, -1.30), // Smooth descent
+            new THREE.Vector3(0, 0.32, -2.18), // Rear exit, sunken into fuselage
         ];
-        const airbox = tube(airPts, 0.200, materials.body, 22, 28); // Reduced radius from 0.260 to 0.200
+        const airbox = tube(airPts, 0.26, materials.body, 22, 28);
+        airbox.scale.set(1.10, 1, 1);
         airbox.name = 'airbox';
         this.body.add(airbox);
 
-        // Accent intake ring
+        // Accent intake ring — thin collar flush on the airbox mouth
         const intakeRing = tube([
-            new THREE.Vector3(0, 0.58, 0.225),
-            new THREE.Vector3(0, 0.62, 0.18),
-        ], 0.21, materials.accent1, 22, 2);
+            new THREE.Vector3(0, 0.76, 0.80),
+            new THREE.Vector3(0, 0.76, 0.70),
+        ], 0.265, materials.accent1, 32, 12);
+        intakeRing.scale.set(1.10, 1, 1);
         this.body.add(intakeRing);
-
-        // Shark fin
-        const finSh = new THREE.Shape();
-        finSh.moveTo(0, 0);
-        finSh.bezierCurveTo(0.03, 0.25, -0.20, 0.40, -0.70, 0.05); // Adjusted for smaller, rounder shape
-        finSh.lineTo(-0.70, 0); // Adjusted to match bezier end point
-        finSh.closePath();
-        const finGeo = new THREE.ExtrudeGeometry(finSh, {
-            depth: 0.015, // Reduced depth
-            bevelEnabled: true,
-            bevelSize: 0.01, // Increased bevel for roundness
-            bevelSegments: 3,
-        });
-        const fin = new THREE.Mesh(finGeo, materials.accent2); // Use accent2 for shark fin
-        fin.rotation.y = Math.PI / 2;
-        fin.position.set(0.01, 0.72, -0.38);
-        fin.name = 'shark_fin';
-        this.body.add(fin);
     }
 
     createSidepods(materials) {
