@@ -105,7 +105,7 @@ export class Vehicle {
             carbonG: new THREE.MeshStandardMaterial({ color: 0x7a7a7a, metalness: 0.92, roughness: 0.08, side: THREE.DoubleSide }), // Significantly lightened color
             mech: new THREE.MeshStandardMaterial({ color: 0x585858, metalness: 0.96, roughness: 0.12 }),
             chrome: new THREE.MeshStandardMaterial({ color: 0xc8c8c8, metalness: 1.00, roughness: 0.03 }),
-            tire: new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.97, metalness: 0.0 }),
+            tire: new THREE.MeshStandardMaterial({ color: 0x252525, roughness: 0.75, metalness: 0.0 }),
             yellow: new THREE.MeshStandardMaterial({ color: 0xffcc00, metalness: 0.6, roughness: 0.12 }),
             red: new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 0, side: THREE.DoubleSide }),
         };
