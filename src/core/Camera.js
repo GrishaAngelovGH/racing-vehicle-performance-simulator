@@ -45,7 +45,7 @@ export class Camera {
                 const tiltDirection = e.deltaY > 0 ? 0.05 : -0.05;
                 this.birdseyeTilt += tiltDirection;
                 // Clamp tilt: 0 is top-down, ~1.3 is near-horizon (approx 75 deg)
-                this.birdseyeTilt = Math.max(0, Math.min(1.3, this.birdseyeTilt));
+                this.birdseyeTilt = Math.max(0, Math.min(1.5, this.birdseyeTilt));
             } else if (e.shiftKey) {
                 e.preventDefault(); // Prevent page scrolling
                 // Change horizontal rotation
