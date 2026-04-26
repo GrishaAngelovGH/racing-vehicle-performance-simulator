@@ -299,13 +299,13 @@ export class Vehicle {
         // Mirrors
         [-1, 1].forEach(side => {
             const mirrorStem = tube([
-                new THREE.Vector3(side * 0.25, 0.58, 0.35),
-                new THREE.Vector3(side * 0.38, 0.68, 0.40),
-                new THREE.Vector3(side * 0.48, 0.72, 0.42),
-            ], 0.012, materials.carbon, 6, 4);
+                new THREE.Vector3(side * 0.20, 0.58, 0.35),
+                new THREE.Vector3(side * 0.38, 0.65, 0.40),
+                new THREE.Vector3(side * 0.45, 0.68, 0.42),
+            ], 0.015, materials.carbon, 6, 4);
             this.body.add(mirrorStem);
 
-            const mirrorBody = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.06, 0.04), materials.accent2);
+            const mirrorBody = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.10, 0.08), materials.accent2);
             mirrorBody.position.set(side * 0.52, 0.72, 0.42);
             this.body.add(mirrorBody);
         });
