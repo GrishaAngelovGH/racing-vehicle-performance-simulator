@@ -545,6 +545,51 @@ export class Vehicle {
         const bw = wing(1.20, 0.24, 0.028, 0.014, materials.accent1);
         bw.position.set(-0.60, 0.06, -2.18);
         this.body.add(bw);
+
+        /* ── ENDPLATES ───────────────────────────────────────────────────── */
+        const rwY = 0.74; // Y position of the lower wing element
+        const rw1Y = 0.88; // Y position of the upper wing element
+        const epHeight = 0.22; // Calculated to span below rw and above rw1
+        const epDepth = 0.72;  // Match main wing chord
+        const epBottomY = 0.70; // Lowest Y coordinate for the endplate assembly
+
+        [-1, 1].forEach(side => {
+            const epX = side * (hrwSpan - 0.01); // Position slightly inside full span
+
+            // Primary endplate slab
+            const ep = new THREE.Mesh(
+                new THREE.BoxGeometry(0.012, epHeight, epDepth), // Thin, tall, deep
+                materials.accent1
+            );
+            // Position center of height at epBottomY + epHeight / 2, center of depth at -2.54 (rear wing Z position)
+            ep.position.set(epX, epBottomY + epHeight / 2, -2.54);
+            this.body.add(ep);
+
+            // Lower rounded edge strip
+            const epEdge = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.008, 0.008, epDepth, 12), // Thin cylinder
+                materials.carbon
+            );
+            epEdge.rotation.x = Math.PI / 2; // Orient correctly
+            // Position at the bottom edge of the endplate, centered on the wing's Z position
+            epEdge.position.set(epX, epBottomY, -2.54);
+            this.body.add(epEdge);
+
+            // Footplate — flat skid along the bottom
+            const fp = new THREE.Mesh(
+                new THREE.BoxGeometry(0.14, 0.012, epDepth + 0.06), // Wider than endplate depth
+                materials.carbon
+            );
+            // Position at the bottom of the endplate, centered on the wing's Z position
+            fp.position.set(epX, epBottomY - 0.012 / 2, -2.54);
+            this.body.add(fp);
+        });
+
+        // Sleek single central exhaust pipe
+        this.body.add(tube([
+            new THREE.Vector3(0, 0.50, -1.94),
+            new THREE.Vector3(0, 0.55, -2.18),
+        ], 0.030, materials.chrome, 16, 5));
     }
 
     createRainLight(materials) {
