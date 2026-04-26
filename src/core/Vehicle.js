@@ -520,11 +520,11 @@ export class Vehicle {
         const wSpan = rwSpan - 0.04;
         const hwSpan = wSpan / 2;
 
-        const rw = wing(wSpan, 0.72, 0.048, 0.032, materials.carbonG);
+        const rw = wing(wSpan, 0.72, 0.048, 0.032, materials.body); // Labeled 'primary'
         rw.position.set(-hwSpan, 0.74, -2.54);
         this.body.add(rw);
 
-        const rw1 = wing(wSpan, 0.42, 0.055, 0.022, materials.accent2); // Accent2 on rear flap
+        const rw1 = wing(wSpan, 0.42, 0.055, 0.022, materials.accent1); // Labeled 'sec'
         rw1.position.set(-hwSpan, 0.88, -2.58);
         this.body.add(rw1);
 
