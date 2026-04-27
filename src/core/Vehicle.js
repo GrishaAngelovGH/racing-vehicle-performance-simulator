@@ -362,15 +362,50 @@ export class Vehicle {
     }
 
     createDriverHelmet(materials) {
-        /* ── 6. DRIVER HELMET ───────────────────────────────────────────── */
-        const helmet = new THREE.Mesh(
-            new THREE.CapsuleGeometry(0.13, 0.12, 8, 24),
-            materials.yellow
+        /* ── 6. DRIVER HELMET (Realistic version) ────────────────────────── */
+        const helmetGroup = new THREE.Group();
+        helmetGroup.position.set(0, 0.65, 0.15);
+        helmetGroup.name = 'driver_helmet';
+        this.body.add(helmetGroup);
+
+        const whiteMat = new THREE.MeshStandardMaterial({ color: 0xfdfdfd, roughness: 0.25, metalness: 0.1 });
+        const visorMat = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.05, metalness: 0.9 });
+        const baseMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+
+        // Main Shell - slightly aerodynamic shape
+        const shell = new THREE.Mesh(
+            new THREE.SphereGeometry(0.145, 32, 32),
+            whiteMat
         );
-        helmet.position.set(0, 0.65, 0.15);
-        helmet.name = 'driver_helmet';
-        helmet.castShadow = false;
-        this.body.add(helmet);
+        shell.scale.set(0.92, 1, 1.08);
+        helmetGroup.add(shell);
+
+        // Chin Guard / Face Piece
+        const chin = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.145, 0.145, 0.12, 32, 1, false, -Math.PI * 0.45, Math.PI * 0.9),
+            whiteMat
+        );
+        chin.scale.set(0.92, 1, 1.08);
+        chin.position.y = -0.06;
+        helmetGroup.add(chin);
+
+        // Dark Visor Strip
+        const visor = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.148, 0.148, 0.08, 32, 1, false, -Math.PI * 0.38, Math.PI * 0.76),
+            visorMat
+        );
+        visor.scale.set(0.92, 1, 1.08);
+        visor.position.y = 0.015;
+        helmetGroup.add(visor);
+
+        // Bottom Seal
+        const seal = new THREE.Mesh(
+            new THREE.TorusGeometry(0.138, 0.015, 8, 32),
+            baseMat
+        );
+        seal.rotation.x = Math.PI / 2;
+        seal.position.y = -0.12;
+        helmetGroup.add(seal);
     }
 
     createAirboxAndIntake(materials) {
