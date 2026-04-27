@@ -792,16 +792,40 @@ export class Vehicle {
             tire.castShadow = true;
             wg.add(tire);
 
-            // Rim / Wheel Cover (Aerodynamic disc as seen in car.jpg)
-            const coverMat = materials.carbonG;
-            const cover = new THREE.Mesh(new THREE.CylinderGeometry(Rr * 1.05, Rr * 1.05, W + 0.02, 32), coverMat);
-            cover.rotation.z = Math.PI / 2;
-            wg.add(cover);
-
-            // Hub detail on cover
-            const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, W + 0.08, 16), materials.mech);
-            hub.rotation.z = Math.PI / 2;
-            wg.add(hub);
+            // Multi-spoke Rim (similar to sample-1.png)
+            const spokeMat = new THREE.MeshStandardMaterial({ color: 0xeeeeee, metalness: 0.2, roughness: 0.5 });
+            const numSpokes = 10;
+            const spokeGeo = new THREE.BoxGeometry(0.03, Rr, 0.015);
+            const rimRingGeo = new THREE.TorusGeometry(Rr, 0.025, 12, 48);
+            const hubGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.05, 16);
+            
+            // Apply rim to both sides of the wheel
+            [-1, 1].forEach(side => {
+                const sideGroup = new THREE.Group();
+                sideGroup.position.x = side * (W / 2);
+                
+                // Outer Ring
+                const ring = new THREE.Mesh(rimRingGeo, spokeMat);
+                ring.rotation.y = Math.PI / 2;
+                sideGroup.add(ring);
+                
+                // Spokes
+                for (let i = 0; i < numSpokes; i++) {
+                    const angle = (i / numSpokes) * Math.PI * 2;
+                    const spoke = new THREE.Mesh(spokeGeo, spokeMat);
+                    spoke.rotation.x = angle;
+                    spoke.position.y = Math.cos(angle) * Rr / 2;
+                    spoke.position.z = Math.sin(angle) * Rr / 2;
+                    sideGroup.add(spoke);
+                }
+                
+                // Hub
+                const hub = new THREE.Mesh(hubGeo, materials.mech);
+                hub.rotation.z = Math.PI / 2;
+                sideGroup.add(hub);
+                
+                wg.add(sideGroup);
+            });
 
             // Compound sidewall ring
             const cmpd = this.tireCompounds[this.currentCompound];

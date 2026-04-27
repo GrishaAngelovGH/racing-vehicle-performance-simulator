@@ -1022,8 +1022,19 @@ engine.start(() => {
             estimatedAccel = -actualDecelKmhPerSec;
         }
 
-        // Apply visual effects (Pitch: Dive/Squat, Roll: Lean, Steering: Wheel turn)
+        // Convert speed from km/h to meters/sec for calculations
+        const metersPerSec = currentSpeed * 0.277778;
+
+        // Apply visual effects (Pitch: Dive/Squat, Roll: Lean, Steering: Wheel turn, Wheel Spin)
         if (car && car.body) {
+            // 0. Wheel Rotation (Spin)
+            // Wheel radius is ~0.5m, rotation (rad) = distance / radius
+            const wheelRadius = 0.5;
+            const rotationStep = (metersPerSec * dt) / wheelRadius;
+            car.wheelGroups.forEach(wg => {
+                wg.rotation.x += rotationStep;
+            });
+
             // 1. Chassis Pitch (Dive/Squat)
             const pitchFactor = 0.0004;
             const targetPitch = THREE.MathUtils.clamp(-estimatedAccel * pitchFactor, -0.05, 0.05); // Max ~3 degrees
@@ -1127,8 +1138,6 @@ engine.start(() => {
         const currentTimeEl = document.getElementById('currentTime');
         if (currentTimeEl) currentTimeEl.textContent = timeText;
 
-        // Convert speed from km/h to meters/sec
-        const metersPerSec = currentSpeed * 0.277778;
         const dProgress = (metersPerSec * dt) / trackLength;
 
         // Apply performance-based tire wear
