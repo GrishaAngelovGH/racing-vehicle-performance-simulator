@@ -340,12 +340,12 @@ export class Vehicle {
     createAirboxAndIntake(materials) {
         /* ── 7. AIRBOX / ENGINE INTAKE ──────────────────────────────────── */
         const airPts = [
-            new THREE.Vector3(0, 0.76, 0.75),  // Intake mouth — slightly taller opening
-            new THREE.Vector3(0, 0.78, 0.45),  // Rises gently to a low plateau
-            new THREE.Vector3(0, 0.78, 0.10),  // Flat top — no hump, sits just above helmet
-            new THREE.Vector3(0, 0.72, -0.50), // Gentle start of descent
-            new THREE.Vector3(0, 0.50, -1.30), // Smooth descent
-            new THREE.Vector3(0, 0.32, -2.18), // Rear exit, sunken into fuselage
+            new THREE.Vector3(0, 0.70, 0.75),  // Intake mouth — slightly taller opening
+            new THREE.Vector3(0, 0.72, 0.45),  // Rises gently to a low plateau
+            new THREE.Vector3(0, 0.72, 0.10),  // Flat top — no hump, sits just above helmet
+            new THREE.Vector3(0, 0.66, -0.50), // Gentle start of descent
+            new THREE.Vector3(0, 0.44, -1.30), // Smooth descent
+            new THREE.Vector3(0, 0.26, -2.18), // Rear exit, sunken into fuselage
         ];
         const airbox = tube(airPts, 0.26, materials.body, 22, 28);
         airbox.scale.set(1.10, 1, 1);
@@ -354,8 +354,8 @@ export class Vehicle {
 
         // Accent intake ring — thin collar flush on the airbox mouth
         const intakeRing = tube([
-            new THREE.Vector3(0, 0.76, 0.80),
-            new THREE.Vector3(0, 0.76, 0.70),
+            new THREE.Vector3(0, 0.70, 0.80),
+            new THREE.Vector3(0, 0.70, 0.70),
         ], 0.265, materials.accent1, 32, 12);
         intakeRing.scale.set(1.10, 1, 1);
         this.body.add(intakeRing);
