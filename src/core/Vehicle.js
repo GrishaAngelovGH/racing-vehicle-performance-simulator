@@ -286,17 +286,6 @@ export class Vehicle {
 
     createCockpit(materials) {
         /* ── 5. COCKPIT ─────────────────────────────────────────────────── */
-        // Opening rim — smooth oval
-        const cockpitRim = new THREE.Mesh(
-            new THREE.TorusGeometry(0.270, 0.035, 16, 48, Math.PI),
-            materials.accent1
-        );
-        cockpitRim.rotation.x = Math.PI / 2;
-        cockpitRim.rotation.z = Math.PI;
-        cockpitRim.position.set(0, 0.58, 0.25);
-        cockpitRim.name = 'cockpit_rim';
-        this.body.add(cockpitRim);
-
         // Mirrors
         [-1, 1].forEach(side => {
             const mirrorStem = tube([
