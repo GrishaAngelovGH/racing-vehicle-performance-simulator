@@ -288,16 +288,28 @@ export class Vehicle {
         /* ── 5. COCKPIT ─────────────────────────────────────────────────── */
         // Mirrors
         [-1, 1].forEach(side => {
-            const mirrorStem = tube([
-                new THREE.Vector3(side * 0.20, 0.58, 0.35),
-                new THREE.Vector3(side * 0.38, 0.65, 0.40),
-                new THREE.Vector3(side * 0.45, 0.68, 0.42),
-            ], 0.015, materials.carbon, 6, 4);
-            this.body.add(mirrorStem);
+            const mirrorGroup = new THREE.Group();
+            mirrorGroup.position.set(side * 0.75, 0.60, 1.40);
+            // Angle slightly toward the driver for better visibility/realism
+            mirrorGroup.rotation.y = side * 0.25;
+            this.body.add(mirrorGroup);
 
-            const mirrorBody = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.10, 0.08), materials.accent2);
-            mirrorBody.position.set(side * 0.52, 0.72, 0.42);
-            this.body.add(mirrorBody);
+            const mirrorBody = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.12, 0.06), materials.accent2);
+            mirrorGroup.add(mirrorBody);
+
+            // Mirror Glass (Reflective surface)
+            const mirrorGlass = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.10), materials.chrome);
+            mirrorGlass.position.z = -0.031; // Flush with the back face
+            mirrorGlass.rotation.y = Math.PI; // Face toward the driver
+            mirrorGroup.add(mirrorGlass);
+
+            const mirrorStem = tube([
+                new THREE.Vector3(side * 0.20, 0.35, 1.10), // Base connection
+                new THREE.Vector3(side * 0.35, 0.40, 1.20), // Mid-arch
+                new THREE.Vector3(side * 0.58, 0.52, 1.35), // Approaching mirror
+                new THREE.Vector3(side * 0.64, 0.60, 1.42), // Final connection
+            ], 0.008, materials.carbon, 6, 4);
+            this.body.add(mirrorStem);
         });
     }
 
