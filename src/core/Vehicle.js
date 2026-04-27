@@ -310,19 +310,6 @@ export class Vehicle {
             mirrorBody.position.set(side * 0.52, 0.72, 0.42);
             this.body.add(mirrorBody);
         });
-
-        // Side flanges
-        [-1, 1].forEach(side => {
-            const flange = new THREE.Mesh(
-                new THREE.CylinderGeometry(1, 1, 0.80, 32, 1),
-                materials.carbonG
-            );
-            flange.scale.set(0.080, 1, 0.180);
-            flange.rotation.x = Math.PI / 2;
-            flange.position.set(side * 0.26, 0.45, 0.24);
-            flange.name = 'cockpit_flange';
-            this.body.add(flange);
-        });
     }
 
     createDriverHelmet(materials) {
