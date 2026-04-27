@@ -556,15 +556,15 @@ export class Vehicle {
         rw1.position.set(-hwSpan, 0.88, -2.58);
         this.body.add(rw1);
 
-        // Sleek Y-shaped pillars
+        // Sleek Y-shaped pillars — rooted into the bodywork, shortened
         [-0.32, 0.32].forEach(sx => {
             const pillarPath = [
-                new THREE.Vector3(sx, 0.06, -2.18),
-                new THREE.Vector3(sx * 0.7, 0.45, -2.16),
-                new THREE.Vector3(sx * 0.4, 0.74, -2.54), // Connects to lower wing (rw)
-                new THREE.Vector3(sx * 0.32, 0.88, -2.58), // Connects to upper wing (rw1)
+                new THREE.Vector3(sx * 0.5, 0.50, -2.14),
+                new THREE.Vector3(sx * 0.6, 0.64, -2.22),
+                new THREE.Vector3(sx * 0.4, 0.74, -2.54),
+                new THREE.Vector3(sx * 0.32, 0.88, -2.58),
             ];
-            this.body.add(tube(pillarPath, 0.028, materials.carbon, 8, 5));
+            this.body.add(tube(pillarPath, 0.032, materials.carbon, 8, 5));
         });
 
         // Compact beam wing
