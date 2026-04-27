@@ -18,20 +18,49 @@ function lathe(pairs, mat, segs = 64) {
     return new THREE.Mesh(new THREE.LatheGeometry(pts, segs), mat);
 }
 
-/** Airfoil wing element extruded along span (X axis) */
-function wing(span, chord, camber, thickness, mat, bevel = 0.008) {
-    // NACA-ish profile: flat bottom, curved top
+/** Helper for creating a wing element that follows a 3D path (for spoon shapes) */
+function curvedWing(path, chord, camber, thickness, mat, bevel = 0.002) {
     const s = new THREE.Shape();
-    const N = 24;
-    // top surface
+    const N = 16;
     for (let i = 0; i <= N; i++) {
         const t = i / N;
         const x = t * chord;
-        const y = thickness * Math.sin(Math.PI * t) + camber * Math.sin(Math.PI * t);
+        const weight = Math.pow(t, 0.7) * Math.pow(1 - t, 1.2);
+        const y = (thickness * 4.0 * weight) + (camber * Math.sin(Math.PI * t));
         if (i === 0) s.moveTo(0, 0);
         else s.lineTo(x, y);
     }
-    // bottom surface back to start
+    s.lineTo(chord, 0);
+    s.lineTo(0, 0);
+
+    const geo = new THREE.ExtrudeGeometry(s, {
+        extrudePath: path,
+        steps: 40,
+        bevelEnabled: true,
+        bevelSize: bevel,
+        bevelThickness: bevel,
+        bevelSegments: 2
+    });
+    return new THREE.Mesh(geo, mat);
+}
+
+/** Airfoil wing element extruded along span (X axis) */
+function wing(span, chord, camber, thickness, mat, bevel = 0.004) {
+    // NACA-style profile: max thickness at ~30% chord, sharp trailing edge
+    const s = new THREE.Shape();
+    const N = 24;
+
+    // Top surface
+    for (let i = 0; i <= N; i++) {
+        const t = i / N;
+        const x = t * chord;
+        // Shift peak to ~30% using a power function
+        const weight = Math.pow(t, 0.7) * Math.pow(1 - t, 1.2);
+        const y = (thickness * 4.0 * weight) + (camber * Math.sin(Math.PI * t));
+        if (i === 0) s.moveTo(0, 0);
+        else s.lineTo(x, y);
+    }
+    // Sharp trailing edge and flat-ish bottom
     s.lineTo(chord, 0);
     s.lineTo(0, 0);
 
@@ -40,7 +69,7 @@ function wing(span, chord, camber, thickness, mat, bevel = 0.008) {
         bevelEnabled: true,
         bevelSize: bevel,
         bevelThickness: bevel,
-        bevelSegments: 3,
+        bevelSegments: 2,
     });
     const m = new THREE.Mesh(geo, mat);
     // pivot so span goes along X
@@ -238,26 +267,25 @@ export class Vehicle {
         /* ── 4. NOSE CONE ───────────────────────────────────────────────── */
         // Use a Group to act as a hinge pivot at the junction (Z=2.15)
         const noseGroup = new THREE.Group();
-        // Slightly deeper overlap (2.13) to ensure a solid join
         noseGroup.position.set(0, 0.15, 2.13);
         this.body.add(noseGroup);
 
         const nosePoints = [
-            new THREE.Vector2(0, -0.05), // Increased overlap cap
-            new THREE.Vector2(0.220, 0), // Base matches fuselage
-            new THREE.Vector2(0.200, 0.30),
-            new THREE.Vector2(0.175, 0.65),
-            new THREE.Vector2(0.145, 0.95),
-            new THREE.Vector2(0.120, 1.15),
-            new THREE.Vector2(0.105, 1.28),
-            new THREE.Vector2(0.095, 1.36),
-            new THREE.Vector2(0.075, 1.41),
-            new THREE.Vector2(0, 1.43)
+            new THREE.Vector2(0, -0.05), // Overlap cap
+            new THREE.Vector2(0.22, 0),  // Base matches fuselage
+            new THREE.Vector2(0.21, 0.30),
+            new THREE.Vector2(0.19, 0.65),
+            new THREE.Vector2(0.16, 1.00),
+            new THREE.Vector2(0.13, 1.20),
+            new THREE.Vector2(0.10, 1.35),
+            new THREE.Vector2(0.07, 1.42),
+            new THREE.Vector2(0.05, 1.45),  // Blunter Tip
+            new THREE.Vector2(0, 1.45)      // Cap
         ];
 
-        // Split nose into main and tip for accent color - larger tip area
-        const mainPoints = nosePoints.slice(0, 5);
-        const tipPoints = nosePoints.slice(4);
+        // Split nose into main and tip for accent color
+        const mainPoints = nosePoints.slice(0, 6);
+        const tipPoints = nosePoints.slice(5);
 
         const noseMesh = new THREE.Mesh(new THREE.LatheGeometry(mainPoints, 32), materials.body);
         noseMesh.scale.set(1, 1, 0.75); // Match fuselage height scale
@@ -271,17 +299,7 @@ export class Vehicle {
         tipMesh.castShadow = true;
         noseGroup.add(tipMesh);
 
-        // Tilt the whole group for the downward droop
-        noseGroup.rotation.x = 0.06;
-
-        // Nose-wing mounting pedestal - wider and flatter for realistic look
-        const pedestal = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.18, 0.24, 0.08, 24),
-            materials.carbon
-        );
-        pedestal.position.set(0, -0.12, 3.10);
-        this.body.add(pedestal);
-
+        noseGroup.rotation.x = 0.08;
     }
 
     createCockpit(materials) {
@@ -297,15 +315,15 @@ export class Vehicle {
             // Mirror Body (Rounded aerodynamic housing)
             const mShape = new THREE.Shape();
             const mw = 0.20, mh = 0.09, mr = 0.02;
-            mShape.moveTo(-mw/2, -mh/2 + mr);
-            mShape.lineTo(-mw/2, mh/2 - mr);
-            mShape.quadraticCurveTo(-mw/2, mh/2, -mw/2 + mr, mh/2);
-            mShape.lineTo(mw/2 - mr, mh/2);
-            mShape.quadraticCurveTo(mw/2, mh/2, mw/2, mh/2 - mr);
-            mShape.lineTo(mw/2, -mh/2 + mr);
-            mShape.quadraticCurveTo(mw/2, -mh/2, mw/2 - mr, -mh/2);
-            mShape.lineTo(-mw/2 + mr, -mh/2);
-            mShape.quadraticCurveTo(-mw/2, -mh/2, -mw/2, -mh/2 + mr);
+            mShape.moveTo(-mw / 2, -mh / 2 + mr);
+            mShape.lineTo(-mw / 2, mh / 2 - mr);
+            mShape.quadraticCurveTo(-mw / 2, mh / 2, -mw / 2 + mr, mh / 2);
+            mShape.lineTo(mw / 2 - mr, mh / 2);
+            mShape.quadraticCurveTo(mw / 2, mh / 2, mw / 2, mh / 2 - mr);
+            mShape.lineTo(mw / 2, -mh / 2 + mr);
+            mShape.quadraticCurveTo(mw / 2, -mh / 2, mw / 2 - mr, -mh / 2);
+            mShape.lineTo(-mw / 2 + mr, -mh / 2);
+            mShape.quadraticCurveTo(-mw / 2, -mh / 2, -mw / 2, -mh / 2 + mr);
 
             const mirrorBody = new THREE.Mesh(
                 new THREE.ExtrudeGeometry(mShape, {
@@ -318,21 +336,21 @@ export class Vehicle {
                 materials.accent2
             );
             // Center the extruded geometry
-            mirrorBody.position.z = -0.02; 
+            mirrorBody.position.z = -0.02;
             mirrorGroup.add(mirrorBody);
 
             // Mirror Glass (Reflective surface - rounded to match housing)
             const gShape = new THREE.Shape();
             const gw = 0.198, gh = 0.088, gr = 0.019;
-            gShape.moveTo(-gw/2, -gh/2 + gr);
-            gShape.lineTo(-gw/2, gh/2 - gr);
-            gShape.quadraticCurveTo(-gw/2, gh/2, -gw/2 + gr, gh/2);
-            gShape.lineTo(gw/2 - gr, gh/2);
-            gShape.quadraticCurveTo(gw/2, gh/2, gw/2, gh/2 - gr);
-            gShape.lineTo(gw/2, -gh/2 + gr);
-            gShape.quadraticCurveTo(gw/2, -gh/2, gw/2 - gr, -gh/2);
-            gShape.lineTo(-gw/2 + gr, -gh/2);
-            gShape.quadraticCurveTo(-gw/2, -gh/2, -gw/2, -gh/2 + gr);
+            gShape.moveTo(-gw / 2, -gh / 2 + gr);
+            gShape.lineTo(-gw / 2, gh / 2 - gr);
+            gShape.quadraticCurveTo(-gw / 2, gh / 2, -gw / 2 + gr, gh / 2);
+            gShape.lineTo(gw / 2 - gr, gh / 2);
+            gShape.quadraticCurveTo(gw / 2, gh / 2, gw / 2, gh / 2 - gr);
+            gShape.lineTo(gw / 2, -gh / 2 + gr);
+            gShape.quadraticCurveTo(gw / 2, -gh / 2, gw / 2 - gr, -gh / 2);
+            gShape.lineTo(-gw / 2 + gr, -gh / 2);
+            gShape.quadraticCurveTo(-gw / 2, -gh / 2, -gw / 2, -gh / 2 + gr);
 
             const mirrorGlass = new THREE.Mesh(
                 new THREE.ShapeGeometry(gShape),
@@ -525,69 +543,62 @@ export class Vehicle {
     }
 
     createFrontWing(materials) {
-        /* ── 10. FRONT WING — Multi-element aero design ─────────────────── */
-        // wing(span, chord, camber, thickness, mat) extrudes along X axis,
-        // chord runs along Z, height along Y — identical to the rear wing usage.
+        /* ── 10. FRONT WING — Symmetrical Spoon Aero ────────────────────── */
+        const fwGroup = new THREE.Group();
+        this.body.add(fwGroup);
 
-        const fwZ = 4.10;   // leading edge Z (forward, under nose tip)
-        const fwY = -0.18;  // lower — near ground level
-        const span = 3.00;   // full wing span (X)
-        const hspan = span / 2; // half-span for positioning
+        const fwZ = 4.10;   // Leading edge reference
+        const fwY = -0.18;  // Ground clearance
+        const span = 2.50;
+        const hspan = span / 2;
+        const wingHspan = hspan - 0.01; // Overlap with the endplate interior without poking through
 
-        // Wing elements should be slightly narrower than the endplate-to-endplate span
-        // to account for beveling and ensure they don't poke through.
-        const wSpan = span - 0.04;
-        const hwSpan = wSpan / 2;
+        // Define paths for the curved wing elements (Spoon Shape)
+        const createSpoonPath = (zOff, yOff, sweep, dip) => {
+            return new THREE.CatmullRomCurve3([
+                new THREE.Vector3(-wingHspan, yOff + 0.12, zOff),
+                new THREE.Vector3(-wingHspan * 0.45, yOff + 0.02, zOff + sweep * 0.5),
+                new THREE.Vector3(0, yOff - dip, zOff + sweep),
+                new THREE.Vector3(wingHspan * 0.45, yOff + 0.02, zOff + sweep * 0.5),
+                new THREE.Vector3(wingHspan, yOff + 0.12, zOff)
+            ]);
+        };
 
-        // ── NOSE-TO-WING SUPPORT STRUT ───────────────────────────────────
-        // Vertical strut connecting nose cone underside to front wing
-        const strutHeight = 0.22;
-        const strutTopY = 0.12;
-        const strutBottomY = strutTopY - strutHeight;
-        const noseStrut = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.035, 0.045, strutHeight, 16),
-            materials.accent1
-        );
-        noseStrut.position.set(0, 0.01, 3.45);
-        noseStrut.rotation.x = 0.10;
-        noseStrut.castShadow = true;
-        this.body.add(noseStrut);
+        // 1. MAIN PLANE (Continuous bottom element)
+        const mainPath = createSpoonPath(-0.75, -0.05, 0.25, 0.08);
+        const mainPlane = curvedWing(mainPath, 0.60, 0.01, 0.025, materials.carbon);
+        fwGroup.add(mainPlane);
 
-        // ── CENTRE NEUTRAL SECTION ────────────────────────────────────────
-        // Flat-ish main plane across the central 1.4 m
-        const centreSpan = 1.40;
-        const cMain = wing(centreSpan, 0.65, 0.008, 0.028, materials.carbon);
-        cMain.position.set(-centreSpan / 2, fwY - 0.10, fwZ - 0.65);
-        this.body.add(cMain);
+        // 2. FLAPS (Three progressive elements)
+        const flapConfigs = [
+            { zOff: -0.50, yOff: 0.04, dip: 0.05, sweep: 0.20, chord: 0.45, camber: 0.04, thick: 0.018, mat: materials.accent2 },
+            { zOff: -0.35, yOff: 0.12, dip: 0.02, sweep: 0.15, chord: 0.38, camber: 0.07, thick: 0.014, mat: materials.accent2 },
+            { zOff: -0.22, yOff: 0.22, dip: 0.00, sweep: 0.10, chord: 0.30, camber: 0.10, thick: 0.010, mat: materials.accent2 }
+        ];
 
-        // ── FULL-WIDTH MAIN PLANE ─────────────────────────────────────────
-        const w0 = wing(wSpan, 0.45, 0.030, 0.034, materials.carbon);
-        w0.position.set(-hwSpan, fwY - 0.10, fwZ - 0.70);
-        this.body.add(w0);
+        flapConfigs.forEach(cfg => {
+            const path = createSpoonPath(cfg.zOff, cfg.yOff, cfg.sweep, cfg.dip);
+            const flap = curvedWing(path, cfg.chord, cfg.camber, cfg.thick, cfg.mat);
+            fwGroup.add(flap);
+        });
 
-        // ── FLAP 1 — higher angle, sits just above & aft of main plane ───
-        const w1 = wing(wSpan, 0.48, 0.055, 0.024, materials.accent2); // Accent2 on flaps
-        w1.position.set(-hwSpan, fwY + 0.04, fwZ - 0.28);
-        this.body.add(w1);
-
-        // ── FLAP 2 — steepest angle, topmost element ─────────────────────
-        const w2 = wing(wSpan, 0.34, 0.072, 0.018, materials.accent2);
-        w2.position.set(-hwSpan, fwY + 0.14, fwZ - 0.10);
-        this.body.add(w2);
-
-        // ── ENDPLATES ─────────────────────────────────────────────────────
+        // ── ENDPLATES (Rectangular design at wing edge) ──────────────────
         [-1, 1].forEach(side => {
-            const epX = side * hspan;
-            const epH = 0.38;
+            // Endplate at exact wing edge - wingHspan is the actual wing half-span
+            const epX = side * wingHspan;
+            const epH = 0.42;
             const epD = 0.88;
+            // Local coordinates relative to fwGroup (fwGroup is already placed at fwZ, fwY)
+            const epY = 0.22;   // fwY is the group's Y, so local offset only
+            const epZ = -0.75;  // local Z offset within the group
 
-            // Primary endplate slab — thin, tall, runs chord-wise
+            // Primary endplate slab — thin in X (side-to-side), tall in Y, deep in Z (chord-wise)
             const ep = new THREE.Mesh(
                 new THREE.BoxGeometry(0.012, epH, epD),
-                materials.accent1 // Accent1 on endplates
+                materials.accent1
             );
-            ep.position.set(epX, fwY - 0.10 + epH / 2 - 0.12, fwZ - 0.44);
-            this.body.add(ep);
+            ep.position.set(epX, epY, epZ);
+            fwGroup.add(ep);
 
             // Lower rounded edge strip
             const epEdge = new THREE.Mesh(
@@ -595,18 +606,34 @@ export class Vehicle {
                 materials.carbon
             );
             epEdge.rotation.x = Math.PI / 2;
-            epEdge.position.set(epX, fwY - 0.10 - 0.12 + 0.008, fwZ - 0.44);
-            this.body.add(epEdge);
+            epEdge.position.set(epX, epY - epH / 2 + 0.008, epZ);
+            fwGroup.add(epEdge);
 
-
-            // ── FOOTPLATE — flat skid along the bottom of the endplate ───
+            // Footplate — wider and slightly longer than endplate
             const fp = new THREE.Mesh(
                 new THREE.BoxGeometry(0.14, 0.012, epD + 0.06),
                 materials.carbon
             );
-            fp.position.set(epX, fwY - 0.10 - epH / 2 + 0.12 - 0.006, fwZ - 0.44);
-            this.body.add(fp);
+            fp.position.set(epX, epY - epH / 2 - 0.006, epZ);
+            fwGroup.add(fp);
         });
+
+        // ── NOSE-TO-WING CONNECTING STRUT ─────────────────────────────────
+        // Small support strut connecting nose cone underside to front wing
+        const strutHeight = 0.13;  // Further reduced to ensure it's not out of the wing
+        const strutTopY = 0.12;
+        const strutBottomY = strutTopY - strutHeight;
+        const noseStrut = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.030, 0.040, strutHeight, 16),
+            materials.accent1
+        );
+        noseStrut.position.set(0, 0.01, 3.47); // Adjusted z-position to pull it back slightly
+        noseStrut.rotation.x = 0.08; // Adjusted rotation to align better
+        noseStrut.castShadow = true;
+        this.body.add(noseStrut);
+
+        // Final group placement under the nose
+        fwGroup.position.set(0, fwY, fwZ);
     }
 
     createRearWing(materials) {
@@ -833,17 +860,17 @@ export class Vehicle {
             const spokeGeo = new THREE.BoxGeometry(0.03, Rr, 0.015);
             const rimRingGeo = new THREE.TorusGeometry(Rr, 0.025, 12, 48);
             const hubGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.05, 16);
-            
+
             // Apply rim to both sides of the wheel
             [-1, 1].forEach(side => {
                 const sideGroup = new THREE.Group();
                 sideGroup.position.x = side * (W / 2);
-                
+
                 // Outer Ring
                 const ring = new THREE.Mesh(rimRingGeo, spokeMat);
                 ring.rotation.y = Math.PI / 2;
                 sideGroup.add(ring);
-                
+
                 // Spokes
                 for (let i = 0; i < numSpokes; i++) {
                     const angle = (i / numSpokes) * Math.PI * 2;
@@ -853,12 +880,12 @@ export class Vehicle {
                     spoke.position.z = Math.sin(angle) * Rr / 2;
                     sideGroup.add(spoke);
                 }
-                
+
                 // Hub
                 const hub = new THREE.Mesh(hubGeo, materials.mech);
                 hub.rotation.z = Math.PI / 2;
                 sideGroup.add(hub);
-                
+
                 wg.add(sideGroup);
             });
 
