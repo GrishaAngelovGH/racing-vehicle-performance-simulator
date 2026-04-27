@@ -91,7 +91,7 @@ export class Vehicle {
         } catch (e) {
             livery = { primary: localStorage.getItem('car_livery') || '#a50000', accent1: '#a50000', accent2: '#a50000' };
         }
-        
+
         const primaryColor = new THREE.Color(livery.primary || '#a50000');
         const accent1Color = new THREE.Color(livery.accent1 || livery.primary || '#a50000');
         const accent2Color = new THREE.Color(livery.accent2 || livery.primary || '#a50000');
@@ -254,11 +254,11 @@ export class Vehicle {
             new THREE.Vector2(0.075, 1.41),
             new THREE.Vector2(0, 1.43)
         ];
-        
+
         // Split nose into main and tip for accent color - larger tip area
         const mainPoints = nosePoints.slice(0, 5);
         const tipPoints = nosePoints.slice(4);
-        
+
         const noseMesh = new THREE.Mesh(new THREE.LatheGeometry(mainPoints, 32), materials.body);
         noseMesh.scale.set(1, 1, 0.75); // Match fuselage height scale
         noseMesh.rotation.x = Math.PI / 2;
@@ -281,6 +281,7 @@ export class Vehicle {
         );
         pedestal.position.set(0, -0.12, 3.10);
         this.body.add(pedestal);
+
     }
 
     createCockpit(materials) {
@@ -380,10 +381,10 @@ export class Vehicle {
 
             const podMesh = new THREE.Mesh(new THREE.LatheGeometry(podPts, 48), materials.body);
             // Non-uniform scaling to make them wider than they are tall
-            podMesh.scale.set(1.2, 1, 0.7); 
+            podMesh.scale.set(1.2, 1, 0.7);
             podMesh.rotation.x = Math.PI / 2;
             // Move significantly closer to the center to merge with the fuselage
-            podMesh.position.set(side * 0.45, 0.18, 0); 
+            podMesh.position.set(side * 0.45, 0.18, 0);
             podMesh.castShadow = true;
             this.body.add(podMesh);
 
@@ -404,7 +405,7 @@ export class Vehicle {
             inletMouth.scale.set(1.2, 1, 1);
             inletMouth.rotation.y = Math.PI; // Face forward
             // Flush with the front face of the sidepod (0.78)
-            inletMouth.position.set(side * 0.45, 0.18, 0.782); 
+            inletMouth.position.set(side * 0.45, 0.18, 0.782);
             this.body.add(inletMouth);
 
             // Louvers
@@ -446,15 +447,29 @@ export class Vehicle {
         // wing(span, chord, camber, thickness, mat) extrudes along X axis,
         // chord runs along Z, height along Y — identical to the rear wing usage.
 
-        const fwZ  = 4.10;   // leading edge Z (forward, under nose tip)
-        const fwY  = -0.18;  // lower — near ground level
+        const fwZ = 4.10;   // leading edge Z (forward, under nose tip)
+        const fwY = -0.18;  // lower — near ground level
         const span = 3.00;   // full wing span (X)
         const hspan = span / 2; // half-span for positioning
-        
+
         // Wing elements should be slightly narrower than the endplate-to-endplate span
         // to account for beveling and ensure they don't poke through.
         const wSpan = span - 0.04;
         const hwSpan = wSpan / 2;
+
+        // ── NOSE-TO-WING SUPPORT STRUT ───────────────────────────────────
+        // Vertical strut connecting nose cone underside to front wing
+        const strutHeight = 0.22;
+        const strutTopY = 0.12;
+        const strutBottomY = strutTopY - strutHeight;
+        const noseStrut = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.035, 0.045, strutHeight, 16),
+            materials.accent1
+        );
+        noseStrut.position.set(0, 0.01, 3.45);
+        noseStrut.rotation.x = 0.10;
+        noseStrut.castShadow = true;
+        this.body.add(noseStrut);
 
         // ── CENTRE NEUTRAL SECTION ────────────────────────────────────────
         // Flat-ish main plane across the central 1.4 m
@@ -517,7 +532,7 @@ export class Vehicle {
         // Compact rear wing - smaller span, sleeker design, no DRS
         const rwSpan = 1.60;
         const hrwSpan = rwSpan / 2;
-        
+
         // Wing elements should be slightly narrower than the endplate-to-endplate span
         const wSpan = rwSpan - 0.04;
         const hwSpan = wSpan / 2;
@@ -596,7 +611,7 @@ export class Vehicle {
         /* ── 12. RAIN LIGHT ─────────────────────────────────────────────── */
         // Rectangular housing with a high-intensity LED panel
         const lightGroup = new THREE.Group();
-        
+
         // Housing / Bezel
         const housing = new THREE.Mesh(
             new THREE.BoxGeometry(0.20, 0.16, 0.08),
@@ -616,13 +631,13 @@ export class Vehicle {
         // SpotLight angled DOWNWARDS to hit the track immediately behind the car
         this.rainLightSource = new THREE.SpotLight(0xff0000, 0, 6, Math.PI / 2.5, 0.6, 1);
         this.rainLightSource.position.set(0, 0, -0.04);
-        
+
         // Directional target pointing down and back
         const lightTarget = new THREE.Object3D();
         lightTarget.position.set(0, -1.2, -1.0); // Tilted down towards the track
         lightGroup.add(lightTarget);
         this.rainLightSource.target = lightTarget;
-        
+
         lightGroup.add(this.rainLightSource);
 
         // Positioned closer to the car for a tighter glow
