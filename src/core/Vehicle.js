@@ -117,7 +117,7 @@ export class Vehicle {
         this.createDriverHelmet(materials);
         this.createAirboxAndIntake(materials);
         this.createSidepods(materials);
-        this.createGearboxAndExhaust(materials);
+        this.createGearbox(materials);
         this.createFrontWing(materials);
         this.createRearWing(materials);
         this.createRainLight(materials);
@@ -425,21 +425,32 @@ export class Vehicle {
         });
     }
 
-    createGearboxAndExhaust(materials) {
-        /* ── 9. GEARBOX & EXHAUST ───────────────────────────────────────── */
-        const gearbox = new THREE.Mesh(
-            new THREE.CylinderGeometry(1, 1, 0.85, 36, 1), materials.carbon
+    createGearbox(materials) {
+        /* ── 9. GEARBOX ─────────────────────────────────────────────────── */
+        // Main gearbox casing — wide, flat, tapered box sitting under the engine
+        // Wider at the front (engine side), narrower at the rear (where it meets the crash structure)
+        const gearboxMain = new THREE.Mesh(
+            new THREE.BoxGeometry(0.42, 0.28, 0.80),
+            materials.carbon
         );
-        gearbox.scale.set(0.18, 1, 0.16);
-        gearbox.rotation.x = Math.PI / 2;
-        gearbox.position.set(0, 0.08, -2.12);
-        this.body.add(gearbox);
+        gearboxMain.position.set(0, 0.04, -1.80);
+        this.body.add(gearboxMain);
 
-        // Sleek single central exhaust pipe
-        this.body.add(tube([
-            new THREE.Vector3(0, 0.50, -1.94),
-            new THREE.Vector3(0, 0.55, -2.18),
-        ], 0.030, materials.chrome, 16, 5));
+        // Rear taper section — narrower box blending into the diffuser area
+        const gearboxRear = new THREE.Mesh(
+            new THREE.BoxGeometry(0.30, 0.22, 0.40),
+            materials.carbon
+        );
+        gearboxRear.position.set(0, 0.04, -2.18);
+        this.body.add(gearboxRear);
+
+        // Bottom casing detail — flat undertray of the gearbox
+        const gearboxBase = new THREE.Mesh(
+            new THREE.BoxGeometry(0.44, 0.06, 1.10),
+            materials.mech
+        );
+        gearboxBase.position.set(0, -0.08, -1.85);
+        this.body.add(gearboxBase);
     }
 
     createFrontWing(materials) {
@@ -600,11 +611,6 @@ export class Vehicle {
             this.body.add(fp);
         });
 
-        // Sleek single central exhaust pipe
-        this.body.add(tube([
-            new THREE.Vector3(0, 0.50, -1.94),
-            new THREE.Vector3(0, 0.55, -2.18),
-        ], 0.030, materials.chrome, 16, 5));
     }
 
     createRainLight(materials) {
