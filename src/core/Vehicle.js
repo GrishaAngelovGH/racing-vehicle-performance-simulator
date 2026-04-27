@@ -294,12 +294,60 @@ export class Vehicle {
             mirrorGroup.rotation.y = side * 0.25;
             this.body.add(mirrorGroup);
 
-            const mirrorBody = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.12, 0.06), materials.accent2);
+            // Mirror Body (Rounded aerodynamic housing)
+            const mShape = new THREE.Shape();
+            const mw = 0.20, mh = 0.09, mr = 0.02;
+            mShape.moveTo(-mw/2, -mh/2 + mr);
+            mShape.lineTo(-mw/2, mh/2 - mr);
+            mShape.quadraticCurveTo(-mw/2, mh/2, -mw/2 + mr, mh/2);
+            mShape.lineTo(mw/2 - mr, mh/2);
+            mShape.quadraticCurveTo(mw/2, mh/2, mw/2, mh/2 - mr);
+            mShape.lineTo(mw/2, -mh/2 + mr);
+            mShape.quadraticCurveTo(mw/2, -mh/2, mw/2 - mr, -mh/2);
+            mShape.lineTo(-mw/2 + mr, -mh/2);
+            mShape.quadraticCurveTo(-mw/2, -mh/2, -mw/2, -mh/2 + mr);
+
+            const mirrorBody = new THREE.Mesh(
+                new THREE.ExtrudeGeometry(mShape, {
+                    depth: 0.04,
+                    bevelEnabled: true,
+                    bevelThickness: 0.01,
+                    bevelSize: 0.01,
+                    bevelSegments: 3
+                }),
+                materials.accent2
+            );
+            // Center the extruded geometry
+            mirrorBody.position.z = -0.02; 
             mirrorGroup.add(mirrorBody);
 
-            // Mirror Glass (Reflective surface)
-            const mirrorGlass = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.10), materials.chrome);
-            mirrorGlass.position.z = -0.031; // Flush with the back face
+            // Mirror Glass (Reflective surface - rounded to match housing)
+            const gShape = new THREE.Shape();
+            const gw = 0.198, gh = 0.088, gr = 0.019;
+            gShape.moveTo(-gw/2, -gh/2 + gr);
+            gShape.lineTo(-gw/2, gh/2 - gr);
+            gShape.quadraticCurveTo(-gw/2, gh/2, -gw/2 + gr, gh/2);
+            gShape.lineTo(gw/2 - gr, gh/2);
+            gShape.quadraticCurveTo(gw/2, gh/2, gw/2, gh/2 - gr);
+            gShape.lineTo(gw/2, -gh/2 + gr);
+            gShape.quadraticCurveTo(gw/2, -gh/2, gw/2 - gr, -gh/2);
+            gShape.lineTo(-gw/2 + gr, -gh/2);
+            gShape.quadraticCurveTo(-gw/2, -gh/2, -gw/2, -gh/2 + gr);
+
+            const mirrorGlass = new THREE.Mesh(
+                new THREE.ShapeGeometry(gShape),
+                new THREE.MeshPhysicalMaterial({
+                    color: 0x111111,
+                    metalness: 1.0,
+                    roughness: 0.0,
+                    reflectivity: 1.0,
+                    clearcoat: 1.0,
+                    clearcoatRoughness: 0.0,
+                    emissive: 0x223344, // Subtle blue tint to fake sky reflection
+                    emissiveIntensity: 0.5
+                })
+            );
+            mirrorGlass.position.z = -0.032; // Recessed slightly into the beveled housing
             mirrorGlass.rotation.y = Math.PI; // Face toward the driver
             mirrorGroup.add(mirrorGlass);
 
