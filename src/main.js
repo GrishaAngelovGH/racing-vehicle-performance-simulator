@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Engine } from './core/Engine.js';
 import { initEnvironment } from './core/Environment.js';
-import { CIRCUIT_CONFIGS, createCircuit, analyzeCircuitGeometry, getIdealSetup } from './core/Circuit.js';
+import { CIRCUIT_CONFIGS, createCircuit, analyzeCircuitGeometry, getIdealSetup, getCircuitLengthKm } from './core/Circuit.js';
 import { CircuitDesigner } from './core/CircuitDesigner.js';
 import { Vehicle } from './core/Vehicle.js';
 import { Camera } from './core/Camera.js';
@@ -235,13 +235,25 @@ function drawMinimap(config, canvas) {
     ctx.fill();
 }
 
-function updateCircuitDisplay(config) {
+function getCircuitComparison(lengthKm) {
+    const avgRealCircuit = 5.5; // Average circuit ~5.5km
+    const length = parseFloat(lengthKm);
+    if (length < avgRealCircuit * 0.7) return 'smaller than';
+    if (length > avgRealCircuit * 1.3) return 'bigger than';
+    return 'comparable to';
+}
+
+function updateCircuitDisplay(config, lengthKm) {
     const nameEl = document.getElementById('info-circuit-name');
     const descEl = document.getElementById('info-circuit-desc');
+    const lengthEl = document.getElementById('info-circuit-length');
     const canvas = document.getElementById('track-minimap');
 
     if (nameEl) nameEl.textContent = config.name;
     if (descEl) descEl.textContent = config.description;
+    const km = lengthKm || getCircuitLengthKm(config.points);
+    const comparison = getCircuitComparison(km);
+    if (lengthEl) lengthEl.textContent = `Length: ${km} km (${comparison} avg. circuit ~3-7 km)`;
     if (canvas) drawMinimap(config, canvas);
 }
 
@@ -261,6 +273,7 @@ function loadCircuit(id) {
     // 2. Rebuild Circuit
     const result = createCircuit(circuitGroup, config, decorationsGroup);
     trackCurve = result.circuitCurve;
+    const lengthKm = result.lengthKm;
 
     // Apply decorations toggle state
     if (decorationsGroup) {
@@ -280,7 +293,7 @@ function loadCircuit(id) {
     camera.resetCameraForCircuit(trackCurve);
 
     // 5. Update Circuit Info Display
-    updateCircuitDisplay(config);
+    updateCircuitDisplay(config, lengthKm);
     const circuitInfoPanel = document.getElementById('circuit-info');
     if (circuitInfoPanel) {
         if (uiHideMode === 0) {

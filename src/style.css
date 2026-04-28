@@ -575,8 +575,19 @@ input[type="range"] {
 #info-circuit-desc {
     font-size: 0.85rem;
     color: var(--label-color);
-    margin-bottom: 15px;
+    margin-bottom: 8px;
     line-height: 1.4;
+}
+
+.circuit-length {
+    font-size: 0.9rem;
+    color: #2d5016;
+    font-weight: 600;
+    margin-bottom: 12px;
+    padding: 4px 10px;
+    background: rgba(144, 238, 144, 0.4);
+    border-radius: 4px;
+    display: inline-block;
 }
 
 .minimap-container {

@@ -6,6 +6,7 @@ An interactive 3D racing simulation that allows users to configure vehicle param
 
 * **Multiple Race Circuits** - Choose from Classic High-Speed, Forest Sprint, or City Street tracks
 * **Custom Circuit Designer** - Draw and generate your own custom race tracks with an interactive canvas
+* **Real-World Circuit Lengths** - Track lengths are calculated and displayed in km (scaled 1000:1), compared against average racing circuits (~3-7 km)
 * **Vehicle Physics Simulation** - Configure max speed, acceleration, cornering grip, braking strength, and aerodynamic downforce
 * **Tyre Compound Selection** - Choose between Soft, Medium, and Hard tyres with different grip and wear characteristics
 * **Dynamic Weather System** - Toggle rain conditions that affect grip and driving dynamics

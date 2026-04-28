@@ -2,6 +2,11 @@ import * as THREE from 'three';
 import { Building } from '../decorations/Building.js';
 import { Tree } from '../decorations/Tree.js';
 
+// In Three.js, "world units" are the arbitrary units used for coordinates in 3D space.
+// Scale factor: 1 world unit = 0.001 km (1000 units = 1km)
+// This gives realistic circuit lengths (~3-7 km)
+export const WORLD_UNIT_TO_KM = 0.001;
+
 export const CIRCUIT_CONFIGS = {
     classic: {
         name: 'High-Speed Classic',
@@ -162,9 +167,9 @@ function makeAsphaltTexture() {
         }
         
         data[i] = val;     // R
-        data[i+1] = val;   // G
-        data[i+2] = val;   // B
-        data[i+3] = 255;   // A
+        data[i + 1] = val;   // G
+        data[i + 2] = val;   // B
+        data[i + 3] = 255;   // A
     }
     
     ctx.putImageData(imgData, 0, 0);
@@ -307,6 +312,14 @@ function createStartFinish(circuitGroup, circuitCurve, config, circuitWidth) {
     gantryGroup.add(signBackward);
 
     circuitGroup.add(gantryGroup);
+}
+
+export function getCircuitLengthKm(points) {
+    if (!points || points.length < 2) return 0;
+    const curve = new THREE.CatmullRomCurve3(points, true, 'centripetal');
+    curve.closed = true;
+    const lengthWorldUnits = curve.getLength();
+    return (lengthWorldUnits * WORLD_UNIT_TO_KM).toFixed(2);
 }
 
 export function getIdealSetup(chars, totalLaps = 5) {
@@ -534,7 +547,8 @@ export function createCircuit(circuitGroup, config, decorationsGroup = null) {
     populateDecorations(circuitGroup, circuitCurve, config, circuitWidth, decorationsGroup);
     createStartFinish(circuitGroup, circuitCurve, config, circuitWidth);
 
-    return { circuitCurve };
+    const lengthKm = (trackLength * WORLD_UNIT_TO_KM).toFixed(2);
+    return { circuitCurve, lengthKm };
 }
 
 function populateDecorations(circuitGroup, circuitCurve, config, trackWidth, decorationsGroup = null) {
