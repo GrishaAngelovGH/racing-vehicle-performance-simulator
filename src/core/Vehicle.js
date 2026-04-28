@@ -504,13 +504,6 @@ export class Vehicle {
                     new THREE.Vector3(side * 0.58, 0.32 - i * 0.030, -0.15 - i * 0.18),
                 ], 0.006, materials.carbon, 4, 2));
             }
-
-            // Bargeboard
-            this.body.add(tube([
-                new THREE.Vector3(side * 0.55, 0.20, 1.05),
-                new THREE.Vector3(side * 0.60, 0.04, 0.88),
-                new THREE.Vector3(side * 0.58, -0.12, 0.68),
-            ], 0.016, materials.accent1, 6, 8)); // Accent color on bargeboard
         });
     }
 
