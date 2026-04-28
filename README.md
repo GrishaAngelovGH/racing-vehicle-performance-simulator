@@ -4,6 +4,7 @@ An interactive 3D racing simulation that allows users to configure vehicle param
 
 ## The project implements the following features:
 
+* **Interactive Guided Tour** - First-time user onboarding with spotlight tour explaining all UI elements step-by-step
 * **Multiple Race Circuits** - Choose from Classic High-Speed, Forest Sprint, or City Street tracks
 * **Custom Circuit Designer** - Draw and generate your own custom race tracks with an interactive canvas
 * **Real-World Circuit Lengths** - Track lengths are calculated and displayed in km (scaled 1000:1), compared against average racing circuits (~3-7 km)
@@ -92,4 +93,4 @@ The Race Engineer doesn't just give random advice; it follows a sophisticated te
 
 ## The project is using the following technologies:
 
-<img src="https://img.shields.io/badge/vite-%23646CFF.svg?style=flat&logo=vite&color=white" height="30"> <img src="https://img.shields.io/badge/Three.js-white?style=flat&logo=three.js&logoColor=black" height="30"> <img src="https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&color=white" height="30"> <img src="https://img.shields.io/badge/CSS3-1572B6?style=flat&logo=css3&color=white" height="30"> <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&color=white" height="30">
+<img src="https://img.shields.io/badge/vite-%23646CFF.svg?style=flat&logo=vite&color=white" height="30"> <img src="https://img.shields.io/badge/Three.js-white?style=flat&logo=three.js&logoColor=black" height="30"> <img src="https://img.shields.io/badge/driver.js-FF6B35?style=flat&color=white" height="30"> <img src="https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&color=white" height="30"> <img src="https://img.shields.io/badge/CSS3-1572B6?style=flat&logo=css3&color=white" height="30"> <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&color=white" height="30">

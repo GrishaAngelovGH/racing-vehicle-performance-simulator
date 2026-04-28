@@ -1394,3 +1394,118 @@ input[type="range"]::-moz-range-track {
 .rules-footer {
     text-align: center;
 }
+
+/* Tour Button Styles */
+.tour-btn {
+    background: linear-gradient(135deg, #e10600, #ff6b35);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(225, 6, 0, 0.3);
+}
+
+.tour-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(225, 6, 0, 0.5);
+}
+
+/* Driver.js Custom Styles */
+.racing-tour-popover {
+    background: rgba(30, 30, 40, 0.98) !important;
+    border: 2px solid #e10600 !important;
+    border-radius: 12px !important;
+    color: white !important;
+    padding: 20px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+.racing-tour-popover .driver-popover-title {
+    color: #e10600 !important;
+    font-size: 1.3rem !important;
+    font-weight: bold !important;
+    margin-bottom: 10px !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.racing-tour-popover .driver-popover-close-btn {
+    width: 24px !important;
+    height: 24px !important;
+    padding: 0 !important;
+    font-size: 14px !important;
+    line-height: 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    min-width: 24px !important;
+    color: white !important;
+    background: #444 !important;
+    margin: 8px !important;
+}
+
+.racing-tour-popover .driver-popover-description {
+    color: #ddd !important;
+    font-size: 0.95rem !important;
+    line-height: 1.5 !important;
+}
+
+.racing-tour-popover .driver-popover-footer {
+    margin-top: 15px !important;
+}
+
+.racing-tour-popover .driver-popover-progress-text {
+    color: #888 !important;
+}
+
+.racing-tour-popover .driver-popover-next-btn,
+.racing-tour-popover .driver-popover-prev-btn {
+    background: #e10600 !important;
+    color: white !important;
+    border: none !important;
+    padding: 8px 16px !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+    text-shadow: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+    backface-visibility: hidden !important;
+}
+
+.racing-tour-popover .driver-popover-prev-btn {
+    background: #444 !important;
+}
+
+.racing-tour-popover .driver-popover-next-btn:hover,
+.racing-tour-popover .driver-popover-close-btn:hover {
+    background: #ff0800 !important;
+}
+
+.racing-tour-popover .driver-popover-prev-btn:hover {
+    background: #555 !important;
+}
+
+.racing-tour-popover #dontShowTourAgain {
+    accent-color: #e10600;
+}
+
+/* Driver overlay */
+#driver-page-overlay {
+    background: rgba(0, 0, 0, 0.75) !important;
+}

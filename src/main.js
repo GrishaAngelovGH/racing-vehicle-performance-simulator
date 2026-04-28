@@ -10,6 +10,7 @@ import { initAudio, updateEngineSound, toggleSound, enableSound, isAudioInitiali
 import { initReportFeature, showReportButton, hideReportButton, generateReport } from './core/Report.js';
 import { playEngineerAnalysis, analyzeSetupChange, generateLapSummary, formatTimeForTTS } from './core/RaceEngineer.js';
 import { RaceSession } from './core/RaceSession.js';
+import { startTour, hasCompletedTour } from './tour.js';
 
 const engine = new Engine();
 initEnvironment(engine.scene);
@@ -44,10 +45,10 @@ let trackCurve = null;
 let warningPlayed = false;
 
 // Configuration variables (controlled by sliders)
-let maxSpeed = 200;
-let acceleration = 50;
-let grip = 0.8;
-let brakePower = 6;
+let maxSpeed = 150;
+let acceleration = 30;
+let grip = 0.4;
+let brakePower = 3;
 let downforce = 1.0;
 let uiHideMode = 0;
 
@@ -796,7 +797,7 @@ document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT') return; // Prevent shortcuts when typing in inputs
 
     // Space to toggle simulation
-    if (e.key === ' ' || e.code === 'Space') {
+    if ((e.key === ' ' || e.code === 'Space') && hasCompletedTour()) {
         e.preventDefault();
         if (launchBtn) launchBtn.click();
     }
@@ -1305,3 +1306,16 @@ document.addEventListener('click', () => {
         }
     }
 }, { once: true });
+
+// --- Tour Initialization ---
+const startTourBtn = document.getElementById('startTourBtn');
+if (startTourBtn) {
+    startTourBtn.addEventListener('click', () => startTour(false));
+}
+
+// Auto-start tour on first visit after a short delay
+if (!hasCompletedTour()) {
+    setTimeout(() => {
+        startTour(true);
+    }, 1500);
+}

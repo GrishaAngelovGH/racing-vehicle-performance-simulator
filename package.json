@@ -15,7 +15,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "bugs": {
     "url": "https://github.com/GrishaAngelovGH/racing-vehicle-performance-simulator/issues"
   },
@@ -25,6 +24,7 @@
     "vite": "^8.0.8"
   },
   "dependencies": {
+    "driver.js": "^1.4.0",
     "three": "^0.184.0"
   }
 }
