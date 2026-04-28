@@ -173,6 +173,44 @@ function resetOnParamChange() {
     }
 }
 
+// Update slider colors based on comparison with ideal values
+// Uses same tolerances as RaceEngineer.js for consistency
+function updateSliderColors() {
+    const circuitId = document.getElementById('circuitSelect')?.value || 'classic';
+    const config = CIRCUIT_CONFIGS[circuitId];
+    if (!config) return;
+
+    const ideal = getIdealSetup(config.characteristics, session.totalLaps);
+
+    // Tolerances matching RaceEngineer.js analyzeSetupChange()
+    const sliders = [
+        { id: 'maxSpeed', value: maxSpeed, ideal: ideal.maxSpeed, tolerance: ideal.maxSpeed * 0.08 }, // 8%
+        { id: 'acceleration', value: acceleration, ideal: ideal.acceleration, tolerance: 5 }, // ±5
+        { id: 'grip', value: grip, ideal: ideal.grip, tolerance: 0.1 }, // ±0.1
+        { id: 'brakePower', value: brakePower, ideal: ideal.brakePower, tolerance: 1 }, // ±1
+        { id: 'downforce', value: downforce, ideal: ideal.downforce, tolerance: 0.15 } // ±0.15
+    ];
+
+    sliders.forEach(({ id, value, ideal, tolerance }) => {
+        const slider = document.getElementById(id);
+        if (!slider) return;
+
+        // Remove existing color classes
+        slider.classList.remove('slider-below-ideal', 'slider-matched', 'slider-above-ideal');
+
+        // Use absolute difference (same as race engineer)
+        const diff = value - ideal;
+
+        if (diff < -tolerance) {
+            slider.classList.add('slider-below-ideal');
+        } else if (diff > tolerance) {
+            slider.classList.add('slider-above-ideal');
+        } else {
+            slider.classList.add('slider-matched');
+        }
+    });
+}
+
 function drawMinimap(config, canvas) {
     const ctx = canvas.getContext('2d');
     const w = canvas.width;
@@ -322,6 +360,9 @@ function loadCircuit(id) {
     if (speedEl) speedEl.textContent = "0 km/h";
     const currentTimeEl = document.getElementById('currentTime');
     if (currentTimeEl) currentTimeEl.textContent = '--:--.---';
+
+    // Update slider colors based on new circuit's ideal setup
+    updateSliderColors();
 }
 
 // Initialize Designer
@@ -397,6 +438,7 @@ if (lapsInput) {
     lapsInput.addEventListener('change', (e) => {
         session.totalLaps = parseInt(e.target.value) || 5;
         resetOnParamChange();
+        updateSliderColors();
     });
 }
 
@@ -409,6 +451,7 @@ if (maxSpeedInput) {
         maxSpeed = value;
         if (maxSpeedValue) maxSpeedValue.textContent = value;
         resetOnParamChange();
+        updateSliderColors();
     });
     maxSpeedInput.addEventListener('change', (e) => {
         analyzeSetupChange('maxSpeed', parseInt(e.target.value), { lastSetupValues, totalLaps: session.totalLaps, weather, car });
@@ -424,6 +467,7 @@ if (accelerationInput) {
         acceleration = value;
         if (accelerationValue) accelerationValue.textContent = value;
         resetOnParamChange();
+        updateSliderColors();
     });
     accelerationInput.addEventListener('change', (e) => {
         analyzeSetupChange('acceleration', parseInt(e.target.value), { lastSetupValues, totalLaps: session.totalLaps, weather, car });
@@ -439,6 +483,7 @@ if (gripInput) {
         grip = value;
         if (gripValue) gripValue.textContent = value.toFixed(1);
         resetOnParamChange();
+        updateSliderColors();
     });
     gripInput.addEventListener('change', (e) => {
         analyzeSetupChange('grip', parseFloat(e.target.value), { lastSetupValues, totalLaps: session.totalLaps, weather, car });
@@ -454,6 +499,7 @@ if (brakePowerInput) {
         brakePower = value;
         if (brakePowerValue) brakePowerValue.textContent = value;
         resetOnParamChange();
+        updateSliderColors();
     });
     brakePowerInput.addEventListener('change', (e) => {
         analyzeSetupChange('brakePower', parseInt(e.target.value), { lastSetupValues, totalLaps: session.totalLaps, weather, car });
@@ -469,6 +515,7 @@ if (downforceInput) {
         downforce = value;
         if (downforceValue) downforceValue.textContent = value.toFixed(1);
         resetOnParamChange();
+        updateSliderColors();
     });
     downforceInput.addEventListener('change', (e) => {
         analyzeSetupChange('downforce', parseFloat(e.target.value), { lastSetupValues, totalLaps: session.totalLaps, weather, car });

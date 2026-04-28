@@ -10,6 +10,7 @@ An interactive 3D racing simulation that allows users to configure vehicle param
 * **Vehicle Physics Simulation** - Configure max speed, acceleration, cornering grip, braking strength, and aerodynamic downforce
 * **Tyre Compound Selection** - Choose between Soft, Medium, and Hard tyres with different grip and wear characteristics
 * **Dynamic Weather System** - Toggle rain conditions that affect grip and driving dynamics
+* **Setup Slider Feedback** - Visual color-coded indicators on setup sliders show how they align with the circuit's ideal values, aiding in finding the "Sweet Spot".
 * **Environment Decorations** - Toggle trees and buildings for immersive racing environments
 * **Engine Sound Modes** - Switch between Dynamic and Real engine sound profiles
 *   **Dynamic Race Engineer Analysis** - Real-time audio feedback that evaluates your car setup against the specific geometry of the current track.

@@ -389,6 +389,83 @@ select {
 input[type="range"] {
     width: 100%;
     cursor: pointer;
+    accent-color: #808080;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: #ffffff;
+    border-radius: 3px;
+    outline: none;
+    border: 1px solid #ccc;
+}
+
+/* Webkit thumb styling */
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #808080;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Firefox thumb styling */
+input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #808080;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Firefox track styling */
+input[type="range"]::-moz-range-track {
+    height: 6px;
+    background: #ffffff;
+    border-radius: 3px;
+    border: 1px solid #ccc;
+}
+
+/* Color-coded slider states */
+.control-group input[type="range"].slider-below-ideal {
+    accent-color: #FFC107;
+}
+
+.control-group input[type="range"].slider-below-ideal::-webkit-slider-thumb {
+    background: #FFC107;
+}
+
+.control-group input[type="range"].slider-below-ideal::-moz-range-thumb {
+    background: #FFC107;
+}
+
+.control-group input[type="range"].slider-matched {
+    accent-color: #4CAF50;
+}
+
+.control-group input[type="range"].slider-matched::-webkit-slider-thumb {
+    background: #4CAF50;
+}
+
+.control-group input[type="range"].slider-matched::-moz-range-thumb {
+    background: #4CAF50;
+}
+
+.control-group input[type="range"].slider-above-ideal {
+    accent-color: #f44336;
+}
+
+.control-group input[type="range"].slider-above-ideal::-webkit-slider-thumb {
+    background: #f44336;
+}
+
+.control-group input[type="range"].slider-above-ideal::-moz-range-thumb {
+    background: #f44336;
 }
 
 #openDrawBtn {
@@ -1130,7 +1207,7 @@ input[type="range"] {
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
-    padding: 1rem 0 2rem;
+    padding: 0.3rem 0 2rem;
     -webkit-overflow-scrolling: touch;
 }
 
@@ -1151,7 +1228,7 @@ input[type="range"] {
 .slide {
     flex: 0 0 550px;
     min-width: 550px;
-    height: 520px;
+    height: 620px;
     scroll-snap-align: start;
     background: rgba(255, 255, 255, 0.9);
     border: 2px solid rgba(0, 0, 0, 0.1);
@@ -1180,7 +1257,8 @@ input[type="range"] {
     color: #1a1a2e;
     border-left: 6px solid #e10600;
     padding-left: 1rem;
-    padding-bottom: 0; /* Override global */
+    padding-bottom: 0;
+    /* Override global */
     flex-shrink: 0;
     display: flex;
     align-items: center;
@@ -1190,7 +1268,8 @@ input[type="range"] {
 }
 
 .slide h2::after {
-    display: none; /* In case there's an after pseudo-element in global h2 */
+    display: none;
+    /* In case there's an after pseudo-element in global h2 */
 }
 
 .slide-content {
@@ -1314,5 +1393,4 @@ input[type="range"] {
 
 .rules-footer {
     text-align: center;
-    padding: 2rem;
 }
