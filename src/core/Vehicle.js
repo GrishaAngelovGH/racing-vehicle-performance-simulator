@@ -164,15 +164,15 @@ export class Vehicle {
            Let's use a single large symmetrical shape.
         ──────────────────────────────────────────────────────────────── */
         const floorSh = new THREE.Shape();
-        floorSh.moveTo(0.20,  1.80);                                      // right, near nose strut
-        floorSh.lineTo(1.05,  1.50);                                      // step out to floor edge behind front wheel
+        floorSh.moveTo(0.20, 1.80);                                      // right, near nose strut
+        floorSh.lineTo(1.05, 1.50);                                      // step out to floor edge behind front wheel
         floorSh.lineTo(1.05, -0.60);                                      // straight run along sidepod
         floorSh.bezierCurveTo(1.05, -1.55, 0.78, -1.95, 0.75, -2.20);   // diffuser taper
         floorSh.lineTo(-0.75, -2.20);                                     // rear edge
         floorSh.bezierCurveTo(-0.78, -1.95, -1.05, -1.55, -1.05, -0.60);
-        floorSh.lineTo(-1.05,  1.50);
-        floorSh.lineTo(-0.20,  1.80);
-        floorSh.lineTo( 0.20,  1.80);
+        floorSh.lineTo(-1.05, 1.50);
+        floorSh.lineTo(-0.20, 1.80);
+        floorSh.lineTo(0.20, 1.80);
 
         const floorGeo = new THREE.ExtrudeGeometry(floorSh, {
             depth: 0.055,
@@ -190,13 +190,13 @@ export class Vehicle {
 
         // Floor edge accent strip — clean straight outer edge
         const floorEdge = tube([
-            new THREE.Vector3( 1.05, -0.28,  1.50),
-            new THREE.Vector3( 1.05, -0.28, -0.60),
-            new THREE.Vector3( 0.75, -0.28, -2.20),
+            new THREE.Vector3(1.05, -0.28, 1.50),
+            new THREE.Vector3(1.05, -0.28, -0.60),
+            new THREE.Vector3(0.75, -0.28, -2.20),
         ], 0.020, materials.accent1, 8, 6);
         this.body.add(floorEdge);
         const floorEdgeL = tube([
-            new THREE.Vector3(-1.05, -0.28,  1.50),
+            new THREE.Vector3(-1.05, -0.28, 1.50),
             new THREE.Vector3(-1.05, -0.28, -0.60),
             new THREE.Vector3(-0.75, -0.28, -2.20),
         ], 0.020, materials.accent1, 8, 6);
@@ -868,13 +868,13 @@ export class Vehicle {
                     sideGroup.add(spoke);
                 }
 
-                // Hub
-                const hub = new THREE.Mesh(hubGeo, materials.mech);
-                hub.rotation.z = Math.PI / 2;
-                sideGroup.add(hub);
-
                 wg.add(sideGroup);
             });
+
+            // Hub at wheel center (where suspension connects)
+            const hub = new THREE.Mesh(hubGeo, materials.mech);
+            hub.rotation.z = Math.PI / 2;
+            wg.add(hub);
 
             // Compound sidewall ring
             const cmpd = this.tireCompounds[this.currentCompound];
@@ -890,7 +890,7 @@ export class Vehicle {
             this.tireSidewalls.push(sw);
 
             wg.position.set(pos.x, pos.y, pos.z);
-            this.group.add(wg);
+            this.body.add(wg);
             this.wheelGroups.push(wg);
 
             // Suspension arms
