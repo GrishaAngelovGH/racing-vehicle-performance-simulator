@@ -164,29 +164,15 @@ export class Vehicle {
            Let's use a single large symmetrical shape.
         ──────────────────────────────────────────────────────────────── */
         const floorSh = new THREE.Shape();
-        // 1. Tip and Narrow Nose (past wheels at z=2.0)
-        floorSh.moveTo(0, 3.40);
-        floorSh.lineTo(0.35, 3.35);
-        floorSh.lineTo(0.38, 2.10);
-
-        // 2. The "S-Curve" Flare (Bargeboard area)
-        // Flare OUT behind front wheels
-        floorSh.bezierCurveTo(0.40, 1.95, 1.25, 1.85, 1.25, 1.45);
-        // Curve IN slightly before main sidepod
-        floorSh.bezierCurveTo(1.25, 1.20, 1.05, 1.05, 1.15, 0.40);
-
-        // 3. Main Sidepod & Rear
-        floorSh.lineTo(1.15, -0.60);
-        floorSh.bezierCurveTo(1.15, -1.50, 0.85, -1.90, 0.85, -2.20);
-
-        // 4. Mirror (Back to front)
-        floorSh.lineTo(-0.85, -2.20);
-        floorSh.bezierCurveTo(-0.85, -1.90, -1.15, -1.50, -1.15, -0.60);
-        floorSh.lineTo(-1.15, 0.40);
-        floorSh.bezierCurveTo(-1.05, 1.05, -1.25, 1.20, -1.25, 1.45);
-        floorSh.bezierCurveTo(-1.25, 1.85, -0.40, 1.95, -0.38, 2.10);
-        floorSh.lineTo(-0.35, 3.35);
-        floorSh.lineTo(0, 3.40);
+        floorSh.moveTo(0.20,  1.80);                                      // right, near nose strut
+        floorSh.lineTo(1.05,  1.50);                                      // step out to floor edge behind front wheel
+        floorSh.lineTo(1.05, -0.60);                                      // straight run along sidepod
+        floorSh.bezierCurveTo(1.05, -1.55, 0.78, -1.95, 0.75, -2.20);   // diffuser taper
+        floorSh.lineTo(-0.75, -2.20);                                     // rear edge
+        floorSh.bezierCurveTo(-0.78, -1.95, -1.05, -1.55, -1.05, -0.60);
+        floorSh.lineTo(-1.05,  1.50);
+        floorSh.lineTo(-0.20,  1.80);
+        floorSh.lineTo( 0.20,  1.80);
 
         const floorGeo = new THREE.ExtrudeGeometry(floorSh, {
             depth: 0.055,
@@ -202,33 +188,41 @@ export class Vehicle {
         floorMesh.receiveShadow = true;
         this.body.add(floorMesh);
 
-        // Accent edge for the floor — extended further forward
+        // Floor edge accent strip — clean straight outer edge
         const floorEdge = tube([
-            new THREE.Vector3(1.25, -0.28, 1.45),
-            new THREE.Vector3(1.15, -0.28, 0.40),
-            new THREE.Vector3(1.15, -0.28, -0.60),
-            new THREE.Vector3(0.85, -0.28, -2.20),
-        ], 0.024, materials.accent1, 8, 4);
+            new THREE.Vector3( 1.05, -0.28,  1.50),
+            new THREE.Vector3( 1.05, -0.28, -0.60),
+            new THREE.Vector3( 0.75, -0.28, -2.20),
+        ], 0.020, materials.accent1, 8, 6);
         this.body.add(floorEdge);
         const floorEdgeL = tube([
-            new THREE.Vector3(-1.25, -0.28, 1.45),
-            new THREE.Vector3(-1.15, -0.28, 0.40),
-            new THREE.Vector3(-1.15, -0.28, -0.60),
-            new THREE.Vector3(-0.85, -0.28, -2.20),
-        ], 0.024, materials.accent1, 8, 4);
+            new THREE.Vector3(-1.05, -0.28,  1.50),
+            new THREE.Vector3(-1.05, -0.28, -0.60),
+            new THREE.Vector3(-0.75, -0.28, -2.20),
+        ], 0.020, materials.accent1, 8, 6);
         this.body.add(floorEdgeL);
 
-        // Vortex fences (adjusted to match new floor profile)
+        // Floor edge winglets — small angled fins along outer edge
+        [-1, 1].forEach(side => {
+            [1.10, 0.45, -0.25].forEach(zPos => {
+                const wl = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.005, 0.07, 0.13),
+                    materials.carbon
+                );
+                wl.position.set(side * 1.05, -0.24, zPos);
+                wl.rotation.z = side * 0.15;
+                this.body.add(wl);
+            });
+        });
+
+        // Vortex generators — small upright tabs on floor surface
         [-1, 1].forEach(sx => {
-            for (let i = 0; i < 7; i++) {
-                const zPos = 1.15 - i * 0.38;
-                // Calculate approximate X at this Z for the curve
-                const xPos = sx * (zPos > 0.4 ? 1.05 : 0.95);
-                const f = tube([
-                    new THREE.Vector3(xPos, -0.28, zPos),
-                    new THREE.Vector3(xPos, -0.14, zPos),
-                ], 0.010, materials.carbon, 4, 2);
-                this.body.add(f);
+            for (let i = 0; i < 5; i++) {
+                const zPos = 1.20 - i * 0.44;
+                this.body.add(tube([
+                    new THREE.Vector3(sx * 0.88, -0.28, zPos),
+                    new THREE.Vector3(sx * 0.88, -0.17, zPos),
+                ], 0.008, materials.carbon, 4, 2));
             }
         });
     }
