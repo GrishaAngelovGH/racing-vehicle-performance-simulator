@@ -687,19 +687,36 @@ input[type="range"]::-moz-range-track {
     list-style: none;
     padding: 0;
     margin: 0;
-    flex: 1;
-    min-height: 80px;
-    max-height: none;
+    height: 10.5rem;
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-color) transparent;
+    scrollbar-gutter: stable;
+    box-sizing: border-box;
+}
+
+#lapHistory::-webkit-scrollbar {
+    width: 6px;
+}
+
+#lapHistory::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#lapHistory::-webkit-scrollbar-thumb {
+    background-color: var(--accent-color);
+    border-radius: 10px;
 }
 
 #lapHistory li {
     display: flex;
     justify-content: space-between;
-    padding: 5px 0;
+    padding: 0.5rem 10px 0.5rem 0;
     border-bottom: 1px solid var(--panel-border);
     font-family: 'Courier New', Courier, monospace;
     font-size: 0.9rem;
+    line-height: 1.1;
+    box-sizing: border-box;
 }
 
 #lapHistory li:last-child {
@@ -753,10 +770,10 @@ input[type="range"]::-moz-range-track {
 }
 
 #history-container {
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     display: flex;
     flex-direction: column;
-    min-height: 250px;
+    margin-bottom: 10px;
 }
 
 #minimap-panel-section {
