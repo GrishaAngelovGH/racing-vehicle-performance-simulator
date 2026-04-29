@@ -99,6 +99,34 @@ function recordLap(time) {
             boxBtn.style.background = '';
             boxBtn.style.color = '';
         }
+        const compound = session.currentTireCompound;
+        car.setCompound(compound);
+
+        // Update UI button states to reflect new compound
+        softTyreBtn?.classList.remove('active');
+        mediumTyreBtn?.classList.remove('active');
+        hardTyreBtn?.classList.remove('active');
+        intermediateTyreBtn?.classList.remove('active');
+        wetTyreBtn?.classList.remove('active');
+        if (compound === 'soft') softTyreBtn?.classList.add('active');
+        if (compound === 'medium') mediumTyreBtn?.classList.add('active');
+        if (compound === 'hard') hardTyreBtn?.classList.add('active');
+        if (compound === 'intermediate') intermediateTyreBtn?.classList.add('active');
+        if (compound === 'wet') wetTyreBtn?.classList.add('active');
+
+        // Update stats display
+        const compoundData = car.tireCompounds[compound];
+        if (compoundGripEl) {
+            const sign = compoundData.grip >= 0 ? '+' : '';
+            compoundGripEl.textContent = `Grip: ${sign}${compoundData.grip}`;
+        }
+        if (compoundWearEl) {
+            const wear = getTireWearRate();
+            compoundWearEl.textContent = `Wear: ${Math.round(wear * 100)}%/lap`;
+        }
+        if (currentCompoundEl) {
+            currentCompoundEl.textContent = compoundData.name;
+        }
     }
 
     const li = document.createElement('li');
