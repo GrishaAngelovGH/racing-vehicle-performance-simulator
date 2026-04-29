@@ -1149,6 +1149,13 @@ engine.start(() => {
             const targetRoll = rollDirection * curvature * (currentSpeed / effectiveMaxSpeed) * maxRoll;
             car.body.rotation.z = THREE.MathUtils.lerp(car.body.rotation.z, targetRoll, 0.08);
 
+            // Compensate ride height for roll to prevent tires sinking into track
+            // Inner wheel drops by wheel_x * sin(roll) relative to chassis center
+            // Max rear wheel drop = 1.5 * sin(0.04) ≈ 0.06m, add 0.02m safety margin
+            const rollAngle = Math.abs(car.body.rotation.z);
+            const wheelDrop = 1.5 * Math.sin(rollAngle);
+            car.group.position.y = 0.61 + wheelDrop + 0.03;
+
             // 3. Steering Wheel Rotation
             if (car.steeringWheel) {
                 const wheelRot = rollDirection * curvature * 1.8; // More aggressive wheel turn
@@ -1300,8 +1307,9 @@ engine.start(() => {
         }
 
         const position = trackCurve.getPointAt(progress);
-        car.group.position.copy(position);
-        car.group.position.y = 0.61;
+        car.group.position.x = position.x;
+        car.group.position.z = position.z;
+        // Y position is set dynamically earlier with roll compensation
 
         const lookAheadU = (progress + 0.015) % 1;
         const lookAtPos = trackCurve.getPointAt(lookAheadU);
