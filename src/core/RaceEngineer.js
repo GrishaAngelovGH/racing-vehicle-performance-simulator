@@ -71,7 +71,8 @@ export function generateLapSummary(time, lapNumber, previousBest, isLastLap, tir
         if (diff > 0) {
             const diffMs = Math.round(diff * 1000);
             if (diffMs < 500) {
-                text += `You are within half a second of your best. Nice consistency.`;
+                const diffSecs = (diffMs / 1000).toFixed(2);
+                text += `You are within ${diffSecs} seconds of your best. Nice consistency.`;
             } else if (diffMs < 2000) {
                 text += `You are ${formatTimeForTTS(diff)} off your best pace. Keep pushing.`;
             } else {
