@@ -4,9 +4,9 @@ import { CIRCUIT_CONFIGS, analyzeCircuitGeometry, getIdealSetup } from './Circui
 /**
  * High-level wrapper for speaking text through the radio
  */
-export function playEngineerAnalysis(text) {
+export function playEngineerAnalysis(text, priority = 'normal') {
     if (isTTSEnabled()) {
-        playRadioAndSpeak(text);
+        playRadioAndSpeak(text, priority);
     }
 }
 
@@ -17,6 +17,7 @@ export function playEngineerAnalysis(text) {
  */
 export function announceTireTemperature(status, avgTemp) {
     let text = "";
+    let priority = 'normal';
 
     switch (status) {
         case 'cold':
@@ -30,12 +31,13 @@ export function announceTireTemperature(status, avgTemp) {
             break;
         case 'overheated':
             text = `We're seeing high temperatures, averaging ${Math.round(avgTemp)} degrees! Tires are starting to overheat. We'll see grip drop off if they stay this hot.`;
+            priority = 'high';
             break;
         default:
             return;
     }
 
-    playEngineerAnalysis(text);
+    playEngineerAnalysis(text, priority);
 }
 
 /**

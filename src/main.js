@@ -6,7 +6,7 @@ import { CircuitDesigner } from './core/CircuitDesigner.js';
 import { Vehicle } from './core/Vehicle.js';
 import { Camera } from './core/Camera.js';
 import { Weather } from './core/Weather.js';
-import { initAudio, updateEngineSound, toggleSound, enableSound, isAudioInitialized, playFastestLapSound, setSoundMode, getAudioContext, toggleTTS, isTTSEnabled, playRadioAndSpeak } from './core/Audio.js';
+import { initAudio, updateEngineSound, toggleSound, enableSound, isAudioInitialized, playFastestLapSound, setSoundMode, getAudioContext, toggleTTS, isTTSEnabled, playRadioAndSpeak, clearSpeechQueue } from './core/Audio.js';
 import { initReportFeature, showReportButton, hideReportButton, generateReport } from './core/Report.js';
 import { playEngineerAnalysis, analyzeSetupChange, generateLapSummary, formatTimeForTTS, announceTireTemperature } from './core/RaceEngineer.js';
 import { RaceSession } from './core/RaceSession.js';
@@ -186,6 +186,7 @@ function resetOnParamChange() {
         progress = 0;
         session.reset();
         clearLapHistory();
+        clearSpeechQueue();
         lapStartTime = 0;
         updateLapDisplay();
         const launchBtn = document.getElementById('launchBtn');
@@ -584,6 +585,7 @@ if (launchBtn) {
             session.simulationRunning = false;
             session.pitRequested = false;
             warningPlayed = false;
+            clearSpeechQueue();
             const boxBtn = document.getElementById('boxBtn');
             if (boxBtn) {
                 boxBtn.style.display = 'none';
@@ -611,11 +613,11 @@ if (boxBtn) {
         if (session.pitRequested) {
             boxBtn.style.background = '#ffeb3b';
             boxBtn.style.color = '#000';
-            playEngineerAnalysis("Copy that. Box, box, box.");
+            playEngineerAnalysis("Copy that. Box, box, box.", 'high');
         } else {
             boxBtn.style.background = '';
             boxBtn.style.color = '';
-            playEngineerAnalysis("Cancel pit stop. Stay out, stay out.");
+            playEngineerAnalysis("Cancel pit stop. Stay out, stay out.", 'high');
         }
     });
 }
@@ -768,7 +770,7 @@ function updateCompoundUI(compound) {
                 boxBtn.style.background = '#ffeb3b';
                 boxBtn.style.color = '#000';
             }
-            playEngineerAnalysis("Copy that, we'll ready the " + car.tireCompounds[compound].name + " tires. Box this lap.");
+            playEngineerAnalysis("Copy that, we'll ready the " + car.tireCompounds[compound].name + " tires. Box this lap.", 'high');
         }
         return;
     }
@@ -890,11 +892,11 @@ document.addEventListener('keydown', (e) => {
                 if (session.pitRequested) {
                     boxBtn.style.background = '#ffeb3b';
                     boxBtn.style.color = '#000';
-                    playEngineerAnalysis("Copy that. Box, box, box.");
+                    playEngineerAnalysis("Copy that. Box, box, box.", 'high');
                 } else {
                     boxBtn.style.background = '';
                     boxBtn.style.color = '';
-                    playEngineerAnalysis("Cancel pit stop. Stay out, stay out.");
+                    playEngineerAnalysis("Cancel pit stop. Stay out, stay out.", 'high');
                 }
             }
         }
@@ -1241,7 +1243,7 @@ engine.start(() => {
 
                 // One-time engineer warning per lap
                 if (!warningPlayed && isTTSEnabled()) {
-                    playEngineerAnalysis("Tire wear is critical. Box, box!");
+                    playEngineerAnalysis("Tire wear is critical. Box, box!", 'high');
                     warningPlayed = true;
                 }
             } else {

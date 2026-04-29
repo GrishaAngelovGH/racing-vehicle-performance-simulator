@@ -12,13 +12,32 @@ let soundMode = 'dynamic'; // 'dynamic' or 'real'
 let radioSoundBuffer = null;
 let ttsEnabled = false;
 
+let speechQueue = [];
+let isProcessingQueue = false;
+let currentlySpeakingText = null;
+
 export function isTTSEnabled() {
     return ttsEnabled;
 }
 
 export function toggleTTS() {
     ttsEnabled = !ttsEnabled;
+    if (!ttsEnabled) {
+        clearSpeechQueue();
+    }
     return ttsEnabled;
+}
+
+/**
+ * Clears the speech queue and cancels any current speech
+ */
+export function clearSpeechQueue() {
+    speechQueue = [];
+    isProcessingQueue = false;
+    currentlySpeakingText = null;
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+    }
 }
 
 export function isAudioInitialized() {
@@ -310,12 +329,69 @@ if (typeof window !== 'undefined' && window.speechSynthesis) {
     loadVoices();
 }
 
-export function playRadioAndSpeak(text) {
+export function playRadioAndSpeak(text, priority = 'normal') {
     if (!ttsEnabled) return;
+
+    // Deduplicate: don't add if it's already speaking or in the queue
+    if (currentlySpeakingText === text) return;
+    if (speechQueue.some(m => m.text === text)) return;
+
+    if (priority === 'high') {
+        // High priority: Displace oldest normal if full
+        if (speechQueue.length >= 3) {
+            const normalIndex = speechQueue.findIndex(m => m.priority === 'normal');
+            if (normalIndex !== -1) {
+                speechQueue.splice(normalIndex, 1);
+            } else {
+                // If full of high-priority, displace the oldest high-priority
+                speechQueue.shift();
+            }
+        }
+        
+        // Insert after existing high priority messages to maintain FIFO
+        let lastHighIndex = -1;
+        for (let i = 0; i < speechQueue.length; i++) {
+            if (speechQueue[i].priority === 'high') lastHighIndex = i;
+        }
+        
+        if (lastHighIndex === -1) {
+            speechQueue.unshift({ text, priority });
+        } else {
+            speechQueue.splice(lastHighIndex + 1, 0, { text, priority });
+        }
+    } else {
+        // Normal priority: only add if there's room or if we can replace another normal message
+        if (speechQueue.length >= 3) {
+            const normalIndex = speechQueue.findIndex(m => m.priority === 'normal');
+            if (normalIndex !== -1) {
+                speechQueue.splice(normalIndex, 1);
+                speechQueue.push({ text, priority });
+            }
+            // If full of high-priority messages, we just discard this normal one
+        } else {
+            speechQueue.push({ text, priority });
+        }
+    }
+
+    if (!isProcessingQueue) {
+        processNextMessage();
+    }
+}
+
+async function processNextMessage() {
+    if (speechQueue.length === 0) {
+        isProcessingQueue = false;
+        currentlySpeakingText = null;
+        return;
+    }
+
+    isProcessingQueue = true;
+    const message = speechQueue.shift();
+    currentlySpeakingText = message.text;
 
     // Resume context if suspended
     if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume();
+        try { await audioCtx.resume(); } catch (e) { }
     }
 
     if (audioCtx) {
@@ -324,13 +400,14 @@ export function playRadioAndSpeak(text) {
 
     // Delay TTS slightly so the radio beep plays first
     const delay = radioSoundBuffer ? 800 : 200;
+    
     setTimeout(() => {
-        if (!ttsEnabled || !window.speechSynthesis) return;
+        if (!ttsEnabled || !window.speechSynthesis || currentlySpeakingText !== message.text) {
+            isProcessingQueue = false;
+            return;
+        }
 
-        // Cancel any ongoing speech
-        window.speechSynthesis.cancel();
-
-        const utterance = new SpeechSynthesisUtterance(text);
+        const utterance = new SpeechSynthesisUtterance(message.text);
         utterance.lang = 'en-US';
         utterance.rate = 1.05;
         utterance.pitch = 0.95;
@@ -345,6 +422,18 @@ export function playRadioAndSpeak(text) {
         if (preferredVoice) {
             utterance.voice = preferredVoice;
         }
+
+        utterance.onend = () => {
+            currentlySpeakingText = null;
+            setTimeout(() => {
+                processNextMessage();
+            }, 400);
+        };
+
+        utterance.onerror = () => {
+            currentlySpeakingText = null;
+            processNextMessage();
+        };
 
         window.speechSynthesis.speak(utterance);
     }, delay);
