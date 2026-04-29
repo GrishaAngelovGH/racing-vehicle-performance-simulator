@@ -93,10 +93,6 @@
     text-shadow: 0 0 10px var(--value-shadow);
 }
 
-.value.off {
-    color: #ff4444;
-}
-
 body {
     margin: 0;
     padding: 0;

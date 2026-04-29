@@ -692,7 +692,6 @@ function updateSoundUI(enabled) {
     const soundValue = document.getElementById('soundStatus');
     if (soundValue) {
         soundValue.textContent = enabled ? 'On' : 'Off';
-        soundValue.className = enabled ? 'value' : 'value off';
     }
 }
 
@@ -775,7 +774,7 @@ function updateCompoundUI(compound) {
     // Update stats panel
     if (currentCompoundEl) {
         currentCompoundEl.textContent = compoundData.name;
-        currentCompoundEl.className = `value compound-${compound}`;
+        currentCompoundEl.className = 'value';
     }
 
     // Update car visuals
