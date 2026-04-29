@@ -131,6 +131,34 @@
                     </div>
                 </div>
 
+                <!-- Slide 5: Tire Thermal Management -->
+                <div class="slide">
+                    <span class="slide-icon">🔥</span>
+                    <h2>Tire Thermal Management</h2>
+                    <div class="slide-content">
+                        <p>The simulation tracks individual temperatures (FL, FR, RL, RR), though Live Stats show the average across the set:</p>
+                        <ul>
+                            <li><strong>Cold (&lt;70°C):</strong> Low grip (-12%), high wear (1.4x) from tearing.</li>
+                            <li><strong>Suboptimal (70-85°C):</strong> Reduced grip (-4%), slightly higher wear (1.15x). Tires coming up to temperature.</li>
+                            <li><strong>Optimal (85-100°C):</strong> Maximum grip, normal wear. The "Sweet Spot".</li>
+                            <li><strong>Overheated (&gt;100°C):</strong> Low grip (-10%), extreme wear (1.6x) from degradation.</li>
+                        </ul>
+                        <p><strong>Heating Factors:</strong></p>
+                        <ul>
+                            <li><strong>Fronts:</strong> Warmed by heavy braking and steering load.</li>
+                            <li><strong>Rears:</strong> Warmed by aggressive acceleration.</li>
+                        <li><strong>Inertia:</strong> Tires take 1-2 laps to reach optimal temperature.</li>
+                        </ul>
+                        <p><strong>Setup Impacts:</strong></p>
+                        <ul>
+                            <li><strong>Braking & Acceleration:</strong> High slider values generate heat faster.</li>
+                            <li><strong>Downforce:</strong> More downforce creates more friction heat in corners.</li>
+                            <li><strong>Compounds:</strong> Softs reach temperature quickly; Hards stay stable longer.</li>
+                        </ul>
+                        <p>Fresh tires from the pits start at 60°C and reach the optimal window as you race.</p>
+                    </div>
+                </div>
+
                 <!-- Slide 5: Circuits -->
                 <div class="slide">
                     <span class="slide-icon">🗺️</span>
@@ -277,6 +305,11 @@
                                 <span>% Status</span>
                                 <em>Remaining tire life.</em>
                             </div>
+                            <div class="feature-item">
+                                <strong>Tire Temp</strong>
+                                <span>Celsius</span>
+                                <em>Real-time thermal status.</em>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -326,12 +359,13 @@
                     <div class="slide-content">
                         <p>Realistic racing physics:</p>
                         <ul>
-                            <li><strong>Grip Model:</strong> Base + compound - wear + downforce</li>
-                            <li><strong>Rain:</strong> 40% grip reduction</li>
-                            <li><strong>Aero Drag:</strong> Downforce vs speed trade-off</li>
-                            <li><strong>Dynamic Speed:</strong> Auto-slows for corners</li>
-                            <li><strong>Visuals:</strong> Pitch, roll, steering respond to physics</li>
-                            <li><strong>Shift Lights:</strong> RPM indicators near max speed</li>
+                            <li><strong>Thermal Model:</strong> Dynamic heating/cooling based on inputs.</li>
+                            <li><strong>Grip Model:</strong> Base + compound - wear + downforce + temperature.</li>
+                            <li><strong>Rain:</strong> 40% grip reduction.</li>
+                            <li><strong>Aero Drag:</strong> Downforce vs speed trade-off.</li>
+                            <li><strong>Dynamic Speed:</strong> Auto-slows for corners.</li>
+                            <li><strong>Visuals:</strong> Pitch, roll, and steering respond to physics.</li>
+                            <li><strong>Shift Lights:</strong> RPM indicators near max speed.</li>
                         </ul>
                     </div>
                 </div>
@@ -344,6 +378,7 @@
                         <p>Strategies for fastest lap times:</p>
                         <ul>
                             <li><strong>Find the Sweet Spot:</strong> Listen to the engineer to balance speed and grip</li>
+                            <li><strong>Thermal Management:</strong> Build heat gradually; avoid over-driving when tires are hot</li>
                             <li><strong>Tire Strategy:</strong> Soft for qualifying, hard for long races</li>
                             <li><strong>Watch Health:</strong> Below 30% impacts lap times</li>
                             <li><strong>Cockpit Cam:</strong> Most immersive for precision</li>

@@ -11,6 +11,34 @@ export function playEngineerAnalysis(text) {
 }
 
 /**
+ * Announces tire temperature status to the driver
+ * @param {string} status - Temperature status: 'cold', 'suboptimal', 'optimal', 'overheated'
+ * @param {number} avgTemp - Average tire temperature in Celsius
+ */
+export function announceTireTemperature(status, avgTemp) {
+    let text = "";
+
+    switch (status) {
+        case 'cold':
+            text = `The tires are still cold, averaging ${Math.round(avgTemp)} degrees. Careful on the first few corners, we need to build some heat into the set.`;
+            break;
+        case 'suboptimal':
+            text = `Temperatures are climbing across all corners, currently around ${Math.round(avgTemp)} degrees. Grip is building as they reach the window.`;
+            break;
+        case 'optimal':
+            text = `The tire set is now in the optimal window, averaging ${Math.round(avgTemp)} degrees. We're in the sweet spot for maximum grip.`;
+            break;
+        case 'overheated':
+            text = `We're seeing high temperatures, averaging ${Math.round(avgTemp)} degrees! Tires are starting to overheat. We'll see grip drop off if they stay this hot.`;
+            break;
+        default:
+            return;
+    }
+
+    playEngineerAnalysis(text);
+}
+
+/**
  * Formats seconds into a human-readable string for TTS
  */
 export function formatTimeForTTS(seconds) {
@@ -110,7 +138,7 @@ export function analyzeSetupChange(param, newValue, context) {
             text = "We're still sliding too much in the corners. We need to increase the mechanical grip for better stability.";
         }
     }
- else if (param === 'brakePower') {
+    else if (param === 'brakePower') {
         const diff = newValue - targets.brakePower;
         const currentGrip = lastSetupValues.grip;
         

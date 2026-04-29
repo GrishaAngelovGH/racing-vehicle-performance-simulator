@@ -1032,6 +1032,35 @@ input[type="range"]::-moz-range-track {
     color: #4CAF50;
 }
 
+#tireTemp {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: white;
+    text-shadow: none;
+    min-width: 60px;
+    text-align: center;
+    transition: background-color 0.3s ease;
+}
+
+#tireTemp.temp-cold {
+    background-color: #00ccff;
+}
+
+#tireTemp.temp-suboptimal {
+    background-color: #ff9900;
+}
+
+#tireTemp.temp-optimal {
+    background-color: #00a85d;
+}
+
+#tireTemp.temp-overheated {
+    background-color: #e10600;
+}
+
 #floating-minimap-container {
     display: none;
 }

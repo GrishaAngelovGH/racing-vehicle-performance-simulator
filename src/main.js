@@ -8,7 +8,7 @@ import { Camera } from './core/Camera.js';
 import { Weather } from './core/Weather.js';
 import { initAudio, updateEngineSound, toggleSound, enableSound, isAudioInitialized, playFastestLapSound, setSoundMode, getAudioContext, toggleTTS, isTTSEnabled, playRadioAndSpeak } from './core/Audio.js';
 import { initReportFeature, showReportButton, hideReportButton, generateReport } from './core/Report.js';
-import { playEngineerAnalysis, analyzeSetupChange, generateLapSummary, formatTimeForTTS } from './core/RaceEngineer.js';
+import { playEngineerAnalysis, analyzeSetupChange, generateLapSummary, formatTimeForTTS, announceTireTemperature } from './core/RaceEngineer.js';
 import { RaceSession } from './core/RaceSession.js';
 import { startTour, hasCompletedTour } from './tour.js';
 
@@ -51,6 +51,11 @@ let grip = 0.4;
 let brakePower = 3;
 let downforce = 1.0;
 let uiHideMode = 0;
+let lastBrakingIntensity = 0;
+let lastAccelerationIntensity = 0;
+let lastCorneringLoad = 0;
+const TEMP_ANNOUNCE_COOLDOWN = 8000; // ms between temperature announcements
+let lastTempAnnounceTime = 0;
 
 // Get compound-specific values from the car's tire compound definitions
 function getTireWearRate() {
@@ -1047,7 +1052,8 @@ engine.start(() => {
             }
         }
 
-        const baseGrip = (grip + compoundBonus - wearPenalty + downforceGripBonus) * rainGripFactor;
+        const tempGripFactor = session.getTempGripFactor();
+        const baseGrip = (grip + compoundBonus - wearPenalty + downforceGripBonus) * rainGripFactor * tempGripFactor;
         const effectiveGrip = Math.min(1.6, Math.max(0.1, baseGrip));
 
         // Aero drag penalty from downforce (higher downforce = lower top speed)
@@ -1075,13 +1081,21 @@ engine.start(() => {
         const decelRate = actualDecelKmhPerSec * dt;
 
         let estimatedAccel = 0;
+        let brakingIntensity = 0;
+        let accelerationIntensity = 0;
+
         if (currentSpeed < targetSpeed) {
             currentSpeed = Math.min(currentSpeed + accelRate, targetSpeed);
             estimatedAccel = accelKmhPerSec;
+            accelerationIntensity = Math.min(1.0, accelKmhPerSec / 100);
         } else {
             currentSpeed = Math.max(currentSpeed - decelRate, targetSpeed);
             estimatedAccel = -actualDecelKmhPerSec;
+            brakingIntensity = Math.min(1.0, actualDecelKmhPerSec / 150);
         }
+
+        // Calculate cornering load based on curvature and speed
+        const corneringLoad = Math.min(1.0, curvature * (currentSpeed / 100) * 2);
 
         // Convert speed from km/h to meters/sec for calculations
         const metersPerSec = currentSpeed * 0.277778;
@@ -1158,6 +1172,19 @@ engine.start(() => {
             tireHealthEl.style.color = `rgb(${r}, ${g}, 0)`;
         }
 
+        // Update tire temperature display
+        const tireTempEl = document.getElementById('tireTemp');
+        if (tireTempEl) {
+            const avgTemp = session.getAverageTireTemp();
+            tireTempEl.textContent = `${Math.round(avgTemp)}°C`;
+            const tempStatus = session.getOverallTempStatus();
+            tireTempEl.className = 'value';
+            if (tempStatus === 'cold') tireTempEl.classList.add('temp-cold');
+            else if (tempStatus === 'suboptimal') tireTempEl.classList.add('temp-suboptimal');
+            else if (tempStatus === 'optimal') tireTempEl.classList.add('temp-optimal');
+            else if (tempStatus === 'overheated') tireTempEl.classList.add('temp-overheated');
+        }
+
         // --- Box Button Pulse/Alert Logic ---
         const boxBtn = document.getElementById('boxBtn');
         if (boxBtn) {
@@ -1201,11 +1228,24 @@ engine.start(() => {
 
         const dProgress = (metersPerSec * dt) / trackLength;
 
+        // Update tire temperatures based on driving conditions
+        session.updateTireTemps(currentSpeed, brakingIntensity, accelerationIntensity, corneringLoad, dt);
+
+        // Check and announce tire temperature status changes
+        const currentTempStatus = session.getOverallTempStatus();
+        if (currentTempStatus !== session.lastAnnouncedTempStatus &&
+            now - lastTempAnnounceTime > TEMP_ANNOUNCE_COOLDOWN) {
+            const avgTemp = session.getAverageTireTemp();
+            announceTireTemperature(currentTempStatus, avgTemp);
+            session.lastAnnouncedTempStatus = currentTempStatus;
+            lastTempAnnounceTime = now;
+        }
+
         // Apply performance-based tire wear
-        // Higher speed and higher acceleration increase wear rate
+        // Higher speed increases base wear; temperature then modifies it (U-shaped curve)
         const speedWearFactor = Math.max(0.4, currentSpeed / 220);
-        const accelWearFactor = Math.max(1.0, acceleration / 70);
-        session.tireHealth = Math.max(0, session.tireHealth - (dProgress * getTireWearRate() * speedWearFactor * accelWearFactor));
+        const baseWear = dProgress * getTireWearRate() * speedWearFactor;
+        session.updateTireWear(baseWear);
 
         const previousProgress = progress;
         progress += dProgress;
