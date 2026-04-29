@@ -360,7 +360,7 @@ function loadCircuit(id) {
     car.group.position.copy(startPos);
     car.group.position.y = 0.61;
     const lookAtPos = new THREE.Vector3().copy(startPos).add(startTangent);
-    car.group.lookAt(lookAtPos.x, 0.61, lookAtPos.z);
+    car.group.lookAt(lookAtPos.x, car.group.position.y, lookAtPos.z);
 
     // 4. Reset Camera to Start
     camera.resetCameraForCircuit(trackCurve);
@@ -1151,12 +1151,19 @@ engine.start(() => {
             const targetRoll = rollDirection * curvature * (currentSpeed / effectiveMaxSpeed) * maxRoll;
             car.body.rotation.z = THREE.MathUtils.lerp(car.body.rotation.z, targetRoll, 0.08);
 
-            // Compensate ride height for roll to prevent tires sinking into track
-            // Inner wheel drops by wheel_x * sin(roll) relative to chassis center
-            // Max rear wheel drop = 1.5 * sin(0.04) ≈ 0.06m, add 0.02m safety margin
-            const rollAngle = Math.abs(car.body.rotation.z);
-            const wheelDrop = 1.5 * Math.sin(rollAngle);
-            car.group.position.y = 0.61 + wheelDrop + 0.03;
+            // Compensate ride height for roll and pitch to prevent tires sinking into track
+            // Rear outer edge at x=1.85, z=-1.7; Front outer edge at x=1.45, z=2.3
+            const roll = car.body.rotation.z;
+            const pitch = car.body.rotation.x;
+            const sinRoll = Math.sin(Math.abs(roll));
+            const sinPitch = Math.sin(pitch);
+            
+            // Max drop happens at either front-outer or rear-outer corners
+            const frontDrop = 1.45 * sinRoll + 2.3 * sinPitch;
+            const rearDrop = 1.85 * sinRoll - 1.7 * sinPitch;
+            const maxDrop = Math.max(0, frontDrop, rearDrop);
+            
+            car.group.position.y = 0.61 + maxDrop + 0.01;
 
             // 3. Steering Wheel Rotation
             if (car.steeringWheel) {
@@ -1315,7 +1322,7 @@ engine.start(() => {
 
         const lookAheadU = (progress + 0.015) % 1;
         const lookAtPos = trackCurve.getPointAt(lookAheadU);
-        car.group.lookAt(lookAtPos.x, 0.61, lookAtPos.z);
+        car.group.lookAt(lookAtPos.x, car.group.position.y, lookAtPos.z);
     }
 
     // Update engine sound
